@@ -1,0 +1,111 @@
+[
+  {
+    "id": "p-1001",
+    "sku": "CY-100492",
+    "cas": "98-92-0",
+    "nameCn": "烟酰胺",
+    "nameEn": "Nicotinamide",
+    "category": "生化试剂",
+    "formula": "C6H6N2O",
+    "purity": "99%",
+    "stock": 184,
+    "packageSize": "25g",
+    "price": 88,
+    "leadTime": "现货",
+    "image": "",
+    "tags": [
+      "维生素",
+      "现货",
+      "热销"
+    ]
+  },
+  {
+    "id": "p-1002",
+    "sku": "CY-415725",
+    "cas": "69-65-8",
+    "nameCn": "D-甘露醇",
+    "nameEn": "D-Mannitol",
+    "category": "标准品",
+    "formula": "C6H14O6",
+    "purity": "98%",
+    "stock": 72,
+    "packageSize": "100g",
+    "price": 156,
+    "leadTime": "现货",
+    "image": "",
+    "tags": [
+      "糖醇",
+      "标准品"
+    ]
+  },
+  {
+    "id": "p-1003",
+    "sku": "CY-407214",
+    "cas": "77-06-5",
+    "nameCn": "赤霉酸",
+    "nameEn": "Gibberellic Acid",
+    "category": "植物激素",
+    "formula": "C19H22O6",
+    "purity": "90%",
+    "stock": 18,
+    "packageSize": "1g",
+    "price": 420,
+    "leadTime": "1-2 天",
+    "image": "",
+    "tags": [
+      "植物",
+      "小包装"
+    ]
+  },
+  {
+    "id": "p-1004",
+    "sku": "CY-900055",
+    "cas": "25322-68-3",
+    "nameCn": "聚乙二醇 2000",
+    "nameEn": "Polyethylene Glycol 2000",
+    "category": "PEG",
+    "formula": "HO(C2H4O)nH",
+    "purity": "AR",
+    "stock": 39,
+    "packageSize": "500g",
+    "price": 260,
+    "leadTime": "现货",
+    "image": "",
+    "tags": [
+      "PEG",
+      "大包装"
+    ]
+  },
+  {
+    "id": "p-1784125880875",
+    "sku": "SKU-1784125880875",
+    "cas": "",
+    "nameCn": "新产品",
+    "nameEn": "",
+    "category": "",
+    "formula": "",
+    "purity": "",
+    "stock": 0,
+    "packageSize": "",
+    "price": 0,
+    "leadTime": "",
+    "image": "",
+    "tags": []
+  },
+  {
+    "id": "p-1784126029000",
+    "sku": "SKU-1784126029000",
+    "cas": "",
+    "nameCn": "新产品2",
+    "nameEn": "",
+    "category": "",
+    "formula": "",
+    "purity": "",
+    "stock": 0,
+    "packageSize": "",
+    "price": 0,
+    "leadTime": "",
+    "image": "",
+    "tags": []
+  }
+]
