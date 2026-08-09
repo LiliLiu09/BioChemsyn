@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProducts, getQuotes, saveQuotes } from "@/lib/cms";
+import { sendQuoteNotification } from "@/lib/email";
 import type { QuoteCustomer, QuoteLine, QuoteRequest } from "@/lib/types";
 
 type IncomingLine = {
@@ -70,5 +71,7 @@ export async function POST(request: Request) {
   const quotes = await getQuotes();
   await saveQuotes([quote, ...quotes]);
 
-  return NextResponse.json({ ok: true, quote });
+  const email = await sendQuoteNotification(quote);
+
+  return NextResponse.json({ ok: true, quote, email });
 }
