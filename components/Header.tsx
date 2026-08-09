@@ -1,6 +1,6 @@
 "use client";
 
-import { FlaskConical, LayoutDashboard, Phone, ShoppingCart } from "lucide-react";
+import { LayoutDashboard, Phone, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cartStorageKey } from "@/lib/session";
@@ -38,8 +38,8 @@ export function Header({ site }: { site: SiteContent }) {
       <header className="header">
         <div className="header-inner">
           <Link className="brand" href="/" aria-label={`${site.brandName} 首页`}>
-            <span className="brand-mark">
-              <FlaskConical size={22} aria-hidden="true" />
+            <span className="brand-logo">
+              <img src="/kasons-logo.jpg" alt={`${site.brandName} 标志`} />
             </span>
             <span>
               <b>{site.brandName}</b>

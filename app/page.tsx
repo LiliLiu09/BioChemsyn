@@ -113,6 +113,17 @@ export default async function HomePage() {
             </Link>
           </div>
         </section>
+
+        <footer className="site-footer">
+          <div>
+            <b>{site.companyName}</b>
+            <span>{site.tagline}</span>
+          </div>
+          <div>
+            <span>{site.contactEmail}</span>
+            <span>{site.address}</span>
+          </div>
+        </footer>
       </main>
     </div>
   );
