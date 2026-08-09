@@ -1,9 +1,9 @@
 {
   "brandName": "ChemHub",
-  "tagline": "产品库 / 搜索 / 申请报价 / 轻量 CMS",
+  "tagline": "试剂 / 标准品 / 化学品采购平台",
   "supportPhone": "400-800-1688",
   "heroTitle": "面向试剂、标准品与化学品采购的 B2B 产品库",
-  "heroDescription": "产品基础信息公开收录，价格统一通过申请报价获取。支持 CAS、货号、中英文名搜索，并用询价车承接采购需求。",
+  "heroDescription": "公开展示产品基础资料，报价统一通过询价获取。支持 CAS、货号、中英文名和分子式搜索，并用询价车承接采购需求。",
   "primaryCta": "进入产品中心",
   "notice": "所有产品仅用于科研或工业用途，不用于人体诊断或治疗。",
   "companyName": "Demo BioTech Co",

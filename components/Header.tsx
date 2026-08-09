@@ -1,5 +1,6 @@
 "use client";
 
+import { FlaskConical, LayoutDashboard, Phone, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cartStorageKey } from "@/lib/session";
@@ -28,29 +29,36 @@ export function Header({ site }: { site: SiteContent }) {
       <div className="topbar">
         <div className="topbar-inner">
           <span>{site.notice}</span>
-          <span>服务热线：{site.supportPhone}　邮箱：{site.contactEmail}</span>
+          <a href={`tel:${site.supportPhone}`}>
+            <Phone size={14} aria-hidden="true" />
+            {site.supportPhone}
+          </a>
         </div>
       </div>
       <header className="header">
         <div className="header-inner">
-          <Link className="brand" href="/">
-            <span className="brand-mark">C</span>
+          <Link className="brand" href="/" aria-label={`${site.brandName} 首页`}>
+            <span className="brand-mark">
+              <FlaskConical size={22} aria-hidden="true" />
+            </span>
             <span>
               <b>{site.brandName}</b>
               <span>{site.tagline}</span>
             </span>
           </Link>
-          <nav className="nav">
+          <nav className="nav" aria-label="主导航">
             <Link href="/">首页</Link>
             <Link href="/products">产品中心</Link>
             <Link href="/cart">询价车</Link>
             <a href="#support">服务支持</a>
           </nav>
           <div className="header-actions">
-            <Link className="btn" href="/admin">
-              管理后台
+            <Link className="icon-link" href="/admin" aria-label="管理后台">
+              <LayoutDashboard size={18} aria-hidden="true" />
+              <span>后台</span>
             </Link>
             <Link className="btn primary" href="/cart">
+              <ShoppingCart size={17} aria-hidden="true" />
               询价车 {cartCount > 0 ? `(${cartCount})` : ""}
             </Link>
           </div>
