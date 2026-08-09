@@ -30,7 +30,7 @@ export function AdminLoginForm() {
 
   return (
     <div className="login-card">
-      <h1>Admin 登录</h1>
+      <h1>后台登录</h1>
       <div className="form-stack">
         <input className="field" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="管理员邮箱" />
         <input
@@ -40,7 +40,7 @@ export function AdminLoginForm() {
           type="password"
           placeholder="管理员密码"
         />
-        <button className="btn primary" onClick={login} disabled={loading}>
+        <button className="btn primary" type="button" onClick={login} disabled={loading}>
           {loading ? "登录中..." : "进入后台"}
         </button>
         <div className="notice">

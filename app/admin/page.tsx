@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdminAuthed } from "@/lib/adminAuth";
-import { getProducts, getSiteContent } from "@/lib/cms";
+import { getProducts, getQuotes, getSiteContent } from "@/lib/cms";
 import { AdminShell } from "@/components/AdminShell";
 import { AdminLogoutButton } from "@/components/AdminLogoutButton";
 
@@ -10,7 +10,8 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
-  const [site, products] = await Promise.all([getSiteContent(), getProducts()]);
+  const [site, products, quotes] = await Promise.all([getSiteContent(), getProducts(), getQuotes()]);
+  const pendingQuotes = quotes.filter((quote) => quote.status === "待处理").length;
 
   return (
     <AdminShell>
@@ -24,12 +25,12 @@ export default async function AdminPage() {
           <span>产品数量</span>
         </div>
         <div className="stat">
-          <b>{site.brandName}</b>
-          <span>站点品牌</span>
+          <b>{quotes.length}</b>
+          <span>询价总数</span>
         </div>
         <div className="stat">
-          <b>{site.supportPhone}</b>
-          <span>服务热线</span>
+          <b>{pendingQuotes}</b>
+          <span>待处理询价</span>
         </div>
       </div>
       <div className="grid" style={{ marginTop: 18 }}>
@@ -39,8 +40,16 @@ export default async function AdminPage() {
         </Link>
         <Link className="product-card" href="/admin/products">
           <h3>管理产品</h3>
-          <p>新增、删除、编辑产品。保存后前台产品库立刻读取 JSON 内容。</p>
+          <p>新增、删除、编辑产品，并上传本地产品图片。</p>
         </Link>
+        <Link className="product-card" href="/admin/quotes">
+          <h3>处理询价</h3>
+          <p>查看客户信息、产品清单、处理状态和销售备注。</p>
+        </Link>
+        <div className="product-card">
+          <h3>站点品牌</h3>
+          <p>{site.brandName}</p>
+        </div>
       </div>
     </AdminShell>
   );

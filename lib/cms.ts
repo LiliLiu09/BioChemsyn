@@ -1,14 +1,23 @@
 import { promises as fs } from "fs";
 import path from "path";
-import type { Product, SiteContent } from "./types";
+import type { Product, QuoteRequest, SiteContent } from "./types";
 
 const dataDir = path.join(process.cwd(), "data");
 const productsFile = path.join(dataDir, "products.json");
 const siteFile = path.join(dataDir, "site.json");
+const quotesFile = path.join(dataDir, "quotes.json");
 
 async function readJson<T>(filePath: string): Promise<T> {
-  const raw = await fs.readFile(filePath, "utf8");
-  return JSON.parse(raw) as T;
+  try {
+    const raw = await fs.readFile(filePath, "utf8");
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    const nodeError = error as NodeJS.ErrnoException;
+    if (nodeError.code === "ENOENT") {
+      return [] as T;
+    }
+    throw error;
+  }
 }
 
 async function writeJson<T>(filePath: string, value: T) {
@@ -30,6 +39,14 @@ export async function getSiteContent() {
 
 export async function saveSiteContent(site: SiteContent) {
   await writeJson(siteFile, site);
+}
+
+export async function getQuotes() {
+  return readJson<QuoteRequest[]>(quotesFile);
+}
+
+export async function saveQuotes(quotes: QuoteRequest[]) {
+  await writeJson(quotesFile, quotes);
 }
 
 export async function getCategories() {

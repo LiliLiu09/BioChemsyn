@@ -621,6 +621,26 @@ textarea:focus-visible {
   box-shadow: 0 10px 28px rgba(16, 33, 47, 0.05);
 }
 
+.product-thumb {
+  display: grid;
+  height: 150px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #eef8fb, #f0fae7);
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.product-thumb img,
+.detail-media img,
+.admin-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .product-card:hover {
   border-color: rgba(15, 118, 110, 0.35);
 }
@@ -791,6 +811,79 @@ textarea:focus-visible {
   color: #475569;
 }
 
+.quote-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+}
+
+.quote-panel {
+  padding: 20px;
+}
+
+.success {
+  padding: 12px;
+  margin-bottom: 14px;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.field-error {
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.detail-hero {
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 28px;
+  align-items: stretch;
+  margin-top: 18px;
+}
+
+.detail-media {
+  display: grid;
+  min-height: 420px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  font-weight: 800;
+  box-shadow: var(--shadow);
+}
+
+.detail-copy {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.detail-copy h1 {
+  margin: 0;
+  font-size: 36px;
+  line-height: 1.2;
+}
+
+.detail-copy p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.detail-specs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .login-wrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
@@ -923,10 +1016,20 @@ textarea.field {
   border-color: #b7dcd6;
 }
 
+.admin-preview {
+  max-width: 220px;
+  height: 140px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
 @media (max-width: 960px) {
   .hero,
   .login-wrap,
-  .cta-band {
+  .cta-band,
+  .quote-layout,
+  .detail-hero {
     grid-template-columns: 1fr;
   }
 
@@ -1029,6 +1132,14 @@ textarea.field {
   .cart-table {
     display: block;
     overflow-x: auto;
+  }
+
+  .detail-copy h1 {
+    font-size: 28px;
+  }
+
+  .detail-specs {
+    grid-template-columns: 1fr;
   }
 
   .site-footer {

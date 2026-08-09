@@ -100,12 +100,17 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
       <div className="grid">
         {filtered.map((product) => (
           <article className="product-card" key={product.id}>
+            <Link className="product-thumb" href={`/products/${product.id}`} aria-label={`查看${product.nameCn || product.nameEn || product.sku}详情`}>
+              {product.image ? <img src={product.image} alt={product.nameCn || product.nameEn || product.sku} /> : <span>产品图片</span>}
+            </Link>
             <div className="product-head">
               <span className="sku">{product.sku}</span>
               <span className="pill">{product.category || "未分类"}</span>
             </div>
             <div>
-              <h3>{product.nameCn || product.nameEn || "未命名产品"}</h3>
+              <h3>
+                <Link href={`/products/${product.id}`}>{product.nameCn || product.nameEn || "未命名产品"}</Link>
+              </h3>
               <p>{product.nameEn || "英文名称待补充"}</p>
             </div>
             <div className="specs">
