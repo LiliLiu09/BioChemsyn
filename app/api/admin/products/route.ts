@@ -7,6 +7,7 @@ function normalizeProduct(product: Product): Product {
   return {
     ...product,
     id: product.id || `p-${Date.now()}`,
+    image: product.image || "",
     stock: Number(product.stock || 0),
     price: Number(product.price || 0),
     tags: Array.isArray(product.tags) ? product.tags : []

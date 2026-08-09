@@ -11,7 +11,7 @@ export function AdminLogoutButton() {
   };
 
   return (
-    <button className="btn" onClick={logout}>
+    <button className="btn" type="button" onClick={logout}>
       退出登录
     </button>
   );

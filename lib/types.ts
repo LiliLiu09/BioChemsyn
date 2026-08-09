@@ -15,6 +15,34 @@ export type Product = {
   tags: string[];
 };
 
+export type QuoteCustomer = {
+  name: string;
+  company: string;
+  phone: string;
+  email: string;
+  region: string;
+  remark: string;
+};
+
+export type QuoteLine = {
+  productId: string;
+  sku: string;
+  nameCn: string;
+  nameEn: string;
+  cas: string;
+  packageSize: string;
+  qty: number;
+};
+
+export type QuoteRequest = {
+  id: string;
+  status: "待处理" | "已报价" | "已关闭";
+  createdAt: string;
+  customer: QuoteCustomer;
+  lines: QuoteLine[];
+  salesNote: string;
+};
+
 export type SiteContent = {
   brandName: string;
   tagline: string;

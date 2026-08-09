@@ -24,10 +24,13 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const [products, setProducts] = useState(initialProducts);
   const [activeId, setActiveId] = useState(initialProducts[0]?.id || "");
   const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState(false);
   const active = products.find((product) => product.id === activeId) || products[0];
 
   const update = (key: keyof Product, value: string | number | string[]) => {
     setProducts((current) => current.map((product) => (product.id === active.id ? { ...product, [key]: value } : product)));
+    setErrors((current) => ({ ...current, [key]: "" }));
   };
 
   const addProduct = () => {
@@ -42,8 +45,23 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     setActiveId(next[0]?.id || "");
   };
 
+  const validate = () => {
+    const nextErrors: Record<string, string> = {};
+    products.forEach((product) => {
+      if (!product.sku.trim()) nextErrors.sku = "货号不能为空";
+      if (!product.nameCn.trim() && !product.nameEn.trim()) nextErrors.nameCn = "中文名或英文名至少填写一个";
+    });
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const save = async () => {
     setMessage("");
+    if (!validate()) {
+      setMessage("请先修正表单错误");
+      return;
+    }
+
     const response = await fetch("/api/admin/products", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -52,10 +70,27 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     setMessage(response.ok ? "已保存产品数据" : "保存失败，请重新登录后台");
   };
 
+  const uploadImage = async (file: File | undefined) => {
+    if (!file || !active) return;
+    setUploading(true);
+    setMessage("");
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await fetch("/api/admin/upload", { method: "POST", body: formData });
+    const payload = (await response.json()) as { url?: string; message?: string };
+    setUploading(false);
+    if (!response.ok || !payload.url) {
+      setMessage(payload.message || "图片上传失败");
+      return;
+    }
+    update("image", payload.url);
+    setMessage("图片已上传，请记得保存全部产品");
+  };
+
   if (!active) {
     return (
       <div className="panel admin-panel">
-        <button className="btn primary" onClick={addProduct}>
+        <button className="btn primary" type="button" onClick={addProduct}>
           新增第一个产品
         </button>
       </div>
@@ -67,7 +102,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       <div className="panel admin-list">
         <div className="toolbar">
           <h2>产品</h2>
-          <button className="btn primary" onClick={addProduct}>
+          <button className="btn primary" type="button" onClick={addProduct}>
             新增
           </button>
         </div>
@@ -75,10 +110,11 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
           <button
             className={`admin-list-item ${product.id === active.id ? "active" : ""}`}
             key={product.id}
+            type="button"
             onClick={() => setActiveId(product.id)}
           >
-            <b>{product.nameCn || "未命名产品"}</b>
-            <span>{product.sku}</span>
+            <b>{product.nameCn || product.nameEn || "未命名产品"}</b>
+            <span>{product.sku || "未填写货号"}</span>
           </button>
         ))}
       </div>
@@ -86,26 +122,28 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         <div className="toolbar">
           <h1>编辑产品</h1>
           <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn" onClick={removeProduct}>
+            <button className="btn" type="button" onClick={removeProduct}>
               删除
             </button>
-            <button className="btn primary" onClick={save}>
+            <button className="btn primary" type="button" onClick={save}>
               保存全部
             </button>
           </div>
         </div>
         <div className="admin-form-grid">
           <label className="admin-field">
-            <span>货号 SKU</span>
+            <span>货号 SKU *</span>
             <input className="field" value={active.sku} onChange={(event) => update("sku", event.target.value)} />
+            {errors.sku && <span className="field-error">{errors.sku}</span>}
           </label>
           <label className="admin-field">
             <span>CAS</span>
             <input className="field" value={active.cas} onChange={(event) => update("cas", event.target.value)} />
           </label>
           <label className="admin-field">
-            <span>中文名</span>
+            <span>中文名 *</span>
             <input className="field" value={active.nameCn} onChange={(event) => update("nameCn", event.target.value)} />
+            {errors.nameCn && <span className="field-error">{errors.nameCn}</span>}
           </label>
           <label className="admin-field">
             <span>英文名</span>
@@ -132,7 +170,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             <input className="field" type="number" value={active.stock} onChange={(event) => update("stock", Number(event.target.value))} />
           </label>
           <label className="admin-field">
-            <span>价格</span>
+            <span>参考价格</span>
             <input className="field" type="number" value={active.price} onChange={(event) => update("price", Number(event.target.value))} />
           </label>
           <label className="admin-field">
@@ -142,6 +180,12 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
           <label className="admin-field">
             <span>图片地址</span>
             <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder="/uploads/products/demo.jpg" />
+          </label>
+          <label className="admin-field full">
+            <span>上传产品图片</span>
+            <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
+            {uploading && <span className="result-count">图片上传中...</span>}
+            {active.image && <img className="admin-preview" src={active.image} alt="产品图片预览" />}
           </label>
           <label className="admin-field full">
             <span>标签，用逗号分隔</span>
