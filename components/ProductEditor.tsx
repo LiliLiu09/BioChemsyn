@@ -6,17 +6,22 @@ import type { Product } from "@/lib/types";
 const emptyProduct: Product = {
   id: "",
   sku: "",
+  catalogNo: "",
   cas: "",
   nameCn: "",
   nameEn: "",
+  synonyms: "",
   category: "",
   formula: "",
+  molecularWeight: "",
   purity: "",
   stock: 0,
   packageSize: "",
   price: 0,
   leadTime: "",
   image: "",
+  details: "",
+  scaleNote: "",
   tags: []
 };
 
@@ -34,7 +39,8 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   };
 
   const addProduct = () => {
-    const product = { ...emptyProduct, id: `p-${Date.now()}`, nameCn: "新产品", sku: `SKU-${Date.now()}` };
+    const now = Date.now();
+    const product = { ...emptyProduct, id: `p-${now}`, nameCn: "新产品", sku: `SKU-${now}`, catalogNo: `SKU-${now}` };
     setProducts((current) => [...current, product]);
     setActiveId(product.id);
   };
@@ -114,7 +120,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             onClick={() => setActiveId(product.id)}
           >
             <b>{product.nameCn || product.nameEn || "未命名产品"}</b>
-            <span>{product.sku || "未填写货号"}</span>
+            <span>{product.catalogNo || product.sku || "未填写货号"}</span>
           </button>
         ))}
       </div>
@@ -137,7 +143,11 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             {errors.sku && <span className="field-error">{errors.sku}</span>}
           </label>
           <label className="admin-field">
-            <span>CAS</span>
+            <span>Catalog #</span>
+            <input className="field" value={active.catalogNo} onChange={(event) => update("catalogNo", event.target.value)} />
+          </label>
+          <label className="admin-field">
+            <span>CAS Number</span>
             <input className="field" value={active.cas} onChange={(event) => update("cas", event.target.value)} />
           </label>
           <label className="admin-field">
@@ -146,47 +156,68 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             {errors.nameCn && <span className="field-error">{errors.nameCn}</span>}
           </label>
           <label className="admin-field">
-            <span>英文名</span>
+            <span>英文名 / Product Name</span>
             <input className="field" value={active.nameEn} onChange={(event) => update("nameEn", event.target.value)} />
+          </label>
+          <label className="admin-field">
+            <span>Synonyms</span>
+            <input className="field" value={active.synonyms} onChange={(event) => update("synonyms", event.target.value)} />
+          </label>
+          <label className="admin-field">
+            <span>Chemical Formula</span>
+            <input className="field" value={active.formula} onChange={(event) => update("formula", event.target.value)} />
+          </label>
+          <label className="admin-field">
+            <span>MW</span>
+            <input className="field" value={active.molecularWeight} onChange={(event) => update("molecularWeight", event.target.value)} />
+          </label>
+          <label className="admin-field">
+            <span>Pack Size</span>
+            <input className="field" value={active.packageSize} onChange={(event) => update("packageSize", event.target.value)} />
           </label>
           <label className="admin-field">
             <span>分类</span>
             <input className="field" value={active.category} onChange={(event) => update("category", event.target.value)} />
           </label>
           <label className="admin-field">
-            <span>分子式</span>
-            <input className="field" value={active.formula} onChange={(event) => update("formula", event.target.value)} />
-          </label>
-          <label className="admin-field">
             <span>纯度</span>
             <input className="field" value={active.purity} onChange={(event) => update("purity", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>规格</span>
-            <input className="field" value={active.packageSize} onChange={(event) => update("packageSize", event.target.value)} />
           </label>
           <label className="admin-field">
             <span>库存</span>
             <input className="field" type="number" value={active.stock} onChange={(event) => update("stock", Number(event.target.value))} />
           </label>
           <label className="admin-field">
-            <span>参考价格</span>
+            <span>参考价格 RMB</span>
             <input className="field" type="number" value={active.price} onChange={(event) => update("price", Number(event.target.value))} />
           </label>
           <label className="admin-field">
             <span>货期</span>
             <input className="field" value={active.leadTime} onChange={(event) => update("leadTime", event.target.value)} />
           </label>
+          <label className="admin-field full">
+            <span>Details 详细介绍</span>
+            <textarea className="field" value={active.details} onChange={(event) => update("details", event.target.value)} />
+          </label>
+          <label className="admin-field full">
+            <span>规模供货说明</span>
+            <input className="field" value={active.scaleNote} onChange={(event) => update("scaleNote", event.target.value)} />
+          </label>
           <label className="admin-field">
             <span>图片地址</span>
             <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder="/uploads/products/demo.jpg" />
           </label>
-          <label className="admin-field full">
+          <label className="admin-field">
             <span>上传产品图片</span>
             <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
             {uploading && <span className="result-count">图片上传中...</span>}
-            {active.image && <img className="admin-preview" src={active.image} alt="产品图片预览" />}
           </label>
+          {active.image && (
+            <div className="admin-field full">
+              <span>产品图片预览</span>
+              <img className="admin-preview" src={active.image} alt="产品图片预览" />
+            </div>
+          )}
           <label className="admin-field full">
             <span>标签，用逗号分隔</span>
             <input className="field" value={active.tags.join(", ")} onChange={(event) => update("tags", event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean))} />

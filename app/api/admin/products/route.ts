@@ -7,7 +7,12 @@ function normalizeProduct(product: Product): Product {
   return {
     ...product,
     id: product.id || `p-${Date.now()}`,
+    catalogNo: product.catalogNo || product.sku || "",
+    synonyms: product.synonyms || "",
+    molecularWeight: product.molecularWeight || "",
     image: product.image || "",
+    details: product.details || "",
+    scaleNote: product.scaleNote || "",
     stock: Number(product.stock || 0),
     price: Number(product.price || 0),
     tags: Array.isArray(product.tags) ? product.tags : []

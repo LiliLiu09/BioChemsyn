@@ -1,17 +1,22 @@
 export type Product = {
   id: string;
   sku: string;
+  catalogNo: string;
   cas: string;
   nameCn: string;
   nameEn: string;
+  synonyms: string;
   category: string;
   formula: string;
+  molecularWeight: string;
   purity: string;
   stock: number;
   packageSize: string;
   price: number;
   leadTime: string;
   image: string;
+  details: string;
+  scaleNote: string;
   tags: string[];
 };
 
