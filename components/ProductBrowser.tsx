@@ -111,7 +111,14 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
         {filtered.map((product) => (
           <article className="product-card" key={product.id}>
             <Link className="product-thumb" href={`/products/${product.id}`} aria-label={`查看${product.nameCn || product.nameEn || product.sku}详情`}>
-              {product.image ? <img src={product.image} alt={product.nameCn || product.nameEn || product.sku} /> : <span>产品图片</span>}
+              {product.image ? (
+                <img src={product.image} alt={product.nameCn || product.nameEn || product.sku} />
+              ) : (
+                <span className="product-placeholder">
+                  <b>KASONS</b>
+                  <small>{product.formula || product.cas || "Chemical Product"}</small>
+                </span>
+              )}
             </Link>
             <div className="product-head">
               <span className="sku">{product.catalogNo || product.sku}</span>

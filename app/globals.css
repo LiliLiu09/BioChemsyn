@@ -623,22 +623,50 @@ textarea:focus-visible {
 
 .product-thumb {
   display: grid;
-  height: 150px;
+  height: 118px;
   place-items: center;
   overflow: hidden;
   border-radius: 8px;
-  background: linear-gradient(135deg, #eef8fb, #f0fae7);
+  border: 1px solid #e1ebf2;
+  background:
+    linear-gradient(135deg, rgba(231, 246, 251, 0.92), rgba(240, 250, 231, 0.92)),
+    repeating-linear-gradient(90deg, transparent 0, transparent 18px, rgba(0, 155, 216, 0.04) 19px);
   color: var(--muted);
   font-weight: 800;
 }
 
-.product-thumb img,
+.product-thumb img {
+  display: block;
+  width: calc(100% - 28px);
+  height: calc(100% - 28px);
+  object-fit: contain;
+}
+
 .detail-media img,
 .admin-preview {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.product-placeholder {
+  display: grid;
+  gap: 6px;
+  place-items: center;
+  text-align: center;
+}
+
+.product-placeholder b {
+  color: var(--brand-strong);
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.product-placeholder small {
+  color: var(--brand-green-strong);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .product-card:hover {
