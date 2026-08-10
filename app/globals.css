@@ -623,23 +623,23 @@ textarea:focus-visible {
 
 .product-thumb {
   display: grid;
-  height: 118px;
+  height: 190px;
   place-items: center;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 8px;
   border: 1px solid #e1ebf2;
-  background:
-    linear-gradient(135deg, rgba(231, 246, 251, 0.92), rgba(240, 250, 231, 0.92)),
-    repeating-linear-gradient(90deg, transparent 0, transparent 18px, rgba(0, 155, 216, 0.04) 19px);
+  background: #fff;
   color: var(--muted);
   font-weight: 800;
 }
 
 .product-thumb img {
   display: block;
-  width: calc(100% - 28px);
-  height: calc(100% - 28px);
+  width: 100%;
+  height: 100%;
+  padding: 10px;
   object-fit: contain;
+  object-position: center;
 }
 
 .detail-media img,
