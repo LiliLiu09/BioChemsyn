@@ -49,6 +49,7 @@ export function Header({ site }: { site: SiteContent }) {
           <nav className="nav" aria-label="主导航">
             <Link href="/">首页</Link>
             <Link href="/products">产品中心</Link>
+            <Link href="/news">新闻中心</Link>
             <Link href="/cart">询价车</Link>
             <a href="#support">服务支持</a>
           </nav>

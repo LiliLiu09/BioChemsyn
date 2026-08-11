@@ -817,6 +817,135 @@ textarea:focus-visible {
   font-size: 16px;
 }
 
+.news-hero {
+  padding: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(16, 33, 47, 0.06);
+}
+
+.news-hero h1 {
+  margin: 0 0 10px;
+  font-size: 36px;
+  line-height: 1.2;
+}
+
+.news-hero p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.news-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.news-card {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.news-date {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  min-height: 82px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+}
+
+.news-date b {
+  font-size: 30px;
+}
+
+.news-date span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.news-card-body {
+  display: grid;
+  gap: 8px;
+}
+
+.news-meta,
+.article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.news-card h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.news-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.article-page {
+  display: grid;
+  gap: 22px;
+  max-width: 860px;
+}
+
+.article-page header {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.article-page h1 {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1.25;
+}
+
+.article-cover {
+  width: 100%;
+  max-height: 380px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.article-summary {
+  margin: 0;
+  padding: 16px;
+  border-left: 4px solid var(--brand);
+  background: #f7fafb;
+  color: #334155;
+  line-height: 1.8;
+}
+
+.article-content {
+  display: grid;
+  gap: 16px;
+  color: #263849;
+  line-height: 1.9;
+}
+
+.article-content p {
+  margin: 0;
+}
+
 .cart-table {
   width: 100%;
   border-collapse: collapse;
@@ -864,6 +993,12 @@ textarea:focus-visible {
 .field-error {
   color: #b91c1c;
   font-size: 12px;
+}
+
+.article-body-input {
+  min-height: 260px;
+  line-height: 1.7;
+  resize: vertical;
 }
 
 .detail-hero {
@@ -1332,6 +1467,14 @@ textarea.field {
   .cart-table {
     display: block;
     overflow-x: auto;
+  }
+
+  .news-card {
+    grid-template-columns: 1fr;
+  }
+
+  .news-date {
+    width: 92px;
   }
 
   .detail-copy h1 {
