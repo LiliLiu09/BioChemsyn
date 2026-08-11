@@ -68,8 +68,20 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               </div>
             </dl>
             <div className="legacy-nav">
-              {previous ? <Link className="btn" href={`/products/${previous.id}`}>Last product</Link> : <span />}
-              {next ? <Link className="btn" href={`/products/${next.id}`}>Next product</Link> : <span />}
+              {previous ? (
+                <Link className="btn" href={`/products/${previous.id}`}>
+                  Last product
+                </Link>
+              ) : (
+                <span />
+              )}
+              {next ? (
+                <Link className="btn" href={`/products/${next.id}`}>
+                  Next product
+                </Link>
+              ) : (
+                <span />
+              )}
             </div>
             <ProductDetailActions productId={product.id} />
           </div>

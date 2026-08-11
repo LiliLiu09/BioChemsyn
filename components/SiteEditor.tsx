@@ -46,7 +46,7 @@ export function SiteEditor({ initialSite }: { initialSite: SiteContent }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(site)
     });
-    setMessage(response.ok ? "已保存首页内容" : "保存失败，请重新登录后台");
+    setMessage(response.ok ? "已保存首页内容" : "保存失败，请重新登录后台或检查 Supabase 配置");
   };
 
   return (
