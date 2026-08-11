@@ -3,6 +3,20 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { getNewsArticles, getSiteContent } from "@/lib/cms";
 
+function renderContent(content: string) {
+  return content
+    .split(/\n+/)
+    .filter(Boolean)
+    .map((paragraph) => {
+      const image = paragraph.match(/^!\[(.*)]\((.*)\)$/);
+      if (image) {
+        const [, alt, src] = image;
+        return <img className="article-inline-image" src={src} alt={alt || "新闻图片"} key={paragraph} />;
+      }
+      return <p key={paragraph}>{paragraph}</p>;
+    });
+}
+
 export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const [{ slug }, site, news] = await Promise.all([params, getSiteContent(), getNewsArticles()]);
   const article = news.find((item) => item.slug === slug && item.published);
@@ -31,11 +45,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
           </header>
           {article.coverImage && <img className="article-cover" src={article.coverImage} alt={article.title} />}
           <p className="article-summary">{article.summary}</p>
-          <div className="article-content">
-            {article.content.split(/\n+/).map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </div>
+          <div className="article-content">{renderContent(article.content)}</div>
         </article>
       </main>
     </div>

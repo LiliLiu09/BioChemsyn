@@ -946,6 +946,15 @@ textarea:focus-visible {
   margin: 0;
 }
 
+.article-inline-image {
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
 .cart-table {
   width: 100%;
   border-collapse: collapse;

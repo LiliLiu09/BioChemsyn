@@ -22,7 +22,7 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ quotes })
     });
-    setMessage(response.ok ? "询价记录已保存" : "保存失败，请重新登录后台");
+    setMessage(response.ok ? "询价记录已保存" : "保存失败，请重新登录后台或检查 Supabase 配置");
   };
 
   if (!active) {
@@ -49,7 +49,9 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
             onClick={() => setActiveId(quote.id)}
           >
             <b>{quote.customer.company || quote.customer.name}</b>
-            <span>{quote.id} · {quote.status}</span>
+            <span>
+              {quote.id} · {quote.status}
+            </span>
           </button>
         ))}
       </div>
@@ -58,7 +60,9 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
         <div className="toolbar">
           <div>
             <h1>询价详情</h1>
-            <span className="result-count">{active.id} · {new Date(active.createdAt).toLocaleString("zh-CN")}</span>
+            <span className="result-count">
+              {active.id} · {new Date(active.createdAt).toLocaleString("zh-CN")}
+            </span>
           </div>
           <button className="btn primary" type="button" onClick={save}>
             保存

@@ -83,7 +83,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ products })
     });
-    setMessage(response.ok ? "已保存产品数据" : "保存失败，请重新登录后台");
+    setMessage(response.ok ? "已保存产品数据" : "保存失败，请重新登录后台或检查 Supabase 配置");
   };
 
   const uploadImage = async (file: File | undefined) => {
@@ -92,6 +92,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     setMessage("");
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("folder", "products");
     const response = await fetch("/api/admin/upload", { method: "POST", body: formData });
     const payload = (await response.json()) as { url?: string; message?: string };
     setUploading(false);
@@ -100,7 +101,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       return;
     }
     update("image", payload.url);
-    setMessage("图片已上传，请记得保存全部产品");
+    setMessage("图片已上传，请保存全部产品");
   };
 
   if (!active) {
@@ -150,7 +151,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         <div className="admin-form-grid">
           <label className="admin-field full">
             <span>产品图片</span>
-            <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder="/uploads/products/demo.jpg" />
+            <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder="上传后自动生成图片地址" />
             <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
             {uploading && <span className="result-count">图片上传中...</span>}
             {active.image && <img className="admin-preview" src={active.image} alt="产品图片预览" />}

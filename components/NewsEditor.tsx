@@ -34,6 +34,7 @@ export function NewsEditor({ initialNews }: { initialNews: NewsArticle[] }) {
   const [activeId, setActiveId] = useState(initialNews[0]?.id || "");
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState<"cover" | "body" | "">("");
   const active = news.find((item) => item.id === activeId) || news[0];
 
   const update = (key: keyof NewsArticle, value: string | number | boolean) => {
@@ -93,7 +94,33 @@ export function NewsEditor({ initialNews }: { initialNews: NewsArticle[] }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ news })
     });
-    setMessage(response.ok ? "新闻内容已保存" : "保存失败，请重新登录后台");
+    setMessage(response.ok ? "新闻内容已保存" : "保存失败，请重新登录后台或检查 Supabase 配置");
+  };
+
+  const uploadImage = async (file: File | undefined, mode: "cover" | "body") => {
+    if (!file || !active) return;
+    setUploading(mode);
+    setMessage("");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "news");
+    const response = await fetch("/api/admin/upload", { method: "POST", body: formData });
+    const payload = (await response.json()) as { url?: string; message?: string };
+    setUploading("");
+    if (!response.ok || !payload.url) {
+      setMessage(payload.message || "图片上传失败");
+      return;
+    }
+
+    if (mode === "cover") {
+      update("coverImage", payload.url);
+      setMessage("封面图片已上传，请保存全部新闻");
+      return;
+    }
+
+    const markdown = `\n\n![${active.title || "新闻图片"}](${payload.url})\n\n`;
+    update("content", `${active.content}${markdown}`);
+    setMessage("正文图片已上传并插入，请保存全部新闻");
   };
 
   if (!active) {
@@ -175,13 +202,21 @@ export function NewsEditor({ initialNews }: { initialNews: NewsArticle[] }) {
             <input className="field" value={active.source} onChange={(event) => update("source", event.target.value)} />
           </label>
           <label className="admin-field full">
-            <span>封面图片地址</span>
-            <input className="field" value={active.coverImage} onChange={(event) => update("coverImage", event.target.value)} placeholder="/uploads/news/demo.jpg" />
+            <span>封面图片</span>
+            <input className="field" value={active.coverImage} onChange={(event) => update("coverImage", event.target.value)} placeholder="上传后自动生成图片地址" />
+            <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0], "cover")} />
+            {uploading === "cover" && <span className="result-count">封面上传中...</span>}
+            {active.coverImage && <img className="admin-preview" src={active.coverImage} alt="新闻封面预览" />}
           </label>
           <label className="admin-field full">
             <span>摘要 *</span>
             <textarea className="field" value={active.summary} onChange={(event) => update("summary", event.target.value)} />
             {errors.summary && <span className="field-error">{errors.summary}</span>}
+          </label>
+          <label className="admin-field full">
+            <span>正文图片</span>
+            <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0], "body")} />
+            {uploading === "body" && <span className="result-count">正文图片上传中...</span>}
           </label>
           <label className="admin-field full">
             <span>正文 *</span>
