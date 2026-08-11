@@ -61,8 +61,8 @@ function quoteToRow(quote) {
     quote.id,
     quote.status || "待处理",
     quote.createdAt || new Date().toISOString(),
-    quote.customer || {},
-    quote.lines || [],
+    JSON.stringify(quote.customer || {}),
+    JSON.stringify(quote.lines || []),
     quote.salesNote || ""
   ];
 }

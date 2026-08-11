@@ -304,7 +304,7 @@ export async function saveQuotes(quotes: QuoteRequest[]) {
       const row = quoteToRow(quote);
       await dbQuery(
         "insert into public.quotes (id, status, created_at, customer, lines, sales_note) values ($1, $2, $3, $4, $5, $6)",
-        [row.id, row.status, row.created_at, row.customer, row.lines, row.sales_note]
+        [row.id, row.status, row.created_at, JSON.stringify(row.customer), JSON.stringify(row.lines), row.sales_note]
       );
     }
     return;
