@@ -6,17 +6,22 @@ import type { Product } from "@/lib/types";
 const emptyProduct: Product = {
   id: "",
   sku: "",
+  catalogNo: "",
   cas: "",
   nameCn: "",
   nameEn: "",
+  synonyms: "",
   category: "",
   formula: "",
+  molecularWeight: "",
   purity: "",
   stock: 0,
   packageSize: "",
   price: 0,
   leadTime: "",
   image: "",
+  details: "",
+  scaleNote: "",
   tags: []
 };
 
@@ -29,12 +34,23 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const active = products.find((product) => product.id === activeId) || products[0];
 
   const update = (key: keyof Product, value: string | number | string[]) => {
-    setProducts((current) => current.map((product) => (product.id === active.id ? { ...product, [key]: value } : product)));
+    setProducts((current) =>
+      current.map((product) => {
+        if (product.id !== active.id) return product;
+        const next = { ...product, [key]: value };
+        if (key === "catalogNo" && typeof value === "string") {
+          next.sku = value;
+        }
+        return next;
+      })
+    );
     setErrors((current) => ({ ...current, [key]: "" }));
   };
 
   const addProduct = () => {
-    const product = { ...emptyProduct, id: `p-${Date.now()}`, nameCn: "新产品", sku: `SKU-${Date.now()}` };
+    const now = Date.now();
+    const catalogNo = `SKU-${now}`;
+    const product = { ...emptyProduct, id: `p-${now}`, nameCn: "新产品", nameEn: "New Product", sku: catalogNo, catalogNo };
     setProducts((current) => [...current, product]);
     setActiveId(product.id);
   };
@@ -48,8 +64,8 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
     products.forEach((product) => {
-      if (!product.sku.trim()) nextErrors.sku = "货号不能为空";
-      if (!product.nameCn.trim() && !product.nameEn.trim()) nextErrors.nameCn = "中文名或英文名至少填写一个";
+      if (!(product.catalogNo || product.sku).trim()) nextErrors.catalogNo = "Catalog # 不能为空";
+      if (!product.nameEn.trim() && !product.nameCn.trim()) nextErrors.nameEn = "Product Name 不能为空";
     });
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -113,14 +129,14 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             type="button"
             onClick={() => setActiveId(product.id)}
           >
-            <b>{product.nameCn || product.nameEn || "未命名产品"}</b>
-            <span>{product.sku || "未填写货号"}</span>
+            <b>{product.nameEn || product.nameCn || "未命名产品"}</b>
+            <span>{product.catalogNo || product.sku || "未填写 Catalog #"}</span>
           </button>
         ))}
       </div>
       <div className="panel admin-panel">
         <div className="toolbar">
-          <h1>编辑产品</h1>
+          <h1>编辑产品展示字段</h1>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn" type="button" onClick={removeProduct}>
               删除
@@ -130,66 +146,53 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             </button>
           </div>
         </div>
+
         <div className="admin-form-grid">
-          <label className="admin-field">
-            <span>货号 SKU *</span>
-            <input className="field" value={active.sku} onChange={(event) => update("sku", event.target.value)} />
-            {errors.sku && <span className="field-error">{errors.sku}</span>}
-          </label>
-          <label className="admin-field">
-            <span>CAS</span>
-            <input className="field" value={active.cas} onChange={(event) => update("cas", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>中文名 *</span>
-            <input className="field" value={active.nameCn} onChange={(event) => update("nameCn", event.target.value)} />
-            {errors.nameCn && <span className="field-error">{errors.nameCn}</span>}
-          </label>
-          <label className="admin-field">
-            <span>英文名</span>
-            <input className="field" value={active.nameEn} onChange={(event) => update("nameEn", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>分类</span>
-            <input className="field" value={active.category} onChange={(event) => update("category", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>分子式</span>
-            <input className="field" value={active.formula} onChange={(event) => update("formula", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>纯度</span>
-            <input className="field" value={active.purity} onChange={(event) => update("purity", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>规格</span>
-            <input className="field" value={active.packageSize} onChange={(event) => update("packageSize", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>库存</span>
-            <input className="field" type="number" value={active.stock} onChange={(event) => update("stock", Number(event.target.value))} />
-          </label>
-          <label className="admin-field">
-            <span>参考价格</span>
-            <input className="field" type="number" value={active.price} onChange={(event) => update("price", Number(event.target.value))} />
-          </label>
-          <label className="admin-field">
-            <span>货期</span>
-            <input className="field" value={active.leadTime} onChange={(event) => update("leadTime", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>图片地址</span>
-            <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder="/uploads/products/demo.jpg" />
-          </label>
           <label className="admin-field full">
-            <span>上传产品图片</span>
+            <span>产品图片</span>
+            <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder="/uploads/products/demo.jpg" />
             <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
             {uploading && <span className="result-count">图片上传中...</span>}
             {active.image && <img className="admin-preview" src={active.image} alt="产品图片预览" />}
           </label>
+
+          <label className="admin-field">
+            <span>Product Name *</span>
+            <input className="field" value={active.nameEn} onChange={(event) => update("nameEn", event.target.value)} />
+            {errors.nameEn && <span className="field-error">{errors.nameEn}</span>}
+          </label>
+          <label className="admin-field">
+            <span>CAS Number</span>
+            <input className="field" value={active.cas} onChange={(event) => update("cas", event.target.value)} />
+          </label>
+          <label className="admin-field">
+            <span>Synonyms</span>
+            <input className="field" value={active.synonyms} onChange={(event) => update("synonyms", event.target.value)} />
+          </label>
+          <label className="admin-field">
+            <span>Chemical Formula</span>
+            <input className="field" value={active.formula} onChange={(event) => update("formula", event.target.value)} />
+          </label>
+          <label className="admin-field">
+            <span>Pack Size</span>
+            <input className="field" value={active.packageSize} onChange={(event) => update("packageSize", event.target.value)} />
+          </label>
+          <label className="admin-field">
+            <span>Catalog # *</span>
+            <input className="field" value={active.catalogNo || active.sku} onChange={(event) => update("catalogNo", event.target.value)} />
+            {errors.catalogNo && <span className="field-error">{errors.catalogNo}</span>}
+          </label>
+          <label className="admin-field">
+            <span>MW</span>
+            <input className="field" value={active.molecularWeight} onChange={(event) => update("molecularWeight", event.target.value)} />
+          </label>
           <label className="admin-field full">
-            <span>标签，用逗号分隔</span>
-            <input className="field" value={active.tags.join(", ")} onChange={(event) => update("tags", event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean))} />
+            <span>Details</span>
+            <textarea className="field" value={active.details} onChange={(event) => update("details", event.target.value)} />
+          </label>
+          <label className="admin-field full">
+            <span>规模供货说明</span>
+            <input className="field" value={active.scaleNote} onChange={(event) => update("scaleNote", event.target.value)} />
           </label>
         </div>
         {message && <div className="notice">{message}</div>}

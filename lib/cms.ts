@@ -1,11 +1,12 @@
 import { promises as fs } from "fs";
 import path from "path";
-import type { Product, QuoteRequest, SiteContent } from "./types";
+import type { NewsArticle, Product, QuoteRequest, SiteContent } from "./types";
 
 const dataDir = path.join(process.cwd(), "data");
 const productsFile = path.join(dataDir, "products.json");
 const siteFile = path.join(dataDir, "site.json");
 const quotesFile = path.join(dataDir, "quotes.json");
+const newsFile = path.join(dataDir, "news.json");
 
 async function readJson<T>(filePath: string): Promise<T> {
   try {
@@ -47,6 +48,14 @@ export async function getQuotes() {
 
 export async function saveQuotes(quotes: QuoteRequest[]) {
   await writeJson(quotesFile, quotes);
+}
+
+export async function getNewsArticles() {
+  return readJson<NewsArticle[]>(newsFile);
+}
+
+export async function saveNewsArticles(news: NewsArticle[]) {
+  await writeJson(newsFile, news);
 }
 
 export async function getCategories() {

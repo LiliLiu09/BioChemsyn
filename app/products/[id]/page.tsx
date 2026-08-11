@@ -4,46 +4,102 @@ import { Header } from "@/components/Header";
 import { ProductDetailActions } from "@/components/ProductDetailActions";
 import { getProducts, getSiteContent } from "@/lib/cms";
 
+function valueOrDash(value: string | number) {
+  return value || "待确认";
+}
+
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [{ id }, site, products] = await Promise.all([params, getSiteContent(), getProducts()]);
-  const product = products.find((item) => item.id === id);
+  const productIndex = products.findIndex((item) => item.id === id);
+  const product = products[productIndex];
 
   if (!product) {
     notFound();
   }
 
+  const previous = products[productIndex - 1];
+  const next = products[productIndex + 1];
+  const productUrl = `/products/${product.id}`;
+
   return (
     <div className="shell">
       <Header site={site} />
       <main className="main">
-        <Link className="locked" href="/products">
-          返回产品中心
-        </Link>
-        <section className="detail-hero">
-          <div className="detail-media">
-            {product.image ? <img src={product.image} alt={product.nameCn || product.nameEn} /> : <span>暂无产品图片</span>}
+        <div className="detail-titlebar">
+          <div>
+            <h1>Product display</h1>
+            <span />
           </div>
-          <div className="detail-copy">
-            <span className="sku">{product.sku}</span>
-            <h1>{product.nameCn || product.nameEn || "未命名产品"}</h1>
-            <p>{product.nameEn || "英文名称待补充"}</p>
-            <div className="tag-row">
-              <span className="pill">{product.category || "未分类"}</span>
-              {(product.tags.length ? product.tags : ["询价确认"]).map((tag) => (
-                <span className="pill subtle" key={tag}>
-                  {tag}
-                </span>
-              ))}
+          <nav aria-label="面包屑">
+            <Link href="/">Home</Link>
+            <span>&gt;&gt;</span>
+            <Link href="/products">Product display</Link>
+          </nav>
+        </div>
+
+        <section className="legacy-product-detail">
+          <div className="legacy-gallery">
+            <div className="legacy-main-image">
+              {product.image ? <img src={product.image} alt={product.nameEn || product.nameCn} /> : <span>Product Image</span>}
             </div>
-            <div className="specs detail-specs">
-              <span><b>CAS</b>{product.cas || "待确认"}</span>
-              <span><b>分子式</b>{product.formula || "待确认"}</span>
-              <span><b>纯度</b>{product.purity || "待确认"}</span>
-              <span><b>规格</b>{product.packageSize || "待确认"}</span>
-              <span><b>库存</b>{product.stock > 0 ? product.stock : "询期"}</span>
-              <span><b>货期</b>{product.leadTime || "待确认"}</span>
+            <div className="legacy-thumb">
+              {product.image ? <img src={product.image} alt={`${product.nameEn || product.nameCn} thumbnail`} /> : <span />}
+            </div>
+          </div>
+
+          <div className="legacy-summary">
+            <h2>{product.nameEn || product.nameCn || "未命名产品"}</h2>
+            <dl>
+              <div>
+                <dt>CAS Number：</dt>
+                <dd>{valueOrDash(product.cas)}</dd>
+              </div>
+              <div>
+                <dt>Synonyms：</dt>
+                <dd>{valueOrDash(product.synonyms)}</dd>
+              </div>
+              <div>
+                <dt>Chemical Formula：</dt>
+                <dd>{valueOrDash(product.formula)}</dd>
+              </div>
+              <div>
+                <dt>Pack Size：</dt>
+                <dd>{valueOrDash(product.packageSize)}</dd>
+              </div>
+            </dl>
+            <div className="legacy-nav">
+              {previous ? <Link className="btn" href={`/products/${previous.id}`}>Last product</Link> : <span />}
+              {next ? <Link className="btn" href={`/products/${next.id}`}>Next product</Link> : <span />}
             </div>
             <ProductDetailActions productId={product.id} />
+          </div>
+        </section>
+
+        <section className="legacy-details">
+          <div className="legacy-section-title">
+            <h2>Details</h2>
+            <span />
+          </div>
+          <div className="legacy-detail-copy">
+            <p>Product Name: {product.nameEn || product.nameCn || "待确认"}</p>
+            <p>CAS: {valueOrDash(product.cas)}</p>
+            <p>Catalog #: {product.catalogNo || product.sku || "待确认"}</p>
+            <p>MW: {valueOrDash(product.molecularWeight)}</p>
+            <p>Chemical Formula: {valueOrDash(product.formula)}</p>
+            <p>Synonym: {valueOrDash(product.synonyms)}</p>
+          </div>
+
+          {product.scaleNote && (
+            <p className="scale-note">
+              ******{product.scaleNote.includes("凯森斯生物") ? product.scaleNote : `凯森斯生物可提供该产品：${product.scaleNote}`}******
+            </p>
+          )}
+
+          <p className="legacy-description">{product.details || "产品详细介绍待补充。"}</p>
+
+          <div className="legacy-link-row">
+            <span>产品链接：</span>
+            <Link href={productUrl}>{productUrl}</Link>
           </div>
         </section>
       </main>

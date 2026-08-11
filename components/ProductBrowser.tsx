@@ -17,7 +17,17 @@ function matches(product: Product, keyword: string, category: string) {
   const inCategory = category === "all" || productCategory === category;
   const inText =
     !query ||
-    [product.sku, product.cas, product.nameCn, product.nameEn, product.formula, ...product.tags]
+    [
+      product.sku,
+      product.catalogNo,
+      product.cas,
+      product.nameCn,
+      product.nameEn,
+      product.synonyms,
+      product.formula,
+      product.molecularWeight,
+      ...product.tags
+    ]
       .join(" ")
       .toLowerCase()
       .includes(query);
@@ -74,7 +84,7 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
           <input
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
-            placeholder="输入 CAS、货号、中文名、英文名或分子式"
+            placeholder="输入 CAS、Catalog #、货号、产品名、Synonyms 或分子式"
           />
         </label>
         <label className="sr-only" htmlFor="category-filter">
@@ -101,10 +111,17 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
         {filtered.map((product) => (
           <article className="product-card" key={product.id}>
             <Link className="product-thumb" href={`/products/${product.id}`} aria-label={`查看${product.nameCn || product.nameEn || product.sku}详情`}>
-              {product.image ? <img src={product.image} alt={product.nameCn || product.nameEn || product.sku} /> : <span>产品图片</span>}
+              {product.image ? (
+                <img src={product.image} alt={product.nameCn || product.nameEn || product.sku} />
+              ) : (
+                <span className="product-placeholder">
+                  <b>KASONS</b>
+                  <small>{product.formula || product.cas || "Chemical Product"}</small>
+                </span>
+              )}
             </Link>
             <div className="product-head">
-              <span className="sku">{product.sku}</span>
+              <span className="sku">{product.catalogNo || product.sku}</span>
               <span className="pill">{product.category || "未分类"}</span>
             </div>
             <div>
@@ -115,28 +132,20 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
             </div>
             <div className="specs">
               <span>
-                <b>CAS</b>
+                <b>CAS Number</b>
                 {valueOrDash(product.cas)}
               </span>
               <span>
-                <b>纯度</b>
-                {valueOrDash(product.purity)}
+                <b>Synonyms</b>
+                {valueOrDash(product.synonyms)}
               </span>
               <span>
-                <b>规格</b>
-                {valueOrDash(product.packageSize)}
-              </span>
-              <span>
-                <b>库存</b>
-                {product.stock > 0 ? product.stock : "询期"}
-              </span>
-              <span>
-                <b>分子式</b>
+                <b>Chemical Formula</b>
                 {valueOrDash(product.formula)}
               </span>
               <span>
-                <b>货期</b>
-                {valueOrDash(product.leadTime)}
+                <b>Pack Size</b>
+                {valueOrDash(product.packageSize)}
               </span>
             </div>
             <div className="tag-row">

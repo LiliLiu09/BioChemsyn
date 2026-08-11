@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { ProductBrowser } from "@/components/ProductBrowser";
-import { getProducts, getSiteContent } from "@/lib/cms";
+import { getNewsArticles, getProducts, getSiteContent } from "@/lib/cms";
 
 export default async function HomePage() {
-  const [site, products] = await Promise.all([getSiteContent(), getProducts()]);
+  const [site, products, news] = await Promise.all([getSiteContent(), getProducts(), getNewsArticles()]);
   const categoryCounts = products.reduce<Record<string, number>>((acc, product) => {
     const category = product.category || "未分类";
     acc[category] = (acc[category] || 0) + 1;
@@ -12,6 +12,10 @@ export default async function HomePage() {
   }, {});
   const categories = Object.entries(categoryCounts).slice(0, 6);
   const inStockCount = products.filter((product) => product.stock > 0).length;
+  const latestNews = news
+    .filter((article) => article.published)
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+    .slice(0, 3);
 
   return (
     <div className="shell">
@@ -72,8 +76,8 @@ export default async function HomePage() {
             <span>按规格、数量、库存和客户信息确认最终报价。</span>
           </div>
           <div>
-            <b>科研与工业用途</b>
-            <span>{site.notice}</span>
+            <b>新闻与产品资讯</b>
+            <span>通过新闻中心发布公司动态、产品更新和服务说明。</span>
           </div>
         </section>
 
@@ -94,6 +98,43 @@ export default async function HomePage() {
         </section>
 
         <ProductBrowser compact products={products} />
+
+        {latestNews.length > 0 && (
+          <section className="section-block">
+            <div className="section-heading product-heading">
+              <div>
+                <span className="eyebrow">新闻中心</span>
+                <h2>公司新闻与产品资讯</h2>
+              </div>
+              <Link className="btn" href="/news">
+                查看全部新闻
+              </Link>
+            </div>
+            <div className="news-list">
+              {latestNews.map((article) => (
+                <article className="news-card" key={article.id}>
+                  <div className="news-date">
+                    <b>{article.publishedAt.slice(8, 10)}</b>
+                    <span>{article.publishedAt.slice(0, 7)}</span>
+                  </div>
+                  <div className="news-card-body">
+                    <div className="news-meta">
+                      <span>{article.category}</span>
+                      <span>阅读量：{article.views}</span>
+                    </div>
+                    <h2>
+                      <Link href={`/news/${article.slug}`}>{article.title}</Link>
+                    </h2>
+                    <p>{article.summary}</p>
+                    <Link className="locked" href={`/news/${article.slug}`}>
+                      查看全文
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="cta-band" id="support">
           <div>
