@@ -26,3 +26,23 @@ export async function dbQuery<T extends pg.QueryResultRow = pg.QueryResultRow>(s
   const result = await getPool().query<T>(sql, values);
   return result.rows;
 }
+
+export async function dbTransaction<T>(callback: (query: <R extends pg.QueryResultRow = pg.QueryResultRow>(sql: string, values?: unknown[]) => Promise<R[]>) => Promise<T>) {
+  const client = await getPool().connect();
+  const query = async <R extends pg.QueryResultRow = pg.QueryResultRow>(sql: string, values: unknown[] = []) => {
+    const result = await client.query<R>(sql, values);
+    return result.rows;
+  };
+
+  try {
+    await client.query("begin");
+    const value = await callback(query);
+    await client.query("commit");
+    return value;
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
+}

@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { dbQuery, hasDatabaseUrl } from "./db";
+import { dbQuery, dbTransaction, hasDatabaseUrl } from "./db";
 import { getSupabaseConfig, supabaseRest } from "./supabase";
 import type { NewsArticle, Product, QuoteRequest, SiteContent } from "./types";
 
@@ -204,17 +204,40 @@ export async function getProducts() {
 
 export async function saveProducts(products: Product[]) {
   if (hasDatabaseUrl()) {
-    await dbQuery("delete from public.products");
-    for (const product of products) {
-      await dbQuery(
-        `insert into public.products (
-          id, sku, catalog_no, cas, name_cn, name_en, synonyms, category, formula,
-          molecular_weight, purity, stock, package_size, price, lead_time, image,
-          details, scale_note, tags
-        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
-        Object.values(productToRow(product))
-      );
-    }
+    const rows = products.map(productToRow);
+    await dbTransaction(async (query) => {
+      await query("delete from public.products");
+      for (const row of rows) {
+        await query(
+          `insert into public.products (
+            id, sku, catalog_no, cas, name_cn, name_en, synonyms, category, formula,
+            molecular_weight, purity, stock, package_size, price, lead_time, image,
+            details, scale_note, tags
+          ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+          [
+            row.id,
+            row.sku,
+            row.catalog_no,
+            row.cas,
+            row.name_cn,
+            row.name_en,
+            row.synonyms,
+            row.category,
+            row.formula,
+            row.molecular_weight,
+            row.purity,
+            row.stock,
+            row.package_size,
+            row.price,
+            row.lead_time,
+            row.image,
+            row.details,
+            row.scale_note,
+            row.tags
+          ]
+        );
+      }
+    });
     return;
   }
   if (!requireWritableSupabase()) {
