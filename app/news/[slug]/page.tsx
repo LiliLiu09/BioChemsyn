@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { getNewsArticles, getSiteContent } from "@/lib/cms";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 function renderContent(content: string) {
   return content
     .split(/\n+/)

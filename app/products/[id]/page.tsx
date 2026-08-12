@@ -4,6 +4,9 @@ import { Header } from "@/components/Header";
 import { ProductDetailActions } from "@/components/ProductDetailActions";
 import { getProducts, getSiteContent } from "@/lib/cms";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 function valueOrDash(value: string | number) {
   return value || "待确认";
 }

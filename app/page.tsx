@@ -3,6 +3,9 @@ import { Header } from "@/components/Header";
 import { ProductBrowser } from "@/components/ProductBrowser";
 import { getNewsArticles, getProducts, getSiteContent } from "@/lib/cms";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function HomePage() {
   const [site, products, news] = await Promise.all([getSiteContent(), getProducts(), getNewsArticles()]);
   const categoryCounts = products.reduce<Record<string, number>>((acc, product) => {
