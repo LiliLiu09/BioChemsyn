@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { SiteContent } from "@/lib/types";
+import { RichTextEditor } from "@/components/RichTextEditor";
 
 export function AboutEditor({ initialSite }: { initialSite: SiteContent }) {
   const [site, setSite] = useState(initialSite);
@@ -76,7 +77,7 @@ export function AboutEditor({ initialSite }: { initialSite: SiteContent }) {
 
         <label className="admin-field full">
           <span>关于我们文字</span>
-          <textarea className="field" value={site.aboutDescription} onChange={(event) => update("aboutDescription", event.target.value)} />
+          <RichTextEditor value={site.aboutDescription} onChange={(value) => update("aboutDescription", value)} uploadFolder="about" imageAlt="关于我们图片" />
           {errors.aboutDescription && <span className="field-error">{errors.aboutDescription}</span>}
         </label>
 

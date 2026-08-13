@@ -1,24 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { RichTextContent } from "@/components/RichTextContent";
 import { getNewsArticles, getSiteContent } from "@/lib/cms";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-function renderContent(content: string) {
-  return content
-    .split(/\n+/)
-    .filter(Boolean)
-    .map((paragraph) => {
-      const image = paragraph.match(/^!\[(.*)]\((.*)\)$/);
-      if (image) {
-        const [, alt, src] = image;
-        return <img className="article-inline-image" src={src} alt={alt || "新闻图片"} key={paragraph} />;
-      }
-      return <p key={paragraph}>{paragraph}</p>;
-    });
-}
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const [{ slug }, site, news] = await Promise.all([params, getSiteContent(), getNewsArticles()]);
@@ -48,7 +35,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
           </header>
           {article.coverImage && <img className="article-cover" src={article.coverImage} alt={article.title} />}
           <p className="article-summary">{article.summary}</p>
-          <div className="article-content">{renderContent(article.content)}</div>
+          <RichTextContent content={article.content} imageAlt="新闻图片" />
         </article>
       </main>
     </div>

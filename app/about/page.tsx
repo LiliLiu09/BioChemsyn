@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { RichTextContent } from "@/components/RichTextContent";
 import { getSiteContent } from "@/lib/cms";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export default async function AboutPage() {
           <div className="about-content">
             <span className="eyebrow">关于我们</span>
             <h1>{site.aboutTitle}</h1>
-            <p>{site.aboutDescription}</p>
+            <RichTextContent content={site.aboutDescription} imageAlt="关于我们图片" />
           </div>
 
           {site.aboutQrImage && (

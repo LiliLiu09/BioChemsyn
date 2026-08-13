@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { InfoArticle } from "@/lib/types";
+import { RichTextEditor } from "@/components/RichTextEditor";
 
 const emptyArticle: InfoArticle = {
   id: "",
@@ -34,12 +35,13 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
   const [activeId, setActiveId] = useState(initialInfo[0]?.id || "");
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [uploading, setUploading] = useState<"cover" | "body" | "">("");
+  const [uploading, setUploading] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const active = info.find((item) => item.id === activeId) || info[0];
   const categories = useMemo(() => Array.from(new Set(info.map((article) => article.category.trim()).filter(Boolean))).sort(), [info]);
 
   const update = (key: keyof InfoArticle, value: string | number | boolean) => {
+    if (!active) return;
     setInfo((current) =>
       current.map((article) => {
         if (article.id !== active.id) return article;
@@ -108,30 +110,22 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
     setMessage(response.ok ? "资讯内容已保存" : "保存失败，请重新登录后台或检查 Supabase 配置");
   };
 
-  const uploadImage = async (file: File | undefined, mode: "cover" | "body") => {
+  const uploadCover = async (file: File | undefined) => {
     if (!file || !active) return;
-    setUploading(mode);
+    setUploading(true);
     setMessage("");
     const formData = new FormData();
     formData.append("file", file);
     formData.append("folder", "info");
     const response = await fetch("/api/admin/upload", { method: "POST", body: formData });
     const payload = (await response.json()) as { url?: string; message?: string };
-    setUploading("");
+    setUploading(false);
     if (!response.ok || !payload.url) {
       setMessage(payload.message || "图片上传失败");
       return;
     }
-
-    if (mode === "cover") {
-      update("coverImage", payload.url);
-      setMessage("封面图片已上传，请保存全部资讯");
-      return;
-    }
-
-    const markdown = `\n\n![${active.title || "资讯图片"}](${payload.url})\n\n`;
-    update("content", `${active.content}${markdown}`);
-    setMessage("正文图片已上传并插入，请保存全部资讯");
+    update("coverImage", payload.url);
+    setMessage("封面图片已上传，请保存全部资讯");
   };
 
   if (!active) {
@@ -154,12 +148,7 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
           </button>
         </div>
         {info.map((article) => (
-          <button
-            className={`admin-list-item ${article.id === active.id ? "active" : ""}`}
-            key={article.id}
-            type="button"
-            onClick={() => setActiveId(article.id)}
-          >
+          <button className={`admin-list-item ${article.id === active.id ? "active" : ""}`} key={article.id} type="button" onClick={() => setActiveId(article.id)}>
             <b>{article.title || "未命名资讯"}</b>
             <span>
               {article.category} · {article.publishedAt} · {article.published ? "已发布" : "草稿"}
@@ -170,7 +159,7 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
 
       <div className="panel admin-panel">
         <div className="toolbar">
-          <h1>资讯管理</h1>
+          <h1>资讯信息管理</h1>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn" type="button" onClick={removeArticle}>
               删除
@@ -236,8 +225,8 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
           <label className="admin-field full">
             <span>封面图片</span>
             <input className="field" value={active.coverImage} onChange={(event) => update("coverImage", event.target.value)} placeholder="上传后自动生成图片地址" />
-            <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0], "cover")} />
-            {uploading === "cover" && <span className="result-count">封面上传中...</span>}
+            <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadCover(event.target.files?.[0])} />
+            {uploading && <span className="result-count">封面上传中...</span>}
             {active.coverImage && <img className="admin-preview" src={active.coverImage} alt="资讯封面预览" />}
           </label>
           <label className="admin-field full">
@@ -246,13 +235,8 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
             {errors.summary && <span className="field-error">{errors.summary}</span>}
           </label>
           <label className="admin-field full">
-            <span>正文图片</span>
-            <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0], "body")} />
-            {uploading === "body" && <span className="result-count">正文图片上传中...</span>}
-          </label>
-          <label className="admin-field full">
             <span>正文 *</span>
-            <textarea className="field article-body-input" value={active.content} onChange={(event) => update("content", event.target.value)} />
+            <RichTextEditor value={active.content} onChange={(value) => update("content", value)} uploadFolder="info" imageAlt="资讯图片" />
             {errors.content && <span className="field-error">{errors.content}</span>}
           </label>
           <label className="admin-field full checkbox-field">

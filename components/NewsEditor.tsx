@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { NewsArticle } from "@/lib/types";
+import { RichTextEditor } from "@/components/RichTextEditor";
 
 const emptyArticle: NewsArticle = {
   id: "",
@@ -34,10 +35,11 @@ export function NewsEditor({ initialNews }: { initialNews: NewsArticle[] }) {
   const [activeId, setActiveId] = useState(initialNews[0]?.id || "");
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [uploading, setUploading] = useState<"cover" | "body" | "">("");
+  const [uploading, setUploading] = useState(false);
   const active = news.find((item) => item.id === activeId) || news[0];
 
   const update = (key: keyof NewsArticle, value: string | number | boolean) => {
+    if (!active) return;
     setNews((current) =>
       current.map((article) => {
         if (article.id !== active.id) return article;
@@ -97,30 +99,22 @@ export function NewsEditor({ initialNews }: { initialNews: NewsArticle[] }) {
     setMessage(response.ok ? "新闻内容已保存" : "保存失败，请重新登录后台或检查 Supabase 配置");
   };
 
-  const uploadImage = async (file: File | undefined, mode: "cover" | "body") => {
+  const uploadCover = async (file: File | undefined) => {
     if (!file || !active) return;
-    setUploading(mode);
+    setUploading(true);
     setMessage("");
     const formData = new FormData();
     formData.append("file", file);
     formData.append("folder", "news");
     const response = await fetch("/api/admin/upload", { method: "POST", body: formData });
     const payload = (await response.json()) as { url?: string; message?: string };
-    setUploading("");
+    setUploading(false);
     if (!response.ok || !payload.url) {
       setMessage(payload.message || "图片上传失败");
       return;
     }
-
-    if (mode === "cover") {
-      update("coverImage", payload.url);
-      setMessage("封面图片已上传，请保存全部新闻");
-      return;
-    }
-
-    const markdown = `\n\n![${active.title || "新闻图片"}](${payload.url})\n\n`;
-    update("content", `${active.content}${markdown}`);
-    setMessage("正文图片已上传并插入，请保存全部新闻");
+    update("coverImage", payload.url);
+    setMessage("封面图片已上传，请保存全部新闻");
   };
 
   if (!active) {
@@ -143,12 +137,7 @@ export function NewsEditor({ initialNews }: { initialNews: NewsArticle[] }) {
           </button>
         </div>
         {news.map((article) => (
-          <button
-            className={`admin-list-item ${article.id === active.id ? "active" : ""}`}
-            key={article.id}
-            type="button"
-            onClick={() => setActiveId(article.id)}
-          >
+          <button className={`admin-list-item ${article.id === active.id ? "active" : ""}`} key={article.id} type="button" onClick={() => setActiveId(article.id)}>
             <b>{article.title || "未命名新闻"}</b>
             <span>
               {article.publishedAt} · {article.published ? "已发布" : "草稿"}
@@ -159,7 +148,7 @@ export function NewsEditor({ initialNews }: { initialNews: NewsArticle[] }) {
 
       <div className="panel admin-panel">
         <div className="toolbar">
-          <h1>撰写新闻</h1>
+          <h1>新闻管理</h1>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn" type="button" onClick={removeArticle}>
               删除
@@ -204,8 +193,8 @@ export function NewsEditor({ initialNews }: { initialNews: NewsArticle[] }) {
           <label className="admin-field full">
             <span>封面图片</span>
             <input className="field" value={active.coverImage} onChange={(event) => update("coverImage", event.target.value)} placeholder="上传后自动生成图片地址" />
-            <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0], "cover")} />
-            {uploading === "cover" && <span className="result-count">封面上传中...</span>}
+            <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadCover(event.target.files?.[0])} />
+            {uploading && <span className="result-count">封面上传中...</span>}
             {active.coverImage && <img className="admin-preview" src={active.coverImage} alt="新闻封面预览" />}
           </label>
           <label className="admin-field full">
@@ -214,13 +203,8 @@ export function NewsEditor({ initialNews }: { initialNews: NewsArticle[] }) {
             {errors.summary && <span className="field-error">{errors.summary}</span>}
           </label>
           <label className="admin-field full">
-            <span>正文图片</span>
-            <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0], "body")} />
-            {uploading === "body" && <span className="result-count">正文图片上传中...</span>}
-          </label>
-          <label className="admin-field full">
             <span>正文 *</span>
-            <textarea className="field article-body-input" value={active.content} onChange={(event) => update("content", event.target.value)} />
+            <RichTextEditor value={active.content} onChange={(value) => update("content", value)} uploadFolder="news" imageAlt="新闻图片" />
             {errors.content && <span className="field-error">{errors.content}</span>}
           </label>
           <label className="admin-field full checkbox-field">
