@@ -1,8 +1,29 @@
-import { LayoutDashboard, Phone } from "lucide-react";
+"use client";
+
+import { LayoutDashboard, Phone, ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { cartStorageKey } from "@/lib/session";
 import type { SiteContent } from "@/lib/types";
 
 export function Header({ site }: { site: SiteContent }) {
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const refresh = () => {
+      const cart = JSON.parse(localStorage.getItem(cartStorageKey) || "[]") as unknown[];
+      setCartCount(cart.length);
+    };
+
+    refresh();
+    window.addEventListener("storage", refresh);
+    window.addEventListener("cart-updated", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("cart-updated", refresh);
+    };
+  }, []);
+
   return (
     <>
       <div className="topbar">
@@ -37,6 +58,10 @@ export function Header({ site }: { site: SiteContent }) {
             <Link className="icon-link" href="/admin" aria-label="管理后台">
               <LayoutDashboard size={18} aria-hidden="true" />
               <span>后台</span>
+            </Link>
+            <Link className="btn primary" href="/cart">
+              <ShoppingCart size={17} aria-hidden="true" />
+              询价车 {cartCount > 0 ? `(${cartCount})` : ""}
             </Link>
           </div>
         </div>
