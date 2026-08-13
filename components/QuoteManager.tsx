@@ -8,13 +8,13 @@ const statuses: QuoteRequest["status"][] = ["待处理", "已报价", "已关闭
 export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] }) {
   const [quotes, setQuotes] = useState(initialQuotes);
   const [showAll, setShowAll] = useState(false);
-  const [activeId, setActiveId] = useState(initialQuotes.find((quote) => quote.status !== "已处理")?.id || initialQuotes[0]?.id || "");
+  const [activeId, setActiveId] = useState(initialQuotes.find((quote) => quote.status === "待处理")?.id || initialQuotes[0]?.id || "");
   const [message, setMessage] = useState("");
 
-  const visibleQuotes = showAll ? quotes : quotes.filter((quote) => quote.status !== "已处理" || quote.id === activeId);
+  const visibleQuotes = showAll ? quotes : quotes.filter((quote) => quote.status === "待处理" || quote.id === activeId);
   const active = visibleQuotes.find((quote) => quote.id === activeId) || visibleQuotes[0];
-  const hiddenCount = quotes.filter((quote) => quote.status === "已处理").length;
-  const unprocessedCount = quotes.length - hiddenCount;
+  const pendingCount = quotes.filter((quote) => quote.status === "待处理").length;
+  const hiddenCount = quotes.length - pendingCount;
 
   const updateQuote = (id: string, patch: Partial<QuoteRequest>) => {
     setQuotes((current) => current.map((quote) => (quote.id === id ? { ...quote, ...patch } : quote)));
@@ -23,7 +23,7 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
   const toggleShowAll = () => {
     setShowAll((current) => {
       const nextShowAll = !current;
-      const nextVisible = nextShowAll ? quotes : quotes.filter((quote) => quote.status !== "已处理");
+      const nextVisible = nextShowAll ? quotes : quotes.filter((quote) => quote.status === "待处理");
       if (!nextVisible.some((quote) => quote.id === activeId)) {
         setActiveId(nextVisible[0]?.id || "");
       }
@@ -59,13 +59,13 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
     const nextQuotes = quotes.map((quote) => (quote.id === active.id ? { ...quote, status: "已处理" as const } : quote));
     const saved = await persistQuotes(nextQuotes, "询价已标记为已处理");
     if (saved && !showAll) {
-      setActiveId(nextQuotes.find((quote) => quote.status !== "已处理")?.id || "");
+      setActiveId(nextQuotes.find((quote) => quote.status === "待处理")?.id || "");
     }
   };
 
   const filterButton = (
     <button className="btn primary quote-filter-button" type="button" onClick={toggleShowAll} disabled={quotes.length === 0}>
-      {showAll ? "只显示未处理询价" : `显示全部询价（${quotes.length}）`}
+      {showAll ? "只显示待处理询价" : `显示全部询价（${quotes.length}）`}
     </button>
   );
 
@@ -76,12 +76,12 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
           <div>
             <h1>询价管理</h1>
             <span className="result-count">
-              默认隐藏已处理询价。未处理 {unprocessedCount} 条，已处理 {hiddenCount} 条。
+              默认只显示待处理询价。待处理 {pendingCount} 条，其他状态 {hiddenCount} 条。
             </span>
           </div>
         </div>
         <div className="quote-filter-row">{filterButton}</div>
-        <div className="notice">{quotes.length > 0 ? "暂无未处理询价记录。" : "暂无询价记录。"}</div>
+        <div className="notice">{quotes.length > 0 ? "暂无待处理询价记录。" : "暂无询价记录。"}</div>
       </div>
     );
   }
@@ -93,7 +93,7 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
           <div>
             <h2>询价单</h2>
             <span className="result-count">
-              {showAll ? `全部 ${quotes.length} 条` : `未处理 ${unprocessedCount} 条，已处理 ${hiddenCount} 条已隐藏`}
+              {showAll ? `全部 ${quotes.length} 条` : `待处理 ${pendingCount} 条，其他状态 ${hiddenCount} 条已隐藏`}
             </span>
           </div>
         </div>
