@@ -14,8 +14,8 @@ export default async function ContactPage() {
       <main className="main">
         <section className="content-page contact-page">
           <span className="eyebrow">联系我们</span>
-          <h1>提交需求或联系凯森斯生物</h1>
-          <p>如需产品规格、批量供货、交期或替代品确认，可以通过电话、邮箱或询价车提交需求。</p>
+          <h1>{site.contactTitle}</h1>
+          <p>{site.contactDescription}</p>
           <div className="contact-cards">
             <a className="contact-card" href={`tel:${site.supportPhone}`}>
               <span>联系电话</span>
@@ -31,7 +31,7 @@ export default async function ContactPage() {
             </div>
           </div>
           <Link className="btn primary large" href="/cart">
-            前往询价车
+            {site.contactCta}
           </Link>
         </section>
       </main>

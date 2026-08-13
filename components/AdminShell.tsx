@@ -12,11 +12,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </span>
         </Link>
         <nav className="admin-nav">
-          <Link href="/admin">概览</Link>
-          <Link href="/admin/site">首页内容</Link>
+          <Link href="/admin">后台概览</Link>
+          <Link href="/admin/site">首页管理</Link>
           <Link href="/admin/products">产品管理</Link>
           <Link href="/admin/news">新闻管理</Link>
-          <Link href="/admin/info">资讯管理</Link>
+          <Link href="/admin/info">资讯信息管理</Link>
+          <Link href="/admin/about">关于我们管理</Link>
+          <Link href="/admin/contact">联系我们管理</Link>
           <Link href="/admin/quotes">询价管理</Link>
           <Link href="/">返回前台</Link>
         </nav>

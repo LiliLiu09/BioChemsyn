@@ -8,5 +8,16 @@
   "notice": "",
   "companyName": "凯森斯生物 KASONS",
   "contactEmail": "support@biochemsyn.com",
-  "address": "上海市浦东新区 Demo Road 168 号"
+  "address": "上海市浦东新区 Demo Road 168 号",
+  "aboutTitle": "关于凯森斯生物",
+  "aboutDescription": "凯森斯生物 KASONS 专注于科研试剂、标准品与化学品的产品展示和采购询价服务，帮助研发、质控和采购团队更高效地检索产品信息、确认规格并提交询价。",
+  "aboutPointOneTitle": "产品资料清晰",
+  "aboutPointOneText": "围绕 CAS、货号、中英文名、规格和详情字段组织产品信息。",
+  "aboutPointTwoTitle": "询价流程明确",
+  "aboutPointTwoText": "客户提交需求后，销售团队可在后台查看并跟进。",
+  "aboutPointThreeTitle": "内容持续维护",
+  "aboutPointThreeText": "后台 CMS 支持产品、新闻、资讯信息和站点页面持续更新。",
+  "contactTitle": "提交需求或联系凯森斯生物",
+  "contactDescription": "如需产品规格、批量供货、交期或替代品确认，可以通过电话、邮箱或询价表单提交需求。",
+  "contactCta": "前往询价车"
 }

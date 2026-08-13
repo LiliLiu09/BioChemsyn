@@ -67,7 +67,12 @@ create table if not exists public.info_articles (
 create index if not exists info_articles_published_at_idx on public.info_articles (published_at desc);
 create index if not exists info_articles_category_idx on public.info_articles (category);
 
+alter table public.news_articles alter column category set default '公司新闻';
+alter table public.news_articles alter column author set default '凯森斯生物';
+alter table public.news_articles alter column source set default '凯森斯生物';
 alter table public.info_articles alter column category set default '服务资讯';
+alter table public.info_articles alter column author set default '凯森斯生物';
+alter table public.info_articles alter column source set default '凯森斯生物';
 
 create table if not exists public.site_content (
   id text primary key default 'main',
@@ -81,18 +86,44 @@ create table if not exists public.site_content (
   "companyName" text not null default '',
   "contactEmail" text not null default '',
   address text not null default '',
+  "aboutTitle" text not null default '关于凯森斯生物',
+  "aboutDescription" text not null default '凯森斯生物 KASONS 专注于科研试剂、标准品与化学品的产品展示和采购询价服务。',
+  "aboutPointOneTitle" text not null default '产品资料清晰',
+  "aboutPointOneText" text not null default '围绕 CAS、货号、中英文名、规格和详情字段组织产品信息。',
+  "aboutPointTwoTitle" text not null default '询价流程明确',
+  "aboutPointTwoText" text not null default '客户提交需求后，销售团队可在后台查看并跟进。',
+  "aboutPointThreeTitle" text not null default '内容持续维护',
+  "aboutPointThreeText" text not null default '后台 CMS 支持产品、新闻、资讯信息和站点页面持续更新。',
+  "contactTitle" text not null default '提交需求或联系凯森斯生物',
+  "contactDescription" text not null default '如需产品规格、批量供货、交期或替代品确认，可以通过电话、邮箱或询价表单提交需求。',
+  "contactCta" text not null default '前往询价车',
   updated_at timestamptz not null default now()
 );
 
+alter table public.site_content add column if not exists "aboutTitle" text not null default '关于凯森斯生物';
+alter table public.site_content add column if not exists "aboutDescription" text not null default '凯森斯生物 KASONS 专注于科研试剂、标准品与化学品的产品展示和采购询价服务。';
+alter table public.site_content add column if not exists "aboutPointOneTitle" text not null default '产品资料清晰';
+alter table public.site_content add column if not exists "aboutPointOneText" text not null default '围绕 CAS、货号、中英文名、规格和详情字段组织产品信息。';
+alter table public.site_content add column if not exists "aboutPointTwoTitle" text not null default '询价流程明确';
+alter table public.site_content add column if not exists "aboutPointTwoText" text not null default '客户提交需求后，销售团队可在后台查看并跟进。';
+alter table public.site_content add column if not exists "aboutPointThreeTitle" text not null default '内容持续维护';
+alter table public.site_content add column if not exists "aboutPointThreeText" text not null default '后台 CMS 支持产品、新闻、资讯信息和站点页面持续更新。';
+alter table public.site_content add column if not exists "contactTitle" text not null default '提交需求或联系凯森斯生物';
+alter table public.site_content add column if not exists "contactDescription" text not null default '如需产品规格、批量供货、交期或替代品确认，可以通过电话、邮箱或询价表单提交需求。';
+alter table public.site_content add column if not exists "contactCta" text not null default '前往询价车';
+
 create table if not exists public.quotes (
   id text primary key,
-  status text not null default '待处理' check (status in ('待处理', '已报价', '已关闭')),
+  status text not null default '待处理' check (status in ('待处理', '已报价', '已关闭', '已处理')),
   created_at timestamptz not null default now(),
   customer jsonb not null default '{}'::jsonb,
   lines jsonb not null default '[]'::jsonb,
   sales_note text not null default '',
   updated_at timestamptz not null default now()
 );
+
+alter table public.quotes drop constraint if exists quotes_status_check;
+alter table public.quotes add constraint quotes_status_check check (status in ('待处理', '已报价', '已关闭', '已处理'));
 
 create index if not exists quotes_created_at_idx on public.quotes (created_at desc);
 create index if not exists quotes_status_idx on public.quotes (status);

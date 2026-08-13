@@ -3,26 +3,18 @@
 import { useState } from "react";
 import type { SiteContent } from "@/lib/types";
 
-type SiteField = {
-  key: keyof SiteContent;
-  label: string;
-  multiline?: boolean;
-};
-
-const fields: SiteField[] = [
-  { key: "brandName", label: "品牌名称" },
-  { key: "tagline", label: "品牌标语" },
-  { key: "heroTitle", label: "首页主标题" },
-  { key: "heroDescription", label: "首页描述", multiline: true },
-  { key: "primaryCta", label: "主按钮文案" },
-  { key: "notice", label: "用途声明", multiline: true },
-  { key: "companyName", label: "公司名称" },
-  { key: "supportPhone", label: "服务电话" },
-  { key: "contactEmail", label: "联系邮箱" },
-  { key: "address", label: "公司地址" }
+const aboutFields: { key: keyof SiteContent; label: string; multiline?: boolean }[] = [
+  { key: "aboutTitle", label: "页面标题" },
+  { key: "aboutDescription", label: "页面介绍", multiline: true },
+  { key: "aboutPointOneTitle", label: "亮点一标题" },
+  { key: "aboutPointOneText", label: "亮点一内容", multiline: true },
+  { key: "aboutPointTwoTitle", label: "亮点二标题" },
+  { key: "aboutPointTwoText", label: "亮点二内容", multiline: true },
+  { key: "aboutPointThreeTitle", label: "亮点三标题" },
+  { key: "aboutPointThreeText", label: "亮点三内容", multiline: true }
 ];
 
-export function SiteEditor({ initialSite }: { initialSite: SiteContent }) {
+export function AboutEditor({ initialSite }: { initialSite: SiteContent }) {
   const [site, setSite] = useState(initialSite);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -32,42 +24,38 @@ export function SiteEditor({ initialSite }: { initialSite: SiteContent }) {
     setErrors((current) => ({ ...current, [key]: "" }));
   };
 
-  const validate = () => {
-    const nextErrors: Record<string, string> = {};
-    if (!site.brandName.trim()) nextErrors.brandName = "品牌名称不能为空";
-    if (!site.heroTitle.trim()) nextErrors.heroTitle = "首页主标题不能为空";
-    if (!site.contactEmail.includes("@")) nextErrors.contactEmail = "请填写有效邮箱";
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
   const save = async () => {
     setMessage("");
-    if (!validate()) {
+    const nextErrors: Record<string, string> = {};
+    if (!site.aboutTitle.trim()) nextErrors.aboutTitle = "页面标题不能为空";
+    if (!site.aboutDescription.trim()) nextErrors.aboutDescription = "页面介绍不能为空";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
       setMessage("请先修正表单错误");
       return;
     }
-    const response = await fetch("/api/admin/site", {
+
+    const response = await fetch("/api/admin/about", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(site)
     });
-    setMessage(response.ok ? "已保存首页内容" : "保存失败，请重新登录后台或检查 Supabase 配置");
+    setMessage(response.ok ? "已保存关于我们内容" : "保存失败，请重新登录后台或检查 Supabase 配置");
   };
 
   return (
     <div className="panel admin-panel">
       <div className="toolbar">
         <div>
-          <h1>首页管理</h1>
-          <span className="result-count">管理前台首页、品牌和基础联系方式。</span>
+          <h1>关于我们管理</h1>
+          <span className="result-count">维护前台关于我们页面的介绍和亮点内容。</span>
         </div>
         <button className="btn primary" type="button" onClick={save}>
           保存
         </button>
       </div>
       <div className="admin-form-grid">
-        {fields.map((field) => (
+        {aboutFields.map((field) => (
           <label className={`admin-field ${field.multiline ? "full" : ""}`} key={field.key}>
             <span>{field.label}</span>
             {field.multiline ? (

@@ -41,7 +41,7 @@ export type QuoteLine = {
 
 export type QuoteRequest = {
   id: string;
-  status: "待处理" | "已报价" | "已关闭";
+  status: "待处理" | "已报价" | "已关闭" | "已处理";
   createdAt: string;
   customer: QuoteCustomer;
   lines: QuoteLine[];
@@ -89,4 +89,15 @@ export type SiteContent = {
   companyName: string;
   contactEmail: string;
   address: string;
+  aboutTitle: string;
+  aboutDescription: string;
+  aboutPointOneTitle: string;
+  aboutPointOneText: string;
+  aboutPointTwoTitle: string;
+  aboutPointTwoText: string;
+  aboutPointThreeTitle: string;
+  aboutPointThreeText: string;
+  contactTitle: string;
+  contactDescription: string;
+  contactCta: string;
 };

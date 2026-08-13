@@ -3,33 +3,69 @@
 import { useState } from "react";
 import type { QuoteRequest } from "@/lib/types";
 
-const statuses: QuoteRequest["status"][] = ["待处理", "已报价", "已关闭"];
+const statuses: QuoteRequest["status"][] = ["待处理", "已报价", "已关闭", "已处理"];
 
 export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] }) {
   const [quotes, setQuotes] = useState(initialQuotes);
-  const [activeId, setActiveId] = useState(initialQuotes[0]?.id || "");
+  const [showAll, setShowAll] = useState(false);
+  const [activeId, setActiveId] = useState(initialQuotes.find((quote) => quote.status !== "已处理")?.id || initialQuotes[0]?.id || "");
   const [message, setMessage] = useState("");
-  const active = quotes.find((quote) => quote.id === activeId) || quotes[0];
+
+  const visibleQuotes = showAll ? quotes : quotes.filter((quote) => quote.status !== "已处理" || quote.id === activeId);
+  const active = visibleQuotes.find((quote) => quote.id === activeId) || visibleQuotes[0];
+  const hiddenCount = quotes.filter((quote) => quote.status === "已处理").length;
 
   const updateQuote = (id: string, patch: Partial<QuoteRequest>) => {
     setQuotes((current) => current.map((quote) => (quote.id === id ? { ...quote, ...patch } : quote)));
   };
 
-  const save = async () => {
+  const persistQuotes = async (nextQuotes: QuoteRequest[], successMessage: string) => {
     setMessage("");
     const response = await fetch("/api/admin/quotes", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quotes })
+      body: JSON.stringify({ quotes: nextQuotes })
     });
-    setMessage(response.ok ? "询价记录已保存" : "保存失败，请重新登录后台或检查 Supabase 配置");
+
+    if (response.ok) {
+      setQuotes(nextQuotes);
+      setMessage(successMessage);
+      return true;
+    }
+
+    setMessage("保存失败，请重新登录后台或检查 Supabase 配置");
+    return false;
+  };
+
+  const save = async () => {
+    await persistQuotes(quotes, "询价记录已保存");
+  };
+
+  const markProcessed = async () => {
+    if (!active) return;
+
+    const nextQuotes = quotes.map((quote) => (quote.id === active.id ? { ...quote, status: "已处理" as const } : quote));
+    const saved = await persistQuotes(nextQuotes, "询价已标记为已处理");
+    if (saved && !showAll) {
+      setActiveId(nextQuotes.find((quote) => quote.status !== "已处理")?.id || "");
+    }
   };
 
   if (!active) {
     return (
       <div className="panel admin-panel">
-        <h1>询价管理</h1>
-        <div className="notice">暂无询价记录。</div>
+        <div className="toolbar">
+          <div>
+            <h1>询价管理</h1>
+            <span className="result-count">默认隐藏已处理询价。</span>
+          </div>
+          {hiddenCount > 0 && (
+            <button className="btn ghost" type="button" onClick={() => setShowAll(true)}>
+              显示全部
+            </button>
+          )}
+        </div>
+        <div className="notice">{quotes.length > 0 ? "暂无未处理询价记录。" : "暂无询价记录。"}</div>
       </div>
     );
   }
@@ -38,10 +74,17 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
     <div className="admin-products">
       <div className="panel admin-list">
         <div className="toolbar">
-          <h2>询价单</h2>
-          <span className="pill">{quotes.length} 条</span>
+          <div>
+            <h2>询价单</h2>
+            <span className="result-count">
+              {showAll ? `全部 ${quotes.length} 条` : `未处理 ${visibleQuotes.filter((quote) => quote.status !== "已处理").length} 条`}
+            </span>
+          </div>
+          <button className="btn ghost" type="button" onClick={() => setShowAll((current) => !current)}>
+            {showAll ? "隐藏已处理" : "显示全部"}
+          </button>
         </div>
-        {quotes.map((quote) => (
+        {visibleQuotes.map((quote) => (
           <button
             className={`admin-list-item ${quote.id === active.id ? "active" : ""}`}
             key={quote.id}
@@ -64,9 +107,16 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
               {active.id} · {new Date(active.createdAt).toLocaleString("zh-CN")}
             </span>
           </div>
-          <button className="btn primary" type="button" onClick={save}>
-            保存
-          </button>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {active.status !== "已处理" && (
+              <button className="btn ghost" type="button" onClick={markProcessed}>
+                标记已处理
+              </button>
+            )}
+            <button className="btn primary" type="button" onClick={save}>
+              保存
+            </button>
+          </div>
         </div>
 
         <div className="admin-form-grid">

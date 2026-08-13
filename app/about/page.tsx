@@ -8,16 +8,20 @@ export default async function AboutPage() {
   const [site, products] = await Promise.all([getSiteContent(), getProducts()]);
   const categories = Array.from(new Set(products.map((product) => product.category).filter(Boolean)));
 
+  const points = [
+    { title: site.aboutPointOneTitle, text: site.aboutPointOneText },
+    { title: site.aboutPointTwoTitle, text: site.aboutPointTwoText },
+    { title: site.aboutPointThreeTitle, text: site.aboutPointThreeText }
+  ].filter((point) => point.title || point.text);
+
   return (
     <div className="shell">
       <Header site={site} />
       <main className="main">
         <section className="content-page">
           <span className="eyebrow">关于我们</span>
-          <h1>{site.companyName}</h1>
-          <p>
-            {site.brandName} 专注于科研试剂、标准品与化学品的产品展示和采购询价服务，帮助研发、质控和采购团队更高效地检索产品信息、确认规格并提交询价。
-          </p>
+          <h1>{site.aboutTitle}</h1>
+          <p>{site.aboutDescription}</p>
           <div className="content-stats">
             <div>
               <b>{products.length}</b>
@@ -35,18 +39,12 @@ export default async function AboutPage() {
         </section>
 
         <section className="trust-strip">
-          <div>
-            <b>产品资料清晰</b>
-            <span>围绕 CAS、货号、英文名、规格和详情字段组织产品信息。</span>
-          </div>
-          <div>
-            <b>询价流程明确</b>
-            <span>客户提交需求后，销售团队可在后台查看并跟进。</span>
-          </div>
-          <div>
-            <b>内容持续维护</b>
-            <span>后台 CMS 支持产品、新闻、资讯和站点信息持续更新。</span>
-          </div>
+          {points.map((point) => (
+            <div key={point.title}>
+              <b>{point.title}</b>
+              <span>{point.text}</span>
+            </div>
+          ))}
         </section>
       </main>
     </div>
