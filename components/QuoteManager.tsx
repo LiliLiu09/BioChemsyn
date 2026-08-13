@@ -14,6 +14,7 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
   const visibleQuotes = showAll ? quotes : quotes.filter((quote) => quote.status !== "已处理" || quote.id === activeId);
   const active = visibleQuotes.find((quote) => quote.id === activeId) || visibleQuotes[0];
   const hiddenCount = quotes.filter((quote) => quote.status === "已处理").length;
+  const unprocessedCount = quotes.length - hiddenCount;
 
   const updateQuote = (id: string, patch: Partial<QuoteRequest>) => {
     setQuotes((current) => current.map((quote) => (quote.id === id ? { ...quote, ...patch } : quote)));
@@ -62,6 +63,12 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
     }
   };
 
+  const filterButton = (
+    <button className="btn primary quote-filter-button" type="button" onClick={toggleShowAll} disabled={quotes.length === 0}>
+      {showAll ? "只显示未处理询价" : `显示全部询价（${quotes.length}）`}
+    </button>
+  );
+
   if (!active) {
     return (
       <div className="panel admin-panel">
@@ -69,13 +76,11 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
           <div>
             <h1>询价管理</h1>
             <span className="result-count">
-              默认隐藏已处理询价。已隐藏 {hiddenCount} 条，共 {quotes.length} 条。
+              默认隐藏已处理询价。未处理 {unprocessedCount} 条，已处理 {hiddenCount} 条。
             </span>
           </div>
-          <button className="btn ghost" type="button" onClick={toggleShowAll} disabled={quotes.length === 0}>
-            {showAll ? "隐藏已处理" : "显示全部询价"}
-          </button>
         </div>
+        <div className="quote-filter-row">{filterButton}</div>
         <div className="notice">{quotes.length > 0 ? "暂无未处理询价记录。" : "暂无询价记录。"}</div>
       </div>
     );
@@ -88,13 +93,11 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
           <div>
             <h2>询价单</h2>
             <span className="result-count">
-              {showAll ? `全部 ${quotes.length} 条` : `未处理 ${visibleQuotes.filter((quote) => quote.status !== "已处理").length} 条，已隐藏 ${hiddenCount} 条`}
+              {showAll ? `全部 ${quotes.length} 条` : `未处理 ${unprocessedCount} 条，已处理 ${hiddenCount} 条已隐藏`}
             </span>
           </div>
-          <button className="btn ghost" type="button" onClick={toggleShowAll}>
-            {showAll ? "隐藏已处理" : "显示全部询价"}
-          </button>
         </div>
+        <div className="quote-filter-row">{filterButton}</div>
         {visibleQuotes.map((quote) => (
           <button
             className={`admin-list-item ${quote.id === active.id ? "active" : ""}`}

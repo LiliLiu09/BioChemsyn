@@ -1508,6 +1508,15 @@ textarea.field {
   border-color: #b7dcd6;
 }
 
+.quote-filter-row {
+  margin-bottom: 12px;
+}
+
+.quote-filter-button {
+  width: 100%;
+  justify-content: center;
+}
+
 .admin-preview {
   max-width: 220px;
   height: 140px;
