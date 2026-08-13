@@ -195,6 +195,7 @@ const siteDefaults: SiteContent = {
   aboutQrImage: "",
   contactTitle: "提交需求或联系凯森斯生物",
   contactDescription: "如需产品规格、批量供货、交期或替代品确认，可以通过电话、邮箱或询价表单提交需求。",
+  contactQrImage: "",
   contactCta: "前往询价车"
 };
 
@@ -288,8 +289,8 @@ export async function saveSiteContent(site: SiteContent) {
         id, "brandName", tagline, "supportPhone", "heroTitle", "heroDescription",
         "primaryCta", notice, "companyName", "contactEmail", address,
         "aboutTitle", "aboutDescription", "aboutQrImage",
-        "contactTitle", "contactDescription", "contactCta"
-      ) values ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        "contactTitle", "contactDescription", "contactQrImage", "contactCta"
+      ) values ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       on conflict (id) do update set
         "brandName" = excluded."brandName",
         tagline = excluded.tagline,
@@ -306,6 +307,7 @@ export async function saveSiteContent(site: SiteContent) {
         "aboutQrImage" = excluded."aboutQrImage",
         "contactTitle" = excluded."contactTitle",
         "contactDescription" = excluded."contactDescription",
+        "contactQrImage" = excluded."contactQrImage",
         "contactCta" = excluded."contactCta"`,
       [
         normalizedSite.brandName,
@@ -323,6 +325,7 @@ export async function saveSiteContent(site: SiteContent) {
         normalizedSite.aboutQrImage,
         normalizedSite.contactTitle,
         normalizedSite.contactDescription,
+        normalizedSite.contactQrImage,
         normalizedSite.contactCta
       ]
     );

@@ -30,6 +30,11 @@ export default async function ContactPage() {
               <b>{site.address}</b>
             </div>
           </div>
+          {site.contactQrImage && (
+            <div className="about-qr">
+              <img src={site.contactQrImage} alt="凯森斯生物联系二维码" />
+            </div>
+          )}
           <Link className="btn primary large" href="/cart">
             {site.contactCta}
           </Link>

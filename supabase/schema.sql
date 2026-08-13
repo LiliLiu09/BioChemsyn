@@ -97,6 +97,7 @@ create table if not exists public.site_content (
   "aboutPointThreeText" text not null default '后台 CMS 支持产品、新闻、资讯信息和站点页面持续更新。',
   "contactTitle" text not null default '提交需求或联系凯森斯生物',
   "contactDescription" text not null default '如需产品规格、批量供货、交期或替代品确认，可以通过电话、邮箱或询价表单提交需求。',
+  "contactQrImage" text not null default '',
   "contactCta" text not null default '前往询价车',
   updated_at timestamptz not null default now()
 );
@@ -112,6 +113,7 @@ alter table public.site_content add column if not exists "aboutPointThreeTitle" 
 alter table public.site_content add column if not exists "aboutPointThreeText" text not null default '后台 CMS 支持产品、新闻、资讯信息和站点页面持续更新。';
 alter table public.site_content add column if not exists "contactTitle" text not null default '提交需求或联系凯森斯生物';
 alter table public.site_content add column if not exists "contactDescription" text not null default '如需产品规格、批量供货、交期或替代品确认，可以通过电话、邮箱或询价表单提交需求。';
+alter table public.site_content add column if not exists "contactQrImage" text not null default '';
 alter table public.site_content add column if not exists "contactCta" text not null default '前往询价车';
 
 create table if not exists public.quotes (

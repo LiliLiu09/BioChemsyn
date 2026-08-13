@@ -94,5 +94,6 @@ export type SiteContent = {
   aboutQrImage: string;
   contactTitle: string;
   contactDescription: string;
+  contactQrImage: string;
   contactCta: string;
 };
