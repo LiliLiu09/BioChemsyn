@@ -14,7 +14,7 @@ function renderContent(content: string) {
       const image = paragraph.match(/^!\[(.*)]\((.*)\)$/);
       if (image) {
         const [, alt, src] = image;
-        return <img className="article-inline-image" src={src} alt={alt || "咨询图片"} key={paragraph} />;
+        return <img className="article-inline-image" src={src} alt={alt || "资讯图片"} key={paragraph} />;
       }
       return <p key={paragraph}>{paragraph}</p>;
     });
@@ -34,7 +34,7 @@ export default async function InfoDetailPage({ params }: { params: Promise<{ slu
       <main className="main">
         <article className="article-page">
           <Link className="locked" href="/info">
-            返回咨询信息
+            返回资讯信息
           </Link>
           <header>
             <span className="eyebrow">{article.category}</span>

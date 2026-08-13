@@ -16,9 +16,9 @@ export default async function InfoPage() {
       <Header site={site} />
       <main className="main">
         <section className="news-hero">
-          <span className="eyebrow">咨询信息</span>
-          <h1>产品咨询与服务信息</h1>
-          <p>按分类浏览凯森斯生物发布的产品咨询、采购说明和服务答疑，也可以通过关键词快速搜索相关内容。</p>
+          <span className="eyebrow">资讯信息</span>
+          <h1>产品资讯与服务信息</h1>
+          <p>按分类浏览凯森斯生物发布的产品资讯、采购说明和服务信息，也可以通过关键词快速搜索相关内容。</p>
         </section>
         <InfoExplorer articles={publishedInfo} />
       </main>

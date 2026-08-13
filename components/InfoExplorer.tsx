@@ -21,8 +21,8 @@ export function InfoExplorer({ articles }: { articles: InfoArticle[] }) {
   return (
     <section className="info-layout">
       <aside className="info-filter panel">
-          <h2>咨询分类</h2>
-        <div className="info-category-list" aria-label="咨询分类">
+          <h2>资讯分类</h2>
+        <div className="info-category-list" aria-label="资讯分类">
           {categories.map((item) => (
             <button className={item === category ? "active" : ""} type="button" key={item} onClick={() => setCategory(item)}>
               <span>{item}</span>
@@ -35,16 +35,16 @@ export function InfoExplorer({ articles }: { articles: InfoArticle[] }) {
       <div className="info-results">
         <label className="search-field info-search">
           <Search size={18} aria-hidden="true" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索咨询关键词、标题或摘要" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索资讯关键词、标题或摘要" />
         </label>
 
         <div className="result-count">
-          当前显示 {filtered.length} 条咨询{category !== "全部" ? ` · ${category}` : ""}
+          当前显示 {filtered.length} 条资讯{category !== "全部" ? ` · ${category}` : ""}
         </div>
 
         <div className="news-list">
           {filtered.length === 0 ? (
-            <div className="notice">没有找到匹配的咨询。</div>
+            <div className="notice">没有找到匹配的资讯。</div>
           ) : (
             filtered.map((article) => (
               <article className="news-card" key={article.id}>

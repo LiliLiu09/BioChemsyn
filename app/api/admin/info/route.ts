@@ -14,13 +14,13 @@ function slugify(value: string) {
 
 function normalizeArticle(article: InfoArticle): InfoArticle {
   const id = article.id || `i-${Date.now()}`;
-  const title = article.title?.trim() || "未命名咨询";
+  const title = article.title?.trim() || "未命名资讯";
   return {
     ...article,
     id,
     title,
     slug: article.slug?.trim() || slugify(title) || id,
-    category: article.category?.trim() || "服务咨询",
+    category: article.category?.trim() || "服务资讯",
     author: article.author?.trim() || "凯森斯生物",
     source: article.source?.trim() || "凯森斯生物",
     publishedAt: article.publishedAt || new Date().toISOString().slice(0, 10),

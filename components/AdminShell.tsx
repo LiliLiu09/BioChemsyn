@@ -16,7 +16,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <Link href="/admin/site">首页内容</Link>
           <Link href="/admin/products">产品管理</Link>
           <Link href="/admin/news">新闻管理</Link>
-          <Link href="/admin/info">咨询管理</Link>
+          <Link href="/admin/info">资讯管理</Link>
           <Link href="/admin/quotes">询价管理</Link>
           <Link href="/">返回前台</Link>
         </nav>

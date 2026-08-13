@@ -7,7 +7,7 @@ const emptyArticle: InfoArticle = {
   id: "",
   slug: "",
   title: "",
-  category: "服务咨询",
+  category: "服务资讯",
   author: "凯森斯生物",
   source: "凯森斯生物",
   publishedAt: new Date().toISOString().slice(0, 10),
@@ -58,7 +58,7 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
     if (!category || !active) return;
     update("category", category);
     setNewCategory("");
-    setMessage(`已将当前咨询分类设为：${category}。请保存全部咨询。`);
+    setMessage(`已将当前资讯分类设为：${category}。请保存全部资讯。`);
   };
 
   const addArticle = () => {
@@ -67,7 +67,7 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
       ...emptyArticle,
       id: `i-${now}`,
       slug: `info-${now}`,
-      title: "新咨询"
+      title: "新资讯"
     };
     setInfo((current) => [article, ...current]);
     setActiveId(article.id);
@@ -105,7 +105,7 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ info })
     });
-    setMessage(response.ok ? "咨询内容已保存" : "保存失败，请重新登录后台或检查 Supabase 配置");
+    setMessage(response.ok ? "资讯内容已保存" : "保存失败，请重新登录后台或检查 Supabase 配置");
   };
 
   const uploadImage = async (file: File | undefined, mode: "cover" | "body") => {
@@ -125,20 +125,20 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
 
     if (mode === "cover") {
       update("coverImage", payload.url);
-      setMessage("封面图片已上传，请保存全部咨询");
+      setMessage("封面图片已上传，请保存全部资讯");
       return;
     }
 
-    const markdown = `\n\n![${active.title || "咨询图片"}](${payload.url})\n\n`;
+    const markdown = `\n\n![${active.title || "资讯图片"}](${payload.url})\n\n`;
     update("content", `${active.content}${markdown}`);
-    setMessage("正文图片已上传并插入，请保存全部咨询");
+    setMessage("正文图片已上传并插入，请保存全部资讯");
   };
 
   if (!active) {
     return (
       <div className="panel admin-panel">
         <button className="btn primary" type="button" onClick={addArticle}>
-          新增第一条咨询
+          新增第一条资讯
         </button>
       </div>
     );
@@ -148,7 +148,7 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
     <div className="admin-products">
       <div className="panel admin-list">
         <div className="toolbar">
-          <h2>咨询</h2>
+          <h2>资讯</h2>
           <button className="btn primary" type="button" onClick={addArticle}>
             新增
           </button>
@@ -160,7 +160,7 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
             type="button"
             onClick={() => setActiveId(article.id)}
           >
-            <b>{article.title || "未命名咨询"}</b>
+            <b>{article.title || "未命名资讯"}</b>
             <span>
               {article.category} · {article.publishedAt} · {article.published ? "已发布" : "草稿"}
             </span>
@@ -170,7 +170,7 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
 
       <div className="panel admin-panel">
         <div className="toolbar">
-          <h1>咨询管理</h1>
+          <h1>资讯管理</h1>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn" type="button" onClick={removeArticle}>
               删除
@@ -201,15 +201,15 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
             <input className="field" type="number" min={0} value={active.views} onChange={(event) => update("views", Number(event.target.value))} />
           </label>
           <label className="admin-field full">
-            <span>咨询分类 *</span>
-            <input className="field" list="info-categories" value={active.category} onChange={(event) => update("category", event.target.value)} placeholder="选择或输入咨询分类" />
+            <span>资讯分类 *</span>
+            <input className="field" list="info-categories" value={active.category} onChange={(event) => update("category", event.target.value)} placeholder="选择或输入资讯分类" />
             <datalist id="info-categories">
               {categories.map((category) => (
                 <option key={category} value={category} />
               ))}
             </datalist>
             <div className="inline-controls">
-              <input className="field" value={newCategory} onChange={(event) => setNewCategory(event.target.value)} placeholder="新增咨询类别" />
+              <input className="field" value={newCategory} onChange={(event) => setNewCategory(event.target.value)} placeholder="新增资讯类别" />
               <button className="btn" type="button" onClick={addCategory}>
                 添加并应用
               </button>
@@ -238,7 +238,7 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
             <input className="field" value={active.coverImage} onChange={(event) => update("coverImage", event.target.value)} placeholder="上传后自动生成图片地址" />
             <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0], "cover")} />
             {uploading === "cover" && <span className="result-count">封面上传中...</span>}
-            {active.coverImage && <img className="admin-preview" src={active.coverImage} alt="咨询封面预览" />}
+            {active.coverImage && <img className="admin-preview" src={active.coverImage} alt="资讯封面预览" />}
           </label>
           <label className="admin-field full">
             <span>摘要 *</span>
@@ -257,7 +257,7 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
           </label>
           <label className="admin-field full checkbox-field">
             <input type="checkbox" checked={active.published} onChange={(event) => update("published", event.target.checked)} />
-            <span>发布到前台咨询信息页</span>
+            <span>发布到前台资讯信息页</span>
           </label>
         </div>
         {message && <div className="notice">{message}</div>}

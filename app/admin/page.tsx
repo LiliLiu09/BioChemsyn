@@ -40,7 +40,7 @@ export default async function AdminPage() {
         </div>
         <div className="stat">
           <b>{publishedInfo}</b>
-          <span>已发布咨询</span>
+          <span>已发布资讯</span>
         </div>
       </div>
       <div className="grid" style={{ marginTop: 18 }}>
@@ -57,8 +57,8 @@ export default async function AdminPage() {
           <p>发布公司新闻、产品资讯和服务更新。</p>
         </Link>
         <Link className="product-card" href="/admin/info">
-          <h3>管理咨询</h3>
-          <p>维护咨询分类、咨询内容、封面图片和发布状态。</p>
+          <h3>管理资讯</h3>
+          <p>维护资讯分类、资讯内容、封面图片和发布状态。</p>
         </Link>
         <Link className="product-card" href="/admin/quotes">
           <h3>处理询价</h3>

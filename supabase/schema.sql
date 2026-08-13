@@ -51,7 +51,7 @@ create table if not exists public.info_articles (
   id text primary key,
   slug text not null unique,
   title text not null,
-  category text not null default '服务咨询',
+  category text not null default '服务资讯',
   author text not null default '凯森斯生物',
   source text not null default '凯森斯生物',
   published_at date not null default current_date,
@@ -66,6 +66,8 @@ create table if not exists public.info_articles (
 
 create index if not exists info_articles_published_at_idx on public.info_articles (published_at desc);
 create index if not exists info_articles_category_idx on public.info_articles (category);
+
+alter table public.info_articles alter column category set default '服务资讯';
 
 create table if not exists public.site_content (
   id text primary key default 'main',

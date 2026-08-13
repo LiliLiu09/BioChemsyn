@@ -50,7 +50,7 @@ export function Header({ site }: { site: SiteContent }) {
             <Link href="/">首页</Link>
             <Link href="/products">产品中心</Link>
             <Link href="/news">新闻中心</Link>
-            <Link href="/info">咨询信息</Link>
+            <Link href="/info">资讯信息</Link>
             <Link href="/about">关于我们</Link>
             <Link href="/contact">联系我们</Link>
           </nav>

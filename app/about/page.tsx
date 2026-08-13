@@ -45,7 +45,7 @@ export default async function AboutPage() {
           </div>
           <div>
             <b>内容持续维护</b>
-            <span>后台 CMS 支持产品、新闻、咨询和站点信息持续更新。</span>
+            <span>后台 CMS 支持产品、新闻、资讯和站点信息持续更新。</span>
           </div>
         </section>
       </main>
