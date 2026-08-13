@@ -2,13 +2,14 @@ import { promises as fs } from "fs";
 import path from "path";
 import { dbQuery, dbTransaction, hasDatabaseUrl } from "./db";
 import { getSupabaseConfig, supabaseRest } from "./supabase";
-import type { NewsArticle, Product, QuoteRequest, SiteContent } from "./types";
+import type { InfoArticle, NewsArticle, Product, QuoteRequest, SiteContent } from "./types";
 
 const dataDir = path.join(process.cwd(), "data");
 const productsFile = path.join(dataDir, "products.json");
 const siteFile = path.join(dataDir, "site.json");
 const quotesFile = path.join(dataDir, "quotes.json");
 const newsFile = path.join(dataDir, "news.json");
+const infoFile = path.join(dataDir, "info.json");
 
 type ProductRow = {
   id: string;
@@ -387,6 +388,54 @@ export async function saveNewsArticles(news: NewsArticle[]) {
   await supabaseRest("news_articles", { method: "DELETE", query: "?id=not.is.null" });
   if (news.length > 0) {
     await supabaseRest("news_articles", { method: "POST", body: news.map(newsToRow), prefer: "return=representation" });
+  }
+}
+
+export async function getInfoArticles() {
+  if (hasDatabaseUrl()) {
+    const rows = await dbQuery<NewsRow>("select * from public.info_articles order by published_at desc");
+    return rows.map(newsFromRow) as InfoArticle[];
+  }
+  if (!useSupabase()) return readJson<InfoArticle[]>(infoFile);
+  const rows = await supabaseRest<NewsRow[]>("info_articles", { query: "?select=*&order=published_at.desc" });
+  return rows.map(newsFromRow) as InfoArticle[];
+}
+
+export async function saveInfoArticles(info: InfoArticle[]) {
+  if (hasDatabaseUrl()) {
+    await dbQuery("delete from public.info_articles");
+    for (const article of info) {
+      const row = newsToRow(article);
+      await dbQuery(
+        `insert into public.info_articles (
+          id, slug, title, category, author, source, published_at, summary,
+          content, cover_image, views, published
+        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [
+          row.id,
+          row.slug,
+          row.title,
+          row.category,
+          row.author,
+          row.source,
+          row.published_at,
+          row.summary,
+          row.content,
+          row.cover_image,
+          row.views,
+          row.published
+        ]
+      );
+    }
+    return;
+  }
+  if (!requireWritableSupabase()) {
+    await writeJson(infoFile, info);
+    return;
+  }
+  await supabaseRest("info_articles", { method: "DELETE", query: "?id=not.is.null" });
+  if (info.length > 0) {
+    await supabaseRest("info_articles", { method: "POST", body: info.map(newsToRow), prefer: "return=representation" });
   }
 }
 

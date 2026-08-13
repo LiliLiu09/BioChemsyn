@@ -63,6 +63,21 @@ export type NewsArticle = {
   published: boolean;
 };
 
+export type InfoArticle = {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  author: string;
+  source: string;
+  publishedAt: string;
+  summary: string;
+  content: string;
+  coverImage: string;
+  views: number;
+  published: boolean;
+};
+
 export type SiteContent = {
   brandName: string;
   tagline: string;

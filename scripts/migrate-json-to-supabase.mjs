@@ -74,6 +74,7 @@ const client = new pg.Client({
 
 const products = await readJson("products.json");
 const news = await readJson("news.json");
+const info = await readJson("info.json");
 const quotes = await readJson("quotes.json");
 const site = await readJson("site.json");
 
@@ -97,6 +98,17 @@ try {
   for (const article of news) {
     await client.query(
       `insert into public.news_articles (
+        id, slug, title, category, author, source, published_at, summary,
+        content, cover_image, views, published
+      ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      newsToRow(article)
+    );
+  }
+
+  await client.query("delete from public.info_articles");
+  for (const article of info) {
+    await client.query(
+      `insert into public.info_articles (
         id, slug, title, category, author, source, published_at, summary,
         content, cover_image, views, published
       ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
@@ -145,7 +157,7 @@ try {
   );
 
   await client.query("commit");
-  console.log(`Migrated ${products.length} products, ${news.length} news articles, ${quotes.length} quotes, and site content.`);
+  console.log(`Migrated ${products.length} products, ${news.length} news articles, ${info.length} info articles, ${quotes.length} quotes, and site content.`);
 } catch (error) {
   await client.query("rollback");
   throw error;

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdminAuthed } from "@/lib/adminAuth";
-import { getNewsArticles, getProducts, getQuotes, getSiteContent } from "@/lib/cms";
+import { getInfoArticles, getNewsArticles, getProducts, getQuotes, getSiteContent } from "@/lib/cms";
 import { AdminShell } from "@/components/AdminShell";
 import { AdminLogoutButton } from "@/components/AdminLogoutButton";
 
@@ -10,9 +10,10 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
-  const [site, products, quotes, news] = await Promise.all([getSiteContent(), getProducts(), getQuotes(), getNewsArticles()]);
+  const [site, products, quotes, news, info] = await Promise.all([getSiteContent(), getProducts(), getQuotes(), getNewsArticles(), getInfoArticles()]);
   const pendingQuotes = quotes.filter((quote) => quote.status === "待处理").length;
   const publishedNews = news.filter((article) => article.published).length;
+  const publishedInfo = info.filter((article) => article.published).length;
 
   return (
     <AdminShell>
@@ -37,6 +38,10 @@ export default async function AdminPage() {
           <b>{publishedNews}</b>
           <span>已发布新闻</span>
         </div>
+        <div className="stat">
+          <b>{publishedInfo}</b>
+          <span>已发布咨询</span>
+        </div>
       </div>
       <div className="grid" style={{ marginTop: 18 }}>
         <Link className="product-card" href="/admin/site">
@@ -45,11 +50,15 @@ export default async function AdminPage() {
         </Link>
         <Link className="product-card" href="/admin/products">
           <h3>管理产品</h3>
-          <p>维护产品展示字段、图片和详情内容。</p>
+          <p>维护产品展示字段、分类、图片和详情内容。</p>
         </Link>
         <Link className="product-card" href="/admin/news">
           <h3>撰写新闻</h3>
           <p>发布公司新闻、产品资讯和服务更新。</p>
+        </Link>
+        <Link className="product-card" href="/admin/info">
+          <h3>管理咨询</h3>
+          <p>维护咨询分类、咨询内容、封面图片和发布状态。</p>
         </Link>
         <Link className="product-card" href="/admin/quotes">
           <h3>处理询价</h3>

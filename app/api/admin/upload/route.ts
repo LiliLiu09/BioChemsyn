@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/adminAuth";
 import { getSupabaseConfig, uploadToSupabaseStorage } from "@/lib/supabase";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
-const allowedFolders = new Set(["products", "news"]);
+const allowedFolders = new Set(["products", "news", "info"]);
 
 function extensionFor(file: File) {
   const fromName = path.extname(file.name).toLowerCase();
