@@ -19,6 +19,17 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
     setQuotes((current) => current.map((quote) => (quote.id === id ? { ...quote, ...patch } : quote)));
   };
 
+  const toggleShowAll = () => {
+    setShowAll((current) => {
+      const nextShowAll = !current;
+      const nextVisible = nextShowAll ? quotes : quotes.filter((quote) => quote.status !== "已处理");
+      if (!nextVisible.some((quote) => quote.id === activeId)) {
+        setActiveId(nextVisible[0]?.id || "");
+      }
+      return nextShowAll;
+    });
+  };
+
   const persistQuotes = async (nextQuotes: QuoteRequest[], successMessage: string) => {
     setMessage("");
     const response = await fetch("/api/admin/quotes", {
@@ -57,13 +68,13 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
         <div className="toolbar">
           <div>
             <h1>询价管理</h1>
-            <span className="result-count">默认隐藏已处理询价。</span>
+            <span className="result-count">
+              默认隐藏已处理询价。已隐藏 {hiddenCount} 条，共 {quotes.length} 条。
+            </span>
           </div>
-          {hiddenCount > 0 && (
-            <button className="btn ghost" type="button" onClick={() => setShowAll(true)}>
-              显示全部
-            </button>
-          )}
+          <button className="btn ghost" type="button" onClick={toggleShowAll} disabled={quotes.length === 0}>
+            {showAll ? "隐藏已处理" : "显示全部询价"}
+          </button>
         </div>
         <div className="notice">{quotes.length > 0 ? "暂无未处理询价记录。" : "暂无询价记录。"}</div>
       </div>
@@ -77,11 +88,11 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
           <div>
             <h2>询价单</h2>
             <span className="result-count">
-              {showAll ? `全部 ${quotes.length} 条` : `未处理 ${visibleQuotes.filter((quote) => quote.status !== "已处理").length} 条`}
+              {showAll ? `全部 ${quotes.length} 条` : `未处理 ${visibleQuotes.filter((quote) => quote.status !== "已处理").length} 条，已隐藏 ${hiddenCount} 条`}
             </span>
           </div>
-          <button className="btn ghost" type="button" onClick={() => setShowAll((current) => !current)}>
-            {showAll ? "隐藏已处理" : "显示全部"}
+          <button className="btn ghost" type="button" onClick={toggleShowAll}>
+            {showAll ? "隐藏已处理" : "显示全部询价"}
           </button>
         </div>
         {visibleQuotes.map((quote) => (
@@ -91,9 +102,9 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
             type="button"
             onClick={() => setActiveId(quote.id)}
           >
-            <b>{quote.customer.company || quote.customer.name}</b>
+            <b>{quote.customer.name || "未填写联系人"}</b>
             <span>
-              {quote.id} · {quote.status}
+              {quote.customer.company || "未填写公司"} · {quote.id} · {quote.status}
             </span>
           </button>
         ))}
