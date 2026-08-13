@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Product } from "@/lib/types";
 
 const emptyProduct: Product = {
@@ -31,7 +31,9 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
   const active = products.find((product) => product.id === activeId) || products[0];
+  const categories = useMemo(() => Array.from(new Set(products.map((product) => product.category.trim()).filter(Boolean))).sort(), [products]);
 
   const update = (key: keyof Product, value: string | number | string[]) => {
     setProducts((current) =>
@@ -45,6 +47,14 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       })
     );
     setErrors((current) => ({ ...current, [key]: "" }));
+  };
+
+  const addCategory = () => {
+    const category = newCategory.trim();
+    if (!category || !active) return;
+    update("category", category);
+    setNewCategory("");
+    setMessage(`已将当前产品分类设为：${category}。请保存全部产品。`);
   };
 
   const addProduct = () => {
@@ -132,6 +142,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
           >
             <b>{product.nameEn || product.nameCn || "未命名产品"}</b>
             <span>{product.catalogNo || product.sku || "未填写 Catalog #"}</span>
+            {product.category && <span>{product.category}</span>}
           </button>
         ))}
       </div>
@@ -149,6 +160,31 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         </div>
 
         <div className="admin-form-grid">
+          <label className="admin-field full">
+            <span>产品分类</span>
+            <input className="field" list="product-categories" value={active.category} onChange={(event) => update("category", event.target.value)} placeholder="选择或输入产品分类" />
+            <datalist id="product-categories">
+              {categories.map((category) => (
+                <option key={category} value={category} />
+              ))}
+            </datalist>
+            <div className="inline-controls">
+              <input className="field" value={newCategory} onChange={(event) => setNewCategory(event.target.value)} placeholder="新增类别名称" />
+              <button className="btn" type="button" onClick={addCategory}>
+                添加并应用
+              </button>
+            </div>
+            {categories.length > 0 && (
+              <div className="category-pills">
+                {categories.map((category) => (
+                  <button type="button" key={category} onClick={() => update("category", category)}>
+                    {category}
+                  </button>
+                ))}
+              </div>
+            )}
+          </label>
+
           <label className="admin-field full">
             <span>产品图片</span>
             <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder="上传后自动生成图片地址" />

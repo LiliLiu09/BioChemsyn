@@ -955,6 +955,131 @@ textarea:focus-visible {
   background: #fff;
 }
 
+.info-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: 22px;
+}
+
+.info-filter {
+  padding: 18px;
+}
+
+.info-filter h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.info-category-list {
+  display: grid;
+  gap: 8px;
+}
+
+.info-category-list button,
+.category-pills button {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.info-category-list button {
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.info-category-list button.active,
+.info-category-list button:hover,
+.category-pills button:hover {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+}
+
+.info-results {
+  min-width: 0;
+}
+
+.info-search {
+  background: #fff;
+}
+
+.content-page {
+  display: grid;
+  gap: 18px;
+  padding: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(16, 33, 47, 0.06);
+}
+
+.content-page h1 {
+  max-width: 780px;
+  margin: 0;
+  font-size: 38px;
+  line-height: 1.2;
+}
+
+.content-page p {
+  max-width: 820px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.content-stats,
+.contact-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.content-stats div,
+.contact-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.content-stats b,
+.contact-card b {
+  color: var(--ink);
+  font-size: 22px;
+}
+
+.content-stats span,
+.contact-card span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.inline-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-pills button {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
 .cart-table {
   width: 100%;
   border-collapse: collapse;
@@ -1393,7 +1518,8 @@ textarea.field {
   }
 
   .admin-layout,
-  .admin-products {
+  .admin-products,
+  .info-layout {
     grid-template-columns: 1fr;
   }
 
@@ -1455,7 +1581,10 @@ textarea.field {
   .trust-strip,
   .category-grid,
   .stats,
-  .admin-form-grid {
+  .admin-form-grid,
+  .content-stats,
+  .contact-cards,
+  .inline-controls {
     grid-template-columns: 1fr;
   }
 
