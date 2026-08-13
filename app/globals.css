@@ -1035,18 +1035,19 @@ textarea:focus-visible {
 }
 
 .about-page {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 1fr;
   align-items: start;
 }
 
 .about-qr {
   display: grid;
   gap: 10px;
-  justify-items: center;
+  justify-items: start;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f8fafc;
+  width: fit-content;
 }
 
 .about-qr img {
@@ -1622,6 +1623,11 @@ textarea.field {
 
   .about-page {
     grid-template-columns: 1fr;
+  }
+
+  .about-qr {
+    width: 100%;
+    justify-items: center;
   }
 
   .about-qr img {
