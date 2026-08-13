@@ -91,12 +91,7 @@ export type SiteContent = {
   address: string;
   aboutTitle: string;
   aboutDescription: string;
-  aboutPointOneTitle: string;
-  aboutPointOneText: string;
-  aboutPointTwoTitle: string;
-  aboutPointTwoText: string;
-  aboutPointThreeTitle: string;
-  aboutPointThreeText: string;
+  aboutQrImage: string;
   contactTitle: string;
   contactDescription: string;
   contactCta: string;

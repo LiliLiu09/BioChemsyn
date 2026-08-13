@@ -192,12 +192,7 @@ const siteDefaults: SiteContent = {
   aboutTitle: "关于凯森斯生物",
   aboutDescription:
     "凯森斯生物 KASONS 专注于科研试剂、标准品与化学品的产品展示和采购询价服务，帮助研发、质控和采购团队更高效地检索产品信息、确认规格并提交询价。",
-  aboutPointOneTitle: "产品资料清晰",
-  aboutPointOneText: "围绕 CAS、货号、中英文名、规格和详情字段组织产品信息。",
-  aboutPointTwoTitle: "询价流程明确",
-  aboutPointTwoText: "客户提交需求后，销售团队可在后台查看并跟进。",
-  aboutPointThreeTitle: "内容持续维护",
-  aboutPointThreeText: "后台 CMS 支持产品、新闻、资讯信息和站点页面持续更新。",
+  aboutQrImage: "",
   contactTitle: "提交需求或联系凯森斯生物",
   contactDescription: "如需产品规格、批量供货、交期或替代品确认，可以通过电话、邮箱或询价表单提交需求。",
   contactCta: "前往询价车"
@@ -275,14 +270,14 @@ export async function getSiteContent() {
     if (rows[0]) {
       return siteFromRow(rows[0]);
     }
-    return readJson<SiteContent>(siteFile);
+    return { ...siteDefaults, ...(await readJson<Partial<SiteContent>>(siteFile)) };
   }
-  if (!useSupabase()) return readJson<SiteContent>(siteFile);
+  if (!useSupabase()) return { ...siteDefaults, ...(await readJson<Partial<SiteContent>>(siteFile)) };
   const rows = await supabaseRest<SiteRow[]>("site_content", { query: "?select=*&id=eq.main&limit=1" });
   if (rows[0]) {
     return siteFromRow(rows[0]);
   }
-  return readJson<SiteContent>(siteFile);
+  return { ...siteDefaults, ...(await readJson<Partial<SiteContent>>(siteFile)) };
 }
 
 export async function saveSiteContent(site: SiteContent) {
@@ -292,10 +287,9 @@ export async function saveSiteContent(site: SiteContent) {
       `insert into public.site_content (
         id, "brandName", tagline, "supportPhone", "heroTitle", "heroDescription",
         "primaryCta", notice, "companyName", "contactEmail", address,
-        "aboutTitle", "aboutDescription", "aboutPointOneTitle", "aboutPointOneText",
-        "aboutPointTwoTitle", "aboutPointTwoText", "aboutPointThreeTitle", "aboutPointThreeText",
+        "aboutTitle", "aboutDescription", "aboutQrImage",
         "contactTitle", "contactDescription", "contactCta"
-      ) values ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+      ) values ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       on conflict (id) do update set
         "brandName" = excluded."brandName",
         tagline = excluded.tagline,
@@ -309,12 +303,7 @@ export async function saveSiteContent(site: SiteContent) {
         address = excluded.address,
         "aboutTitle" = excluded."aboutTitle",
         "aboutDescription" = excluded."aboutDescription",
-        "aboutPointOneTitle" = excluded."aboutPointOneTitle",
-        "aboutPointOneText" = excluded."aboutPointOneText",
-        "aboutPointTwoTitle" = excluded."aboutPointTwoTitle",
-        "aboutPointTwoText" = excluded."aboutPointTwoText",
-        "aboutPointThreeTitle" = excluded."aboutPointThreeTitle",
-        "aboutPointThreeText" = excluded."aboutPointThreeText",
+        "aboutQrImage" = excluded."aboutQrImage",
         "contactTitle" = excluded."contactTitle",
         "contactDescription" = excluded."contactDescription",
         "contactCta" = excluded."contactCta"`,
@@ -331,12 +320,7 @@ export async function saveSiteContent(site: SiteContent) {
         normalizedSite.address,
         normalizedSite.aboutTitle,
         normalizedSite.aboutDescription,
-        normalizedSite.aboutPointOneTitle,
-        normalizedSite.aboutPointOneText,
-        normalizedSite.aboutPointTwoTitle,
-        normalizedSite.aboutPointTwoText,
-        normalizedSite.aboutPointThreeTitle,
-        normalizedSite.aboutPointThreeText,
+        normalizedSite.aboutQrImage,
         normalizedSite.contactTitle,
         normalizedSite.contactDescription,
         normalizedSite.contactCta

@@ -88,6 +88,7 @@ create table if not exists public.site_content (
   address text not null default '',
   "aboutTitle" text not null default '关于凯森斯生物',
   "aboutDescription" text not null default '凯森斯生物 KASONS 专注于科研试剂、标准品与化学品的产品展示和采购询价服务。',
+  "aboutQrImage" text not null default '',
   "aboutPointOneTitle" text not null default '产品资料清晰',
   "aboutPointOneText" text not null default '围绕 CAS、货号、中英文名、规格和详情字段组织产品信息。',
   "aboutPointTwoTitle" text not null default '询价流程明确',
@@ -102,6 +103,7 @@ create table if not exists public.site_content (
 
 alter table public.site_content add column if not exists "aboutTitle" text not null default '关于凯森斯生物';
 alter table public.site_content add column if not exists "aboutDescription" text not null default '凯森斯生物 KASONS 专注于科研试剂、标准品与化学品的产品展示和采购询价服务。';
+alter table public.site_content add column if not exists "aboutQrImage" text not null default '';
 alter table public.site_content add column if not exists "aboutPointOneTitle" text not null default '产品资料清晰';
 alter table public.site_content add column if not exists "aboutPointOneText" text not null default '围绕 CAS、货号、中英文名、规格和详情字段组织产品信息。';
 alter table public.site_content add column if not exists "aboutPointTwoTitle" text not null default '询价流程明确';

@@ -3,32 +3,44 @@
 import { useState } from "react";
 import type { SiteContent } from "@/lib/types";
 
-const aboutFields: { key: keyof SiteContent; label: string; multiline?: boolean }[] = [
-  { key: "aboutTitle", label: "页面标题" },
-  { key: "aboutDescription", label: "页面介绍", multiline: true },
-  { key: "aboutPointOneTitle", label: "亮点一标题" },
-  { key: "aboutPointOneText", label: "亮点一内容", multiline: true },
-  { key: "aboutPointTwoTitle", label: "亮点二标题" },
-  { key: "aboutPointTwoText", label: "亮点二内容", multiline: true },
-  { key: "aboutPointThreeTitle", label: "亮点三标题" },
-  { key: "aboutPointThreeText", label: "亮点三内容", multiline: true }
-];
-
 export function AboutEditor({ initialSite }: { initialSite: SiteContent }) {
   const [site, setSite] = useState(initialSite);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState(false);
 
   const update = (key: keyof SiteContent, value: string) => {
     setSite((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));
   };
 
+  const uploadQrImage = async (file: File | undefined) => {
+    if (!file) return;
+
+    setUploading(true);
+    setMessage("");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "about");
+
+    const response = await fetch("/api/admin/upload", { method: "POST", body: formData });
+    const payload = (await response.json()) as { url?: string; message?: string };
+    setUploading(false);
+
+    if (!response.ok || !payload.url) {
+      setMessage(payload.message || "二维码图片上传失败");
+      return;
+    }
+
+    update("aboutQrImage", payload.url);
+    setMessage("二维码图片已上传，请保存关于我们内容");
+  };
+
   const save = async () => {
     setMessage("");
     const nextErrors: Record<string, string> = {};
     if (!site.aboutTitle.trim()) nextErrors.aboutTitle = "页面标题不能为空";
-    if (!site.aboutDescription.trim()) nextErrors.aboutDescription = "页面介绍不能为空";
+    if (!site.aboutDescription.trim()) nextErrors.aboutDescription = "关于我们文字不能为空";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       setMessage("请先修正表单错误");
@@ -48,25 +60,45 @@ export function AboutEditor({ initialSite }: { initialSite: SiteContent }) {
       <div className="toolbar">
         <div>
           <h1>关于我们管理</h1>
-          <span className="result-count">维护前台关于我们页面的介绍和亮点内容。</span>
+          <span className="result-count">维护前台关于我们页面的文字和二维码图片。</span>
         </div>
         <button className="btn primary" type="button" onClick={save}>
           保存
         </button>
       </div>
+
       <div className="admin-form-grid">
-        {aboutFields.map((field) => (
-          <label className={`admin-field ${field.multiline ? "full" : ""}`} key={field.key}>
-            <span>{field.label}</span>
-            {field.multiline ? (
-              <textarea className="field" value={site[field.key]} onChange={(event) => update(field.key, event.target.value)} />
-            ) : (
-              <input className="field" value={site[field.key]} onChange={(event) => update(field.key, event.target.value)} />
-            )}
-            {errors[field.key] && <span className="field-error">{errors[field.key]}</span>}
-          </label>
-        ))}
+        <label className="admin-field">
+          <span>页面标题</span>
+          <input className="field" value={site.aboutTitle} onChange={(event) => update("aboutTitle", event.target.value)} />
+          {errors.aboutTitle && <span className="field-error">{errors.aboutTitle}</span>}
+        </label>
+
+        <label className="admin-field full">
+          <span>关于我们文字</span>
+          <textarea className="field" value={site.aboutDescription} onChange={(event) => update("aboutDescription", event.target.value)} />
+          {errors.aboutDescription && <span className="field-error">{errors.aboutDescription}</span>}
+        </label>
+
+        <label className="admin-field">
+          <span>二维码图片地址</span>
+          <input className="field" value={site.aboutQrImage} onChange={(event) => update("aboutQrImage", event.target.value)} placeholder="上传后自动生成，也可以手动粘贴图片地址" />
+        </label>
+
+        <label className="admin-field">
+          <span>上传二维码图片</span>
+          <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadQrImage(event.target.files?.[0])} />
+          {uploading && <span className="result-count">二维码图片上传中...</span>}
+        </label>
+
+        {site.aboutQrImage && (
+          <div className="admin-field">
+            <span>二维码预览</span>
+            <img className="admin-preview" src={site.aboutQrImage} alt="二维码预览" />
+          </div>
+        )}
       </div>
+
       {message && <div className="notice">{message}</div>}
     </div>
   );

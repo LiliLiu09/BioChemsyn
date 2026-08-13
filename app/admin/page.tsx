@@ -63,7 +63,7 @@ export default async function AdminPage() {
         </Link>
         <Link className="product-card" href="/admin/about">
           <h3>关于我们管理</h3>
-          <p>编辑关于我们页面的介绍和服务亮点。</p>
+          <p>编辑关于我们页面的文字和二维码图片。</p>
         </Link>
         <Link className="product-card" href="/admin/contact">
           <h3>联系我们管理</h3>
