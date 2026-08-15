@@ -29,7 +29,7 @@ export default async function HomePage() {
         <div className="home-shell-layout">
           <aside className="home-category-rail" aria-label="首页产品分类">
             <div className="home-category-title">
-              <b>全部产品分类</b>
+              <b>全部分类</b>
             </div>
             <div className="home-category-list">
               <Link href="/products">

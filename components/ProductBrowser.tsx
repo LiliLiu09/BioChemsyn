@@ -50,7 +50,7 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
   );
 
   const filtered = useMemo(
-    () => products.filter((product) => matches(product, keyword, category)).slice(0, compact ? 6 : undefined),
+    () => products.filter((product) => matches(product, keyword, category)).slice(0, compact ? 20 : undefined),
     [products, keyword, category, compact]
   );
 
