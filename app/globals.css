@@ -72,7 +72,7 @@ textarea:focus-visible {
 .topbar {
   background: #082837;
   color: #dce9ec;
-  font-size: 13px;
+  font-size: 19.5px;
 }
 
 .topbar-inner,
@@ -86,7 +86,7 @@ textarea:focus-visible {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  padding: 9px 0;
+  padding: 12px 0;
 }
 
 .topbar a {
