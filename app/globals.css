@@ -250,7 +250,7 @@ textarea:focus-visible {
 .home-scroll-track {
   display: flex;
   width: 400vw;
-  animation: homeBannerSlide 13s steps(1, end) infinite;
+  animation: homeBannerSlide 8s steps(1, end) infinite;
 }
 
 .home-scroll-banner:hover .home-scroll-track {
@@ -261,7 +261,7 @@ textarea:focus-visible {
   position: relative;
   display: grid;
   width: 100vw;
-  min-height: 430px;
+  min-height: 215px;
   overflow: hidden;
   place-items: center;
   background: #fff;
@@ -2215,8 +2215,7 @@ textarea.field {
   }
 
   .home-scroll-slide {
-    min-height: 360px;
-    padding-inline: 42px;
+    min-height: 180px;
   }
 
   .home-shell-layout {
@@ -2287,7 +2286,7 @@ textarea.field {
   }
 
   .home-scroll-slide {
-    min-height: 260px;
+    min-height: 130px;
   }
 
   .hero-copy h1 {
