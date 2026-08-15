@@ -11,10 +11,6 @@ function valueOrDash(value: string | number) {
   return value || "待确认";
 }
 
-function priceLabel(price: number) {
-  return price > 0 ? `¥${price}` : "询价";
-}
-
 function lines(value: string) {
   return value
     .split(/\n+/)
@@ -108,7 +104,6 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
             <div className="offer-price">
               <span>价格</span>
-              <strong>{priceLabel(product.price)}</strong>
               <ProductDetailActions productId={product.id} />
             </div>
           </div>

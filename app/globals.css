@@ -1460,12 +1460,6 @@ textarea:focus-visible {
   align-content: start;
 }
 
-.offer-price strong {
-  color: #c2410c;
-  font-size: 24px;
-  line-height: 1;
-}
-
 .offer-price .btn {
   width: 100%;
   justify-content: center;
