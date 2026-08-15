@@ -64,7 +64,7 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
   };
 
   return (
-    <section className="product-section" id="products">
+    <section className={`product-section ${compact ? "home-product-section" : ""}`} id="products">
       <div className="section-heading product-heading">
         <div>
           <span className="eyebrow">{compact ? "精选产品" : "产品数据库"}</span>
@@ -77,7 +77,31 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
         )}
       </div>
 
-      <div className="search-card">
+      {compact && (
+        <aside className="home-category-rail" aria-label="首页产品分类">
+          <div className="home-category-title">
+            <b>全部产品分类</b>
+            <span>{categories.length} 个分类</span>
+          </div>
+          <div className="home-category-list">
+            <button className={category === "all" ? "active" : ""} type="button" onClick={() => setCategory("all")}>
+              全部产品
+              <span>{products.length}</span>
+            </button>
+            {categories.map((item) => {
+              const count = products.filter((product) => (product.category || "未分类") === item).length;
+              return (
+                <button className={category === item ? "active" : ""} key={item} type="button" onClick={() => setCategory(item)}>
+                  {item}
+                  <span>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+      )}
+
+      <div className={`search-card ${compact ? "home-search-card" : ""}`}>
         <label className="search-field">
           <Search size={18} aria-hidden="true" />
           <span className="sr-only">搜索产品</span>
@@ -103,11 +127,11 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
         </button>
       </div>
 
-      <div className="toolbar">
+      <div className={`toolbar ${compact ? "home-product-toolbar" : ""}`}>
         <span className="result-count">找到 {filtered.length} 个产品</span>
       </div>
 
-      <div className="grid">
+      <div className={`grid ${compact ? "home-product-grid" : ""}`}>
         {filtered.map((product) => (
           <article className="product-card" key={product.id}>
             <Link className="product-thumb" href={`/products/${product.id}`} aria-label={`查看${product.nameCn || product.nameEn || product.sku}详情`}>
