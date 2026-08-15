@@ -1544,6 +1544,28 @@ textarea.field {
   padding: 8px 11px;
 }
 
+.rich-image-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(0, 155, 216, 0.28);
+  border-radius: 8px;
+  background: #eef8fb;
+}
+
+.rich-image-toolbar span {
+  color: var(--brand-strong);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.rich-image-toolbar .field {
+  width: 140px;
+  min-height: 38px;
+}
+
 .rich-upload {
   position: relative;
   overflow: hidden;
@@ -1578,6 +1600,15 @@ textarea.field {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
+}
+
+.rich-content img {
+  cursor: pointer;
+}
+
+.rich-content img.rich-selected-image {
+  outline: 3px solid rgba(0, 155, 216, 0.42);
+  outline-offset: 3px;
 }
 
 .rich-output {

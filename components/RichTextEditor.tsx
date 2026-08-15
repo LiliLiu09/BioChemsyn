@@ -24,16 +24,26 @@ const sizeOptions = [
   { label: "标题", value: "6" }
 ];
 
+const imageWidths = ["25%", "50%", "75%", "100%"];
+
 function isSelectionInside(root: HTMLElement, range: Range) {
   return root.contains(range.commonAncestorContainer);
+}
+
+function cleanEditorHtml(editor: HTMLDivElement) {
+  const clone = editor.cloneNode(true) as HTMLDivElement;
+  clone.querySelectorAll(".rich-selected-image").forEach((node) => node.classList.remove("rich-selected-image"));
+  return clone.innerHTML;
 }
 
 export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const selectionRef = useRef<Range | null>(null);
+  const selectedImageRef = useRef<HTMLImageElement | null>(null);
   const lastValueRef = useRef("");
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [selectedImageWidth, setSelectedImageWidth] = useState("");
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -44,6 +54,8 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
       editor.innerHTML = value;
       lastValueRef.current = value;
       selectionRef.current = null;
+      selectedImageRef.current = null;
+      setSelectedImageWidth("");
     }
   }, [value]);
 
@@ -80,7 +92,8 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
   };
 
   const sync = () => {
-    const html = editorRef.current?.innerHTML || "";
+    const editor = editorRef.current;
+    const html = editor ? cleanEditorHtml(editor) : "";
     lastValueRef.current = html;
     onChange(html);
     saveSelection();
@@ -93,6 +106,31 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
     requestAnimationFrame(() => {
       restoreSelection();
     });
+  };
+
+  const selectImage = (image: HTMLImageElement | null) => {
+    selectedImageRef.current?.classList.remove("rich-selected-image");
+    selectedImageRef.current = image;
+
+    if (!image) {
+      setSelectedImageWidth("");
+      return;
+    }
+
+    image.classList.add("rich-selected-image");
+    setSelectedImageWidth(image.style.width || "100%");
+  };
+
+  const updateSelectedImageWidth = (width: string) => {
+    const image = selectedImageRef.current;
+    if (!image) return;
+
+    const nextWidth = width.trim();
+    image.style.width = nextWidth || "auto";
+    image.style.height = "auto";
+    image.style.maxWidth = "100%";
+    setSelectedImageWidth(nextWidth);
+    sync();
   };
 
   const uploadImage = async (file: File | undefined) => {
@@ -113,8 +151,8 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
       return;
     }
 
-    apply("insertHTML", `<p><img src="${payload.url}" alt="${imageAlt}" /></p>`);
-    setMessage("图片已插入，请保存内容");
+    apply("insertHTML", `<p><img src="${payload.url}" alt="${imageAlt}" style="width: 100%; height: auto; max-width: 100%;" /></p>`);
+    setMessage("图片已插入，请保存内容。点击图片可调整宽度。");
   };
 
   return (
@@ -181,6 +219,25 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
           <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
         </label>
       </div>
+
+      {selectedImageRef.current && (
+        <div className="rich-image-toolbar">
+          <span>图片宽度</span>
+          {imageWidths.map((width) => (
+            <button className="btn" type="button" key={width} onMouseDown={(event) => event.preventDefault()} onClick={() => updateSelectedImageWidth(width)}>
+              {width}
+            </button>
+          ))}
+          <input
+            className="field"
+            value={selectedImageWidth}
+            onChange={(event) => updateSelectedImageWidth(event.target.value)}
+            placeholder="例如 300px"
+            aria-label="自定义图片宽度"
+          />
+        </div>
+      )}
+
       <div
         ref={editorRef}
         className="rich-content"
@@ -192,6 +249,10 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
         onMouseUp={saveSelection}
         onKeyUp={saveSelection}
         onInput={sync}
+        onClick={(event) => {
+          const target = event.target;
+          selectImage(target instanceof HTMLImageElement ? target : null);
+        }}
       />
       {uploading && <span className="result-count">图片上传中...</span>}
       {message && <span className="result-count">{message}</span>}
