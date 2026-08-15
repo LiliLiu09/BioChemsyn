@@ -862,12 +862,13 @@ textarea:focus-visible {
 
 .footer-main {
   display: grid;
-  grid-template-columns: minmax(240px, 1.5fr) repeat(5, minmax(120px, 1fr));
-  gap: 30px;
+  grid-template-columns: minmax(240px, 1.45fr) repeat(5, minmax(112px, 1fr)) minmax(110px, 0.8fr);
+  gap: 28px;
 }
 
 .footer-contact,
-.footer-column {
+.footer-column,
+.footer-qr {
   display: grid;
   align-content: start;
   gap: 10px;
@@ -910,6 +911,32 @@ textarea:focus-visible {
 
 .footer-column a:hover {
   color: var(--brand);
+}
+
+.footer-qr b {
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.footer-qr img {
+  width: 108px;
+  height: 108px;
+  object-fit: contain;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.footer-qr span {
+  display: grid;
+  width: 108px;
+  height: 108px;
+  place-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  text-align: center;
 }
 
 .news-hero {

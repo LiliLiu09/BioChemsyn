@@ -1,19 +1,12 @@
 import { BadgeCheck, FlaskConical, Headset, Mail, MapPin, Phone, ShieldCheck, Truck } from "lucide-react";
 import Link from "next/link";
-import { getInfoArticles, getNewsArticles, getProducts } from "@/lib/cms";
+import { getProducts } from "@/lib/cms";
 import type { SiteContent } from "@/lib/types";
 
 export async function Footer({ site }: { site: SiteContent }) {
-  const [products, news, info] = await Promise.all([getProducts(), getNewsArticles(), getInfoArticles()]);
+  const products = await getProducts();
   const categories = Array.from(new Set(products.map((product) => product.category || "未分类"))).slice(0, 6);
-  const latestNews = news
-    .filter((article) => article.published)
-    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-    .slice(0, 3);
-  const latestInfo = info
-    .filter((article) => article.published)
-    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-    .slice(0, 3);
+  const qrImage = site.contactQrImage || site.aboutQrImage;
 
   return (
     <footer className="site-footer">
@@ -88,7 +81,6 @@ export async function Footer({ site }: { site: SiteContent }) {
           <Link href="/contact">客户服务</Link>
           <Link href="/contact">技术支持</Link>
           <Link href="/info">采购说明</Link>
-          <Link href="/news">公司动态</Link>
         </nav>
 
         <nav className="footer-column" aria-label="产品分类">
@@ -105,25 +97,18 @@ export async function Footer({ site }: { site: SiteContent }) {
           <b>新闻资讯</b>
           <Link href="/news">新闻中心</Link>
           <Link href="/info">资讯信息</Link>
-          {latestNews.slice(0, 1).map((article) => (
-            <Link href={`/news/${article.slug}`} key={article.id}>
-              {article.title}
-            </Link>
-          ))}
-          {latestInfo.slice(0, 1).map((article) => (
-            <Link href={`/info/${article.slug}`} key={article.id}>
-              {article.title}
-            </Link>
-          ))}
         </nav>
 
         <nav className="footer-column" aria-label="关于我们">
           <b>关于我们</b>
           <Link href="/about">公司简介</Link>
           <Link href="/contact">联系我们</Link>
-          <Link href="/products">产品中心</Link>
-          <Link href="/cart">询价车</Link>
         </nav>
+
+        <section className="footer-qr" aria-label="公司二维码">
+          <b>公司二维码</b>
+          {qrImage ? <img src={qrImage} alt="公司二维码" /> : <span>暂无二维码</span>}
+        </section>
       </div>
     </footer>
   );
