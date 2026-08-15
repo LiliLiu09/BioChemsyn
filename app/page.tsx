@@ -30,17 +30,14 @@ export default async function HomePage() {
           <aside className="home-category-rail" aria-label="首页产品分类">
             <div className="home-category-title">
               <b>全部产品分类</b>
-              <span>{allCategories.length} 个分类</span>
             </div>
             <div className="home-category-list">
               <Link href="/products">
                 全部产品
-                <span>{products.length}</span>
               </Link>
-              {allCategories.map(([category, count]) => (
+              {allCategories.map(([category]) => (
                 <Link href={`/products?category=${encodeURIComponent(category)}`} key={category}>
                   {category}
-                  <span>{count}</span>
                 </Link>
               ))}
             </div>

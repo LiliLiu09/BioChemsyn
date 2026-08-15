@@ -634,11 +634,6 @@ textarea:focus-visible {
   line-height: 1.25;
 }
 
-.home-category-title span {
-  color: var(--muted);
-  font-size: 11px;
-}
-
 .home-category-list {
   display: grid;
   gap: 5px;
@@ -669,13 +664,6 @@ textarea:focus-visible {
   border-color: rgba(0, 155, 216, 0.26);
   background: linear-gradient(135deg, rgba(0, 155, 216, 0.1), rgba(140, 198, 63, 0.12));
   color: var(--brand-strong);
-}
-
-.home-category-list a span {
-  flex: 0 0 auto;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 800;
 }
 
 .toolbar {
