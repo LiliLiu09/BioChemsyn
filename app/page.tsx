@@ -15,8 +15,6 @@ export default async function HomePage() {
     return acc;
   }, {});
   const allCategories = Object.entries(categoryCounts);
-  const categories = allCategories.slice(0, 6);
-  const inStockCount = products.filter((product) => product.stock > 0).length;
   const latestNews = news
     .filter((article) => article.published)
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
@@ -64,66 +62,6 @@ export default async function HomePage() {
           </aside>
 
           <div className="home-page-content">
-            <section className="hero">
-              <div className="hero-copy">
-                <span className="eyebrow">可信赖的化学品采购入口</span>
-                <h1>{site.heroTitle}</h1>
-                <p>{site.heroDescription}</p>
-                <div className="hero-actions">
-                  <Link className="btn primary large" href="/products">
-                    {site.primaryCta}
-                  </Link>
-                  <Link className="btn ghost large" href="/cart">
-                    发起询价
-                  </Link>
-                </div>
-                <div className="hero-metrics" aria-label="平台概览">
-                  <div>
-                    <b>{products.length}+</b>
-                    <span>在库条目</span>
-                  </div>
-                  <div>
-                    <b>{categories.length}</b>
-                    <span>核心分类</span>
-                  </div>
-                  <div>
-                    <b>{inStockCount}</b>
-                    <span>现货产品</span>
-                  </div>
-                </div>
-              </div>
-              <aside className="hero-visual" aria-label="化学品采购流程">
-                <div className="molecule-card">
-                  <span className="node node-a">CAS</span>
-                  <span className="node node-b">COA</span>
-                  <span className="node node-c">库存</span>
-                  <span className="node node-d">报价</span>
-                  <span className="bond bond-1" />
-                  <span className="bond bond-2" />
-                  <span className="bond bond-3" />
-                  <div className="visual-copy">
-                    <b>从检索到询价的闭环</b>
-                    <span>产品资料、规格、库存和采购需求在同一流程中沉淀。</span>
-                  </div>
-                </div>
-              </aside>
-            </section>
-
-            <section className="trust-strip" aria-label="服务承诺">
-              <div>
-                <b>CAS / SKU 快速定位</b>
-                <span>面向研发、质控和采购场景的多字段搜索。</span>
-              </div>
-              <div>
-                <b>报价前置校验</b>
-                <span>按规格、数量、库存和客户信息确认最终报价。</span>
-              </div>
-              <div>
-                <b>新闻与产品资讯</b>
-                <span>通过新闻中心发布公司动态、产品更新和服务说明。</span>
-              </div>
-            </section>
-
             <div className="home-middle-content">
               <ProductBrowser compact products={products} />
 
