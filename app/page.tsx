@@ -28,16 +28,16 @@ export default async function HomePage() {
       <section className="home-scroll-banner" aria-label="首页轮播展示">
         <div className="home-scroll-track">
           <Link className="home-scroll-slide image-slide" href="/products">
-            <img src="/carousel-kasons-lab.png" alt="科研试剂、标准品与化学品产品库" />
+            <img className="home-carousel-image" src="/carousel-kasons-lab.png?v=2" alt="科研试剂、标准品与化学品产品库" />
           </Link>
           <Link className="home-scroll-slide image-slide" href="/products">
-            <img src="/carousel-kasons-brand.png" alt="KASONS 凯森斯生物 糖究未来 合成无限" />
+            <img className="home-carousel-image" src="/carousel-kasons-brand.png?v=2" alt="KASONS 凯森斯生物 糖究未来 合成无限" />
           </Link>
           <Link className="home-scroll-slide image-slide" href="/cart">
-            <img src="/carousel-kasons-inquiry-large-logo.png" alt="公开展示产品基础资料，报价统一通过询价获取" />
+            <img className="home-carousel-image" src="/carousel-kasons-inquiry-large-logo.png?v=2" alt="公开展示产品基础资料，报价统一通过询价获取" />
           </Link>
           <Link className="home-scroll-slide image-slide" href="/cart">
-            <img src="/carousel-product-library.png" alt="化学产品库与采购供应链" />
+            <img className="home-carousel-image" src="/carousel-product-library.png?v=2" alt="化学产品库与采购供应链" />
           </Link>
         </div>
         <div className="home-scroll-dots" aria-hidden="true">
