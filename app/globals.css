@@ -240,6 +240,7 @@ textarea:focus-visible {
 .home-scroll-banner {
   position: relative;
   width: 100%;
+  height: 108px;
   overflow: hidden;
   border-bottom: 1px solid rgba(216, 226, 234, 0.9);
   background:
@@ -250,6 +251,7 @@ textarea:focus-visible {
 .home-scroll-track {
   display: flex;
   width: 400vw;
+  height: 100%;
   animation: homeBannerSlide 8s steps(1, end) infinite;
 }
 
@@ -261,7 +263,7 @@ textarea:focus-visible {
   position: relative;
   display: grid;
   width: 100vw;
-  min-height: 108px;
+  height: 100%;
   overflow: hidden;
   place-items: center;
   background: #fff;
@@ -277,7 +279,7 @@ textarea:focus-visible {
 .home-scroll-dots {
   position: absolute;
   left: 50%;
-  bottom: 22px;
+  bottom: 10px;
   z-index: 2;
   display: flex;
   gap: 9px;
@@ -285,8 +287,8 @@ textarea:focus-visible {
 }
 
 .home-scroll-dots span {
-  width: 34px;
-  height: 4px;
+  width: 24px;
+  height: 3px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.55);
   box-shadow: 0 0 0 1px rgba(16, 33, 47, 0.08);
@@ -2214,8 +2216,8 @@ textarea.field {
     position: static;
   }
 
-  .home-scroll-slide {
-    min-height: 90px;
+  .home-scroll-banner {
+    height: 90px;
   }
 
   .home-shell-layout {
@@ -2285,8 +2287,16 @@ textarea.field {
     padding: 28px;
   }
 
-  .home-scroll-slide {
-    min-height: 65px;
+  .home-scroll-banner {
+    height: 65px;
+  }
+
+  .home-scroll-dots {
+    bottom: 6px;
+  }
+
+  .home-scroll-dots span {
+    width: 18px;
   }
 
   .hero-copy h1 {
