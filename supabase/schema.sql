@@ -9,6 +9,7 @@ create table if not exists public.products (
   name_en text not null default '',
   synonyms text not null default '',
   category text not null default '',
+  brand text not null default '',
   formula text not null default '',
   molecular_weight text not null default '',
   purity text not null default '',
@@ -18,6 +19,8 @@ create table if not exists public.products (
   lead_time text not null default '',
   image text not null default '',
   details text not null default '',
+  reference_text text not null default '',
+  certificate text not null default '',
   scale_note text not null default '',
   tags text[] not null default '{}',
   created_at timestamptz not null default now(),
@@ -27,6 +30,10 @@ create table if not exists public.products (
 create index if not exists products_catalog_no_idx on public.products (catalog_no);
 create index if not exists products_cas_idx on public.products (cas);
 create index if not exists products_category_idx on public.products (category);
+
+alter table public.products add column if not exists brand text not null default '';
+alter table public.products add column if not exists reference_text text not null default '';
+alter table public.products add column if not exists certificate text not null default '';
 
 create table if not exists public.news_articles (
   id text primary key,

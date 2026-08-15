@@ -7,6 +7,7 @@ export type Product = {
   nameEn: string;
   synonyms: string;
   category: string;
+  brand: string;
   formula: string;
   molecularWeight: string;
   purity: string;
@@ -16,6 +17,8 @@ export type Product = {
   leadTime: string;
   image: string;
   details: string;
+  references: string;
+  certificate: string;
   scaleNote: string;
   tags: string[];
 };

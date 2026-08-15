@@ -1339,6 +1339,197 @@ textarea:focus-visible {
   color: var(--muted);
 }
 
+.product-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 22px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.product-breadcrumb a {
+  color: var(--brand-strong);
+}
+
+.product-detail-hero {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+  gap: 34px;
+  align-items: center;
+  padding: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.product-detail-image {
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+  border: 1px solid #eef2f5;
+  border-radius: 8px;
+  background: #fbfdfe;
+  color: var(--muted);
+}
+
+.product-detail-image img {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+}
+
+.product-detail-summary h1 {
+  margin: 0 0 8px;
+  font-size: 34px;
+  line-height: 1.2;
+}
+
+.product-subtitle {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.product-field-list {
+  display: grid;
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+
+.product-field-list div {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 18px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.product-field-list dt {
+  color: #526071;
+  font-weight: 800;
+}
+
+.product-field-list dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+.product-offer {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.offer-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--line);
+}
+
+.offer-grid > div {
+  display: grid;
+  gap: 8px;
+  min-height: 86px;
+  padding: 16px;
+  background: #fff;
+}
+
+.offer-grid span {
+  color: #526071;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.offer-grid b {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.offer-price {
+  align-content: start;
+}
+
+.offer-price strong {
+  color: #c2410c;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.offer-price .btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.product-tabs {
+  margin-top: 26px;
+}
+
+.product-tabs > input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tab-labels {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab-labels label {
+  min-width: 128px;
+  padding: 13px 18px;
+  border-radius: 8px 8px 0 0;
+  background: #eaf3f7;
+  color: var(--brand-strong);
+  cursor: pointer;
+  font-weight: 800;
+  text-align: center;
+}
+
+#tab-basic:checked ~ .tab-labels label[for="tab-basic"],
+#tab-references:checked ~ .tab-labels label[for="tab-references"],
+#tab-certificate:checked ~ .tab-labels label[for="tab-certificate"] {
+  background: var(--brand);
+  color: #fff;
+}
+
+.tab-panels {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  background: #fff;
+  line-height: 1.85;
+}
+
+.tab-panel {
+  display: none;
+}
+
+#tab-basic:checked ~ .tab-panels .panel-basic,
+#tab-references:checked ~ .tab-panels .panel-references,
+#tab-certificate:checked ~ .tab-panels .panel-certificate {
+  display: block;
+}
+
+.tab-panel p {
+  margin: 0 0 14px;
+  color: var(--ink);
+}
+
 .detail-media {
   display: grid;
   min-height: 420px;
@@ -1707,8 +1898,13 @@ textarea.field {
   .login-wrap,
   .cta-band,
   .quote-layout,
-  .detail-hero {
+  .detail-hero,
+  .product-detail-hero {
     grid-template-columns: 1fr;
+  }
+
+  .offer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .hero-copy,
@@ -1795,6 +1991,15 @@ textarea.field {
   .contact-cards,
   .inline-controls {
     grid-template-columns: 1fr;
+  }
+
+  .offer-grid,
+  .product-field-list div {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-labels {
+    overflow-x: auto;
   }
 
   .about-page {

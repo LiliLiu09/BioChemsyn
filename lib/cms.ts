@@ -20,6 +20,7 @@ type ProductRow = {
   name_en: string;
   synonyms: string;
   category: string;
+  brand: string;
   formula: string;
   molecular_weight: string;
   purity: string;
@@ -29,6 +30,8 @@ type ProductRow = {
   lead_time: string;
   image: string;
   details: string;
+  reference_text: string;
+  certificate: string;
   scale_note: string;
   tags: string[];
 };
@@ -83,6 +86,7 @@ function productFromRow(row: ProductRow): Product {
     nameEn: row.name_en || "",
     synonyms: row.synonyms || "",
     category: row.category || "",
+    brand: row.brand || "",
     formula: row.formula || "",
     molecularWeight: row.molecular_weight || "",
     purity: row.purity || "",
@@ -92,6 +96,8 @@ function productFromRow(row: ProductRow): Product {
     leadTime: row.lead_time || "",
     image: row.image || "",
     details: row.details || "",
+    references: row.reference_text || "",
+    certificate: row.certificate || "",
     scaleNote: row.scale_note || "",
     tags: Array.isArray(row.tags) ? row.tags : []
   };
@@ -107,6 +113,7 @@ function productToRow(product: Product): ProductRow {
     name_en: product.nameEn || "",
     synonyms: product.synonyms || "",
     category: product.category || "",
+    brand: product.brand || "",
     formula: product.formula || "",
     molecular_weight: product.molecularWeight || "",
     purity: product.purity || "",
@@ -116,6 +123,8 @@ function productToRow(product: Product): ProductRow {
     lead_time: product.leadTime || "",
     image: product.image || "",
     details: product.details || "",
+    reference_text: product.references || "",
+    certificate: product.certificate || "",
     scale_note: product.scaleNote || "",
     tags: Array.isArray(product.tags) ? product.tags : []
   };
@@ -225,10 +234,10 @@ export async function saveProducts(products: Product[]) {
       for (const row of rows) {
         await query(
           `insert into public.products (
-            id, sku, catalog_no, cas, name_cn, name_en, synonyms, category, formula,
+            id, sku, catalog_no, cas, name_cn, name_en, synonyms, category, brand, formula,
             molecular_weight, purity, stock, package_size, price, lead_time, image,
-            details, scale_note, tags
-          ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+            details, reference_text, certificate, scale_note, tags
+          ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`,
           [
             row.id,
             row.sku,
@@ -238,6 +247,7 @@ export async function saveProducts(products: Product[]) {
             row.name_en,
             row.synonyms,
             row.category,
+            row.brand,
             row.formula,
             row.molecular_weight,
             row.purity,
@@ -247,6 +257,8 @@ export async function saveProducts(products: Product[]) {
             row.lead_time,
             row.image,
             row.details,
+            row.reference_text,
+            row.certificate,
             row.scale_note,
             row.tags
           ]
