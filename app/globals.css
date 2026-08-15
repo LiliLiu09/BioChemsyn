@@ -237,6 +237,120 @@ textarea:focus-visible {
   padding: 34px 0 56px;
 }
 
+.home-scroll-banner {
+  width: 100%;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(216, 226, 234, 0.9);
+  background:
+    linear-gradient(90deg, rgba(0, 155, 216, 0.1), rgba(140, 198, 63, 0.12)),
+    #fff;
+}
+
+.home-scroll-track {
+  display: flex;
+  width: max-content;
+  animation: homeBannerScroll 32s linear infinite;
+}
+
+.home-scroll-banner:hover .home-scroll-track {
+  animation-play-state: paused;
+}
+
+.home-scroll-group {
+  display: flex;
+  min-width: 100vw;
+}
+
+.home-scroll-card {
+  position: relative;
+  display: grid;
+  width: calc(100vw / 3);
+  min-height: 176px;
+  align-content: center;
+  gap: 10px;
+  overflow: hidden;
+  padding: 28px max(28px, 4vw);
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.home-scroll-card::after {
+  content: "KASONS";
+  position: absolute;
+  right: 24px;
+  bottom: -14px;
+  color: rgba(255, 255, 255, 0.08);
+  font-size: 72px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.home-scroll-card.feature {
+  background:
+    radial-gradient(circle at 78% 30%, rgba(255, 255, 255, 0.16), transparent 30%),
+    linear-gradient(135deg, #0075ad, #102a36);
+}
+
+.home-scroll-card.green {
+  background:
+    radial-gradient(circle at 15% 80%, rgba(255, 255, 255, 0.16), transparent 28%),
+    linear-gradient(135deg, #009bd8, #6aaa26);
+}
+
+.home-scroll-card.light {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(231, 246, 251, 0.96)),
+    linear-gradient(135deg, var(--brand-soft), #fff);
+  color: var(--ink);
+}
+
+.home-scroll-card.light::after {
+  color: rgba(0, 155, 216, 0.08);
+}
+
+.home-scroll-card span {
+  position: relative;
+  z-index: 1;
+  color: #d8f99e;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.home-scroll-card.light span {
+  color: var(--brand-green-strong);
+}
+
+.home-scroll-card b {
+  position: relative;
+  z-index: 1;
+  max-width: 660px;
+  font-size: 30px;
+  line-height: 1.18;
+}
+
+.home-scroll-card small {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.home-scroll-card.light small {
+  color: var(--muted);
+}
+
+@keyframes homeBannerScroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 .home-main {
   width: min(1480px, calc(100% - 28px));
 }
@@ -2133,6 +2247,10 @@ textarea.field {
     position: static;
   }
 
+  .home-scroll-card {
+    width: 50vw;
+  }
+
   .home-shell-layout {
     grid-template-columns: 1fr;
   }
@@ -2198,6 +2316,20 @@ textarea.field {
 
   .hero-copy {
     padding: 28px;
+  }
+
+  .home-scroll-card {
+    width: 100vw;
+    min-height: 150px;
+    padding: 24px;
+  }
+
+  .home-scroll-card b {
+    font-size: 24px;
+  }
+
+  .home-scroll-card small {
+    font-size: 13px;
   }
 
   .hero-copy h1 {
