@@ -72,7 +72,7 @@ textarea:focus-visible {
 .topbar {
   background: #082837;
   color: #dce9ec;
-  font-size: 19.5px;
+  font-size: 13px;
 }
 
 .topbar-inner,
@@ -86,7 +86,7 @@ textarea:focus-visible {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 0;
+  padding: 9px 0;
 }
 
 .topbar a {
@@ -166,13 +166,13 @@ textarea:focus-visible {
   display: flex;
   gap: 6px;
   color: #344252;
-  font-size: 14px;
+  font-size: 21px;
 }
 
 .nav a,
 .icon-link {
   border-radius: 6px;
-  padding: 9px 11px;
+  padding: 11px 13px;
 }
 
 .nav a:hover,
