@@ -42,8 +42,12 @@ export default async function HomePage() {
             <b>加入询价车后统一报价</b>
             <small>提交客户信息、产品清单和备注，销售团队跟进确认。</small>
           </Link>
+          <Link className="home-scroll-slide image-slide" href="/cart">
+            <img src="/home-carousel-process.png" alt="从检索到询价的闭环" />
+          </Link>
         </div>
         <div className="home-scroll-dots" aria-hidden="true">
+          <span />
           <span />
           <span />
           <span />
