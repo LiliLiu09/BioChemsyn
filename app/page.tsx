@@ -108,22 +108,6 @@ export default async function HomePage() {
             </section>
 
             <div className="home-middle-content">
-              <section className="section-block">
-                <div className="section-heading">
-                  <span className="eyebrow">产品分类</span>
-                  <h2>按应用场景快速发现产品</h2>
-                  <p>保留现有产品库数据，按分类汇总展示，帮助采购和实验室人员更快进入检索。</p>
-                </div>
-                <div className="category-grid">
-                  {categories.map(([category, count]) => (
-                    <Link className="category-card" href="/products" key={category}>
-                      <span>{category}</span>
-                      <b>{count} 个产品</b>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-
               <ProductBrowser compact products={products} />
 
               {latestNews.length > 0 && (

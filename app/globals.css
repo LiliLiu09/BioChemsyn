@@ -605,10 +605,6 @@ textarea:focus-visible {
   min-width: 0;
 }
 
-.home-middle-content > .section-block:first-child {
-  margin-top: 0;
-}
-
 .home-category-rail {
   position: sticky;
   top: 42vh;
