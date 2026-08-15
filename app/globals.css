@@ -243,8 +243,8 @@ textarea:focus-visible {
 
 .home-shell-layout {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 14px;
   align-items: start;
 }
 
@@ -613,9 +613,9 @@ textarea:focus-visible {
   position: sticky;
   top: 112px;
   display: grid;
-  gap: 12px;
+  gap: 8px;
   max-height: min(560px, calc(100vh - 140px));
-  padding: 16px;
+  padding: 8px 6px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -626,39 +626,46 @@ textarea:focus-visible {
 .home-category-title {
   display: grid;
   gap: 4px;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--line);
+  text-align: center;
 }
 
 .home-category-title b {
   color: var(--ink);
-  font-size: 18px;
+  font-size: 13px;
+  line-height: 1.25;
 }
 
 .home-category-title span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .home-category-list {
   display: grid;
-  gap: 6px;
+  gap: 5px;
   max-height: 460px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 0;
 }
 
 .home-category-list a {
-  display: flex;
+  display: grid;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 11px 12px;
+  justify-items: center;
+  gap: 3px;
+  min-height: 44px;
+  padding: 7px 4px;
   border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
   color: #334155;
+  font-size: 12px;
   font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  word-break: break-all;
 }
 
 .home-category-list a:hover {
@@ -670,7 +677,7 @@ textarea:focus-visible {
 .home-category-list a span {
   flex: 0 0 auto;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
 }
 
