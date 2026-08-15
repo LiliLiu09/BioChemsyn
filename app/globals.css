@@ -243,7 +243,7 @@ textarea:focus-visible {
 
 .home-shell-layout {
   display: grid;
-  grid-template-columns: 68px minmax(0, 1fr);
+  grid-template-columns: 87px minmax(0, 1fr);
   gap: 14px;
   align-items: start;
 }
@@ -611,10 +611,11 @@ textarea:focus-visible {
 
 .home-category-rail {
   position: sticky;
-  top: 112px;
+  top: 42vh;
   display: grid;
   gap: 8px;
   max-height: min(560px, calc(100vh - 140px));
+  margin-top: calc(42vh - 120px);
   padding: 8px 6px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -633,7 +634,7 @@ textarea:focus-visible {
 
 .home-category-title b {
   color: var(--ink);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.25;
 }
 
@@ -2025,33 +2026,33 @@ textarea.field {
 
 .floating-contact {
   position: fixed;
-  right: 10px;
+  right: 18px;
   top: 42%;
   z-index: 30;
   display: grid;
-  gap: 5px;
+  gap: 8px;
 }
 
 .float-item {
   position: relative;
   display: grid;
   place-items: center;
-  width: 16px;
-  height: 42px;
-  border-radius: 5px;
+  width: 54px;
+  height: 54px;
+  border-radius: 8px;
   background: rgba(125, 134, 145, 0.88);
   color: #fff;
   box-shadow: 0 12px 28px rgba(16, 33, 47, 0.16);
 }
 
 .float-item svg {
-  width: 13px;
-  height: 13px;
+  width: 24px;
+  height: 24px;
 }
 
 .float-popover {
   position: absolute;
-  right: 24px;
+  right: 64px;
   top: 50%;
   transform: translate(12px, -50%);
   display: grid;
@@ -2155,6 +2156,7 @@ textarea.field {
   .home-category-rail {
     position: static;
     max-height: none;
+    margin-top: 0;
   }
 
   .home-category-list {
