@@ -238,6 +238,7 @@ textarea:focus-visible {
 }
 
 .home-scroll-banner {
+  position: relative;
   width: 100%;
   overflow: hidden;
   border-bottom: 1px solid rgba(216, 226, 234, 0.9);
@@ -248,106 +249,144 @@ textarea:focus-visible {
 
 .home-scroll-track {
   display: flex;
-  width: max-content;
-  animation: homeBannerScroll 32s linear infinite;
+  width: 300vw;
+  animation: homeBannerSlide 15s steps(1, end) infinite;
 }
 
 .home-scroll-banner:hover .home-scroll-track {
   animation-play-state: paused;
 }
 
-.home-scroll-group {
-  display: flex;
-  min-width: 100vw;
-}
-
-.home-scroll-card {
+.home-scroll-slide {
   position: relative;
   display: grid;
-  width: calc(100vw / 3);
-  min-height: 176px;
+  width: 100vw;
+  min-height: 430px;
   align-content: center;
-  gap: 10px;
+  gap: 14px;
   overflow: hidden;
-  padding: 28px max(28px, 4vw);
-  border-right: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 54px max(46px, 10vw);
   color: #fff;
 }
 
-.home-scroll-card::after {
+.home-scroll-slide::before {
+  content: "";
+  position: absolute;
+  inset: 36px max(34px, 7vw);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.home-scroll-slide::after {
   content: "KASONS";
   position: absolute;
-  right: 24px;
-  bottom: -14px;
+  right: max(34px, 8vw);
+  bottom: 8px;
   color: rgba(255, 255, 255, 0.08);
-  font-size: 72px;
+  font-size: clamp(86px, 12vw, 180px);
   font-weight: 900;
   letter-spacing: 0;
 }
 
-.home-scroll-card.feature {
+.home-scroll-slide.feature {
   background:
-    radial-gradient(circle at 78% 30%, rgba(255, 255, 255, 0.16), transparent 30%),
+    radial-gradient(circle at 78% 30%, rgba(255, 255, 255, 0.18), transparent 30%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.16), transparent 62%),
     linear-gradient(135deg, #0075ad, #102a36);
 }
 
-.home-scroll-card.green {
+.home-scroll-slide.green {
   background:
+    radial-gradient(circle at 84% 20%, rgba(255, 255, 255, 0.18), transparent 30%),
     radial-gradient(circle at 15% 80%, rgba(255, 255, 255, 0.16), transparent 28%),
     linear-gradient(135deg, #009bd8, #6aaa26);
 }
 
-.home-scroll-card.light {
+.home-scroll-slide.light {
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(231, 246, 251, 0.96)),
     linear-gradient(135deg, var(--brand-soft), #fff);
   color: var(--ink);
 }
 
-.home-scroll-card.light::after {
+.home-scroll-slide.light::before {
+  border-color: rgba(0, 155, 216, 0.18);
+}
+
+.home-scroll-slide.light::after {
   color: rgba(0, 155, 216, 0.08);
 }
 
-.home-scroll-card span {
+.home-scroll-slide span {
   position: relative;
   z-index: 1;
   color: #d8f99e;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 900;
 }
 
-.home-scroll-card.light span {
+.home-scroll-slide.light span {
   color: var(--brand-green-strong);
 }
 
-.home-scroll-card b {
+.home-scroll-slide b {
   position: relative;
   z-index: 1;
-  max-width: 660px;
-  font-size: 30px;
-  line-height: 1.18;
+  max-width: 860px;
+  font-size: clamp(42px, 5vw, 76px);
+  line-height: 1.08;
 }
 
-.home-scroll-card small {
+.home-scroll-slide small {
   position: relative;
   z-index: 1;
-  max-width: 620px;
+  max-width: 720px;
   color: rgba(255, 255, 255, 0.82);
-  font-size: 15px;
+  font-size: 18px;
   line-height: 1.7;
 }
 
-.home-scroll-card.light small {
+.home-scroll-slide.light small {
   color: var(--muted);
 }
 
-@keyframes homeBannerScroll {
-  from {
+.home-scroll-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  z-index: 2;
+  display: flex;
+  gap: 9px;
+  transform: translateX(-50%);
+}
+
+.home-scroll-dots span {
+  width: 34px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(16, 33, 47, 0.08);
+}
+
+@keyframes homeBannerSlide {
+  0%,
+  30% {
     transform: translateX(0);
   }
 
-  to {
-    transform: translateX(-50%);
+  33%,
+  63% {
+    transform: translateX(-100vw);
+  }
+
+  66%,
+  96% {
+    transform: translateX(-200vw);
+  }
+
+  100% {
+    transform: translateX(0);
   }
 }
 
@@ -2247,8 +2286,9 @@ textarea.field {
     position: static;
   }
 
-  .home-scroll-card {
-    width: 50vw;
+  .home-scroll-slide {
+    min-height: 360px;
+    padding-inline: 42px;
   }
 
   .home-shell-layout {
@@ -2318,17 +2358,20 @@ textarea.field {
     padding: 28px;
   }
 
-  .home-scroll-card {
-    width: 100vw;
-    min-height: 150px;
+  .home-scroll-slide {
+    min-height: 260px;
     padding: 24px;
   }
 
-  .home-scroll-card b {
-    font-size: 24px;
+  .home-scroll-slide::before {
+    inset: 16px;
   }
 
-  .home-scroll-card small {
+  .home-scroll-slide b {
+    font-size: 30px;
+  }
+
+  .home-scroll-slide small {
     font-size: 13px;
   }
 

@@ -25,27 +25,28 @@ export default async function HomePage() {
   return (
     <div className="shell">
       <Header site={site} />
-      <section className="home-scroll-banner" aria-label="首页滚动展示">
+      <section className="home-scroll-banner" aria-label="首页轮播展示">
         <div className="home-scroll-track">
-          {[0, 1].map((group) => (
-            <div className="home-scroll-group" key={group} aria-hidden={group === 1}>
-              <Link className="home-scroll-card feature" href="/products">
-                <span>科研试剂 / 标准品 / 化学品</span>
-                <b>{site.heroTitle}</b>
-                <small>CAS、货号、产品名称快速检索，支持批量规格与交期确认。</small>
-              </Link>
-              <Link className="home-scroll-card green" href="/products">
-                <span>产品中心</span>
-                <b>20 个首页产品入口</b>
-                <small>从精选产品进入完整产品库，按分类与关键词继续筛选。</small>
-              </Link>
-              <Link className="home-scroll-card light" href="/cart">
-                <span>采购支持</span>
-                <b>加入询价车后统一报价</b>
-                <small>提交客户信息、产品清单和备注，销售团队跟进确认。</small>
-              </Link>
-            </div>
-          ))}
+          <Link className="home-scroll-slide feature" href="/products">
+            <span>科研试剂 / 标准品 / 化学品</span>
+            <b>{site.heroTitle}</b>
+            <small>CAS、货号、产品名称快速检索，支持批量规格与交期确认。</small>
+          </Link>
+          <Link className="home-scroll-slide green" href="/products">
+            <span>产品中心</span>
+            <b>20 个首页产品入口</b>
+            <small>从精选产品进入完整产品库，按分类与关键词继续筛选。</small>
+          </Link>
+          <Link className="home-scroll-slide light" href="/cart">
+            <span>采购支持</span>
+            <b>加入询价车后统一报价</b>
+            <small>提交客户信息、产品清单和备注，销售团队跟进确认。</small>
+          </Link>
+        </div>
+        <div className="home-scroll-dots" aria-hidden="true">
+          <span />
+          <span />
+          <span />
         </div>
       </section>
       <main className="main home-main">
@@ -55,9 +56,7 @@ export default async function HomePage() {
               <b>全部分类</b>
             </div>
             <div className="home-category-list">
-              <Link href="/products">
-                全部产品
-              </Link>
+              <Link href="/products">全部产品</Link>
               {allCategories.map(([category]) => (
                 <Link href={`/products?category=${encodeURIComponent(category)}`} key={category}>
                   {category}
