@@ -202,11 +202,11 @@ export function NewsEditor({ initialNews }: { initialNews: NewsArticle[] }) {
             <textarea className="field" value={active.summary} onChange={(event) => update("summary", event.target.value)} />
             {errors.summary && <span className="field-error">{errors.summary}</span>}
           </label>
-          <label className="admin-field full">
+          <div className="admin-field full">
             <span>正文 *</span>
             <RichTextEditor value={active.content} onChange={(value) => update("content", value)} uploadFolder="news" imageAlt="新闻图片" />
             {errors.content && <span className="field-error">{errors.content}</span>}
-          </label>
+          </div>
           <label className="admin-field full checkbox-field">
             <input type="checkbox" checked={active.published} onChange={(event) => update("published", event.target.checked)} />
             <span>发布到前台新闻中心</span>

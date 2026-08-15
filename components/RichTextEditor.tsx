@@ -31,7 +31,7 @@ function isSelectionInside(root: HTMLElement, range: Range) {
 export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const selectionRef = useRef<Range | null>(null);
-  const lastValueRef = useRef(value);
+  const lastValueRef = useRef("");
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -90,6 +90,9 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
     restoreSelection();
     document.execCommand(command, false, commandValue);
     sync();
+    requestAnimationFrame(() => {
+      restoreSelection();
+    });
   };
 
   const uploadImage = async (file: File | undefined) => {
@@ -117,7 +120,16 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
   return (
     <div className="rich-editor">
       <div className="rich-toolbar" aria-label="富文本工具栏">
-        <select className="field" defaultValue="" onChange={(event) => apply("fontName", event.target.value)} aria-label="字体">
+        <select
+          className="field"
+          defaultValue=""
+          onMouseDown={saveSelection}
+          onChange={(event) => {
+            apply("fontName", event.target.value);
+            event.currentTarget.blur();
+          }}
+          aria-label="字体"
+        >
           <option value="" disabled>
             字体
           </option>
@@ -127,7 +139,16 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
             </option>
           ))}
         </select>
-        <select className="field" defaultValue="" onChange={(event) => apply("fontSize", event.target.value)} aria-label="字号">
+        <select
+          className="field"
+          defaultValue=""
+          onMouseDown={saveSelection}
+          onChange={(event) => {
+            apply("fontSize", event.target.value);
+            event.currentTarget.blur();
+          }}
+          aria-label="字号"
+        >
           <option value="" disabled>
             字号
           </option>
@@ -166,6 +187,8 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
         contentEditable
         suppressContentEditableWarning
         onFocus={saveSelection}
+        onBlur={saveSelection}
+        onMouseDown={saveSelection}
         onMouseUp={saveSelection}
         onKeyUp={saveSelection}
         onInput={sync}

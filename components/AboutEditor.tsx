@@ -75,11 +75,11 @@ export function AboutEditor({ initialSite }: { initialSite: SiteContent }) {
           {errors.aboutTitle && <span className="field-error">{errors.aboutTitle}</span>}
         </label>
 
-        <label className="admin-field full">
+        <div className="admin-field full">
           <span>关于我们文字</span>
           <RichTextEditor value={site.aboutDescription} onChange={(value) => update("aboutDescription", value)} uploadFolder="about" imageAlt="关于我们图片" />
           {errors.aboutDescription && <span className="field-error">{errors.aboutDescription}</span>}
-        </label>
+        </div>
 
         <label className="admin-field">
           <span>二维码图片地址</span>
