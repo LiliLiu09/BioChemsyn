@@ -27,23 +27,17 @@ export default async function HomePage() {
       <Header site={site} />
       <section className="home-scroll-banner" aria-label="首页轮播展示">
         <div className="home-scroll-track">
-          <Link className="home-scroll-slide feature" href="/products">
-            <span>科研试剂 / 标准品 / 化学品</span>
-            <b>{site.heroTitle}</b>
-            <small>CAS、货号、产品名称快速检索，支持批量规格与交期确认。</small>
+          <Link className="home-scroll-slide image-slide" href="/products">
+            <img src="/carousel-kasons-lab.png" alt="科研试剂、标准品与化学品产品库" />
           </Link>
-          <Link className="home-scroll-slide green" href="/products">
-            <span>产品中心</span>
-            <b>20 个首页产品入口</b>
-            <small>从精选产品进入完整产品库，按分类与关键词继续筛选。</small>
-          </Link>
-          <Link className="home-scroll-slide light" href="/cart">
-            <span>采购支持</span>
-            <b>加入询价车后统一报价</b>
-            <small>提交客户信息、产品清单和备注，销售团队跟进确认。</small>
+          <Link className="home-scroll-slide image-slide" href="/products">
+            <img src="/carousel-kasons-brand.png" alt="KASONS 凯森斯生物 糖究未来 合成无限" />
           </Link>
           <Link className="home-scroll-slide image-slide" href="/cart">
-            <img src="/home-carousel-process.png" alt="从检索到询价的闭环" />
+            <img src="/carousel-kasons-inquiry-large-logo.png" alt="公开展示产品基础资料，报价统一通过询价获取" />
+          </Link>
+          <Link className="home-scroll-slide image-slide" href="/cart">
+            <img src="/carousel-product-library.png" alt="化学产品库与采购供应链" />
           </Link>
         </div>
         <div className="home-scroll-dots" aria-hidden="true">
