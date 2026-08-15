@@ -25,7 +25,7 @@ export async function Footer({ site }: { site: SiteContent }) {
             <FlaskConical size={26} aria-hidden="true" />
           </span>
           <b>产品全面</b>
-          <span>{products.length}+ 个产品条目</span>
+          <span>20000+ 产品</span>
         </div>
         <div>
           <span className="footer-icon">

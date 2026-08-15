@@ -855,7 +855,8 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: #ff7a00;
+  background: linear-gradient(135deg, var(--brand), var(--brand-green));
+  box-shadow: 0 10px 22px rgba(0, 155, 216, 0.2);
   color: #fff;
 }
 
