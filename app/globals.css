@@ -586,15 +586,20 @@ textarea:focus-visible {
   gap: 14px;
 }
 
-.home-product-section {
+.home-middle-layout {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
+  margin-top: 42px;
 }
 
-.home-product-section .product-heading {
-  grid-column: 1 / -1;
+.home-middle-content {
+  min-width: 0;
+}
+
+.home-middle-content > .section-block:first-child {
+  margin-top: 0;
 }
 
 .home-category-rail {
@@ -636,9 +641,8 @@ textarea:focus-visible {
   padding-right: 4px;
 }
 
-.home-category-list button {
+.home-category-list a {
   display: flex;
-  width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
@@ -647,42 +651,20 @@ textarea:focus-visible {
   border-radius: 6px;
   background: transparent;
   color: #334155;
-  font: inherit;
   font-weight: 700;
-  text-align: left;
-  cursor: pointer;
 }
 
-.home-category-list button:hover,
-.home-category-list button.active {
+.home-category-list a:hover {
   border-color: rgba(0, 155, 216, 0.26);
   background: linear-gradient(135deg, rgba(0, 155, 216, 0.1), rgba(140, 198, 63, 0.12));
   color: var(--brand-strong);
 }
 
-.home-category-list button span {
+.home-category-list a span {
   flex: 0 0 auto;
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
-}
-
-.home-search-card,
-.home-product-toolbar,
-.home-product-grid {
-  grid-column: 2;
-}
-
-.home-search-card {
-  grid-template-columns: minmax(0, 1fr) 128px;
-}
-
-.home-search-card #category-filter {
-  display: none;
-}
-
-.home-product-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .toolbar {
@@ -2147,15 +2129,8 @@ textarea.field {
     position: static;
   }
 
-  .home-product-section {
+  .home-middle-layout {
     grid-template-columns: 1fr;
-  }
-
-  .home-category-rail,
-  .home-search-card,
-  .home-product-toolbar,
-  .home-product-grid {
-    grid-column: 1;
   }
 
   .home-category-rail {
@@ -2242,11 +2217,6 @@ textarea.field {
   .content-stats,
   .contact-cards,
   .inline-controls {
-    grid-template-columns: 1fr;
-  }
-
-  .home-search-card,
-  .home-product-grid {
     grid-template-columns: 1fr;
   }
 

@@ -14,7 +14,8 @@ export default async function HomePage() {
     acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {});
-  const categories = Object.entries(categoryCounts).slice(0, 6);
+  const allCategories = Object.entries(categoryCounts);
+  const categories = allCategories.slice(0, 6);
   const inStockCount = products.filter((product) => product.stock > 0).length;
   const latestNews = news
     .filter((article) => article.published)
@@ -85,60 +86,83 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="section-block">
-          <div className="section-heading">
-            <span className="eyebrow">产品分类</span>
-            <h2>按应用场景快速发现产品</h2>
-            <p>保留现有产品库数据，按分类汇总展示，帮助采购和实验室人员更快进入检索。</p>
-          </div>
-          <div className="category-grid">
-            {categories.map(([category, count]) => (
-              <Link className="category-card" href="/products" key={category}>
-                <span>{category}</span>
-                <b>{count} 个产品</b>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <ProductBrowser compact products={products} />
-
-        {latestNews.length > 0 && (
-          <section className="section-block">
-            <div className="section-heading product-heading">
-              <div>
-                <span className="eyebrow">新闻中心</span>
-                <h2>公司新闻与产品资讯</h2>
-              </div>
-              <Link className="btn" href="/news">
-                查看全部新闻
-              </Link>
+        <div className="home-middle-layout">
+          <aside className="home-category-rail" aria-label="首页产品分类">
+            <div className="home-category-title">
+              <b>全部产品分类</b>
+              <span>{allCategories.length} 个分类</span>
             </div>
-            <div className="news-list">
-              {latestNews.map((article) => (
-                <article className="news-card" key={article.id}>
-                  <div className="news-date">
-                    <b>{article.publishedAt.slice(8, 10)}</b>
-                    <span>{article.publishedAt.slice(0, 7)}</span>
-                  </div>
-                  <div className="news-card-body">
-                    <div className="news-meta">
-                      <span>{article.category}</span>
-                      <span>阅读量：{article.views}</span>
-                    </div>
-                    <h2>
-                      <Link href={`/news/${article.slug}`}>{article.title}</Link>
-                    </h2>
-                    <p>{article.summary}</p>
-                    <Link className="locked" href={`/news/${article.slug}`}>
-                      查看全文
-                    </Link>
-                  </div>
-                </article>
+            <div className="home-category-list">
+              <Link href="/products">
+                全部产品
+                <span>{products.length}</span>
+              </Link>
+              {allCategories.map(([category, count]) => (
+                <Link href={`/products?category=${encodeURIComponent(category)}`} key={category}>
+                  {category}
+                  <span>{count}</span>
+                </Link>
               ))}
             </div>
-          </section>
-        )}
+          </aside>
+
+          <div className="home-middle-content">
+            <section className="section-block">
+              <div className="section-heading">
+                <span className="eyebrow">产品分类</span>
+                <h2>按应用场景快速发现产品</h2>
+                <p>保留现有产品库数据，按分类汇总展示，帮助采购和实验室人员更快进入检索。</p>
+              </div>
+              <div className="category-grid">
+                {categories.map(([category, count]) => (
+                  <Link className="category-card" href="/products" key={category}>
+                    <span>{category}</span>
+                    <b>{count} 个产品</b>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            <ProductBrowser compact products={products} />
+
+            {latestNews.length > 0 && (
+              <section className="section-block">
+                <div className="section-heading product-heading">
+                  <div>
+                    <span className="eyebrow">新闻中心</span>
+                    <h2>公司新闻与产品资讯</h2>
+                  </div>
+                  <Link className="btn" href="/news">
+                    查看全部新闻
+                  </Link>
+                </div>
+                <div className="news-list">
+                  {latestNews.map((article) => (
+                    <article className="news-card" key={article.id}>
+                      <div className="news-date">
+                        <b>{article.publishedAt.slice(8, 10)}</b>
+                        <span>{article.publishedAt.slice(0, 7)}</span>
+                      </div>
+                      <div className="news-card-body">
+                        <div className="news-meta">
+                          <span>{article.category}</span>
+                          <span>阅读量：{article.views}</span>
+                        </div>
+                        <h2>
+                          <Link href={`/news/${article.slug}`}>{article.title}</Link>
+                        </h2>
+                        <p>{article.summary}</p>
+                        <Link className="locked" href={`/news/${article.slug}`}>
+                          查看全文
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        </div>
 
         <section className="cta-band" id="support">
           <div>
