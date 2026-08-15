@@ -24,28 +24,71 @@ const sizeOptions = [
   { label: "标题", value: "6" }
 ];
 
-function runCommand(command: string, value?: string) {
-  document.execCommand(command, false, value);
+function isSelectionInside(root: HTMLElement, range: Range) {
+  return root.contains(range.commonAncestorContainer);
 }
 
 export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
+  const selectionRef = useRef<Range | null>(null);
+  const lastValueRef = useRef(value);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== value) {
-      editorRef.current.innerHTML = value;
+    const editor = editorRef.current;
+    if (!editor || value === lastValueRef.current) return;
+
+    const editorIsFocused = document.activeElement === editor;
+    if (!editorIsFocused) {
+      editor.innerHTML = value;
+      lastValueRef.current = value;
+      selectionRef.current = null;
     }
   }, [value]);
 
+  const saveSelection = () => {
+    const editor = editorRef.current;
+    const selection = window.getSelection();
+    if (!editor || !selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    if (isSelectionInside(editor, range)) {
+      selectionRef.current = range.cloneRange();
+    }
+  };
+
+  const restoreSelection = () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    editor.focus();
+    const selection = window.getSelection();
+    if (!selection) return;
+
+    selection.removeAllRanges();
+    if (selectionRef.current && isSelectionInside(editor, selectionRef.current)) {
+      selection.addRange(selectionRef.current);
+      return;
+    }
+
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    selection.addRange(range);
+    selectionRef.current = range.cloneRange();
+  };
+
   const sync = () => {
-    onChange(editorRef.current?.innerHTML || "");
+    const html = editorRef.current?.innerHTML || "";
+    lastValueRef.current = html;
+    onChange(html);
+    saveSelection();
   };
 
   const apply = (command: string, commandValue?: string) => {
-    editorRef.current?.focus();
-    runCommand(command, commandValue);
+    restoreSelection();
+    document.execCommand(command, false, commandValue);
     sync();
   };
 
@@ -94,22 +137,22 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
             </option>
           ))}
         </select>
-        <button type="button" className="btn" onClick={() => apply("bold")}>
+        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("bold")}>
           B
         </button>
-        <button type="button" className="btn" onClick={() => apply("italic")}>
+        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("italic")}>
           I
         </button>
-        <button type="button" className="btn" onClick={() => apply("underline")}>
+        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("underline")}>
           U
         </button>
-        <button type="button" className="btn" onClick={() => apply("justifyLeft")}>
+        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("justifyLeft")}>
           左
         </button>
-        <button type="button" className="btn" onClick={() => apply("justifyCenter")}>
+        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("justifyCenter")}>
           中
         </button>
-        <button type="button" className="btn" onClick={() => apply("justifyRight")}>
+        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("justifyRight")}>
           右
         </button>
         <label className="btn rich-upload">
@@ -117,7 +160,16 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
           <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
         </label>
       </div>
-      <div ref={editorRef} className="rich-content" contentEditable suppressContentEditableWarning onInput={sync} />
+      <div
+        ref={editorRef}
+        className="rich-content"
+        contentEditable
+        suppressContentEditableWarning
+        onFocus={saveSelection}
+        onMouseUp={saveSelection}
+        onKeyUp={saveSelection}
+        onInput={sync}
+      />
       {uploading && <span className="result-count">图片上传中...</span>}
       {message && <span className="result-count">{message}</span>}
     </div>

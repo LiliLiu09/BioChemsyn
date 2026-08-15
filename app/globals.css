@@ -1570,6 +1570,7 @@ textarea.field {
 .rich-content:empty::before {
   content: "在这里编辑正文，可以设置字体、字号，也可以直接插入图片";
   color: var(--muted);
+  pointer-events: none;
 }
 
 .rich-content img,
