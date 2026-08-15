@@ -261,7 +261,7 @@ textarea:focus-visible {
   position: relative;
   display: grid;
   width: 100vw;
-  min-height: 215px;
+  min-height: 108px;
   overflow: hidden;
   place-items: center;
   background: #fff;
@@ -2215,7 +2215,7 @@ textarea.field {
   }
 
   .home-scroll-slide {
-    min-height: 180px;
+    min-height: 90px;
   }
 
   .home-shell-layout {
@@ -2286,7 +2286,7 @@ textarea.field {
   }
 
   .home-scroll-slide {
-    min-height: 130px;
+    min-height: 65px;
   }
 
   .hero-copy h1 {
