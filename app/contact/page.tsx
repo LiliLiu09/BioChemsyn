@@ -1,3 +1,4 @@
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { RichTextContent } from "@/components/RichTextContent";
 import { getSiteContent } from "@/lib/cms";
@@ -17,6 +18,7 @@ export default async function ContactPage() {
           <h1>{site.contactTitle}</h1>
           <RichTextContent content={site.contactDescription} imageAlt="联系我们图片" />
         </section>
+        <Footer site={site} />
       </main>
     </div>
   );

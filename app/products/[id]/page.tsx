@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { ProductDetailActions } from "@/components/ProductDetailActions";
 import { getProducts, getSiteContent } from "@/lib/cms";
@@ -138,6 +139,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
           </div>
         </section>
+        <Footer site={site} />
       </main>
     </div>
   );

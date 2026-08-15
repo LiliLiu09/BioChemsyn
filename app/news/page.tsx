@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { getNewsArticles, getSiteContent } from "@/lib/cms";
 
@@ -48,6 +49,7 @@ export default async function NewsPage() {
             ))
           )}
         </section>
+        <Footer site={site} />
       </main>
     </div>
   );

@@ -1,3 +1,4 @@
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { InfoExplorer } from "@/components/InfoExplorer";
 import { getInfoArticles, getSiteContent } from "@/lib/cms";
@@ -21,6 +22,7 @@ export default async function InfoPage() {
           <p>按分类浏览凯森斯生物发布的产品资讯、采购说明和服务信息，也可以通过关键词快速搜索相关内容。</p>
         </section>
         <InfoExplorer articles={publishedInfo} />
+        <Footer site={site} />
       </main>
     </div>
   );

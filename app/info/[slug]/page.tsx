@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { RichTextContent } from "@/components/RichTextContent";
 import { getInfoArticles, getSiteContent } from "@/lib/cms";
@@ -37,6 +38,7 @@ export default async function InfoDetailPage({ params }: { params: Promise<{ slu
           <p className="article-summary">{article.summary}</p>
           <RichTextContent content={article.content} imageAlt="资讯图片" />
         </article>
+        <Footer site={site} />
       </main>
     </div>
   );

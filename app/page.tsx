@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { ProductBrowser } from "@/components/ProductBrowser";
 import { getNewsArticles, getProducts, getSiteContent } from "@/lib/cms";
@@ -158,16 +159,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <footer className="site-footer">
-          <div>
-            <b>{site.companyName}</b>
-            <span>{site.tagline}</span>
-          </div>
-          <div>
-            <span>{site.contactEmail}</span>
-            <span>{site.address}</span>
-          </div>
-        </footer>
+        <Footer site={site} />
       </main>
     </div>
   );
