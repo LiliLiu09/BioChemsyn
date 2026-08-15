@@ -28,7 +28,7 @@ export function Header({ site }: { site: SiteContent }) {
     <>
       <div className="topbar">
         <div className="topbar-inner">
-          <span>{site.notice}</span>
+          <span>你好，欢迎来到上海凯森斯科技有限公司！</span>
           <a href={`tel:${site.supportPhone}`}>
             <Phone size={14} aria-hidden="true" />
             {site.supportPhone}
