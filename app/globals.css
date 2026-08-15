@@ -237,6 +237,21 @@ textarea:focus-visible {
   padding: 34px 0 56px;
 }
 
+.home-main {
+  width: min(1480px, calc(100% - 28px));
+}
+
+.home-shell-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.home-page-content {
+  min-width: 0;
+}
+
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(330px, 0.85fr);
@@ -584,14 +599,6 @@ textarea:focus-visible {
   align-items: flex-end;
   justify-content: space-between;
   gap: 14px;
-}
-
-.home-middle-layout {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-  margin-top: 42px;
 }
 
 .home-middle-content {
@@ -2129,7 +2136,7 @@ textarea.field {
     position: static;
   }
 
-  .home-middle-layout {
+  .home-shell-layout {
     grid-template-columns: 1fr;
   }
 
