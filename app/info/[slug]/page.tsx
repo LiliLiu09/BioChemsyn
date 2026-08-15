@@ -3,14 +3,14 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { RichTextContent } from "@/components/RichTextContent";
-import { getNewsArticles, getSiteContent } from "@/lib/cms";
+import { getInfoArticles, getSiteContent } from "@/lib/cms";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const [{ slug }, site, news] = await Promise.all([params, getSiteContent(), getNewsArticles()]);
-  const article = news.find((item) => item.slug === slug && item.published);
+export default async function InfoDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const [{ slug }, site, info] = await Promise.all([params, getSiteContent(), getInfoArticles()]);
+  const article = info.find((item) => item.slug === slug && item.published);
 
   if (!article) {
     notFound();
@@ -21,8 +21,8 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
       <Header site={site} />
       <main className="main">
         <article className="article-page">
-          <Link className="locked" href="/news">
-            返回新闻中心
+          <Link className="locked" href="/info">
+            返回资讯信息
           </Link>
           <header>
             <span className="eyebrow">{article.category}</span>
@@ -36,7 +36,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
           </header>
           {article.coverImage && <img className="article-cover" src={article.coverImage} alt={article.title} />}
           <p className="article-summary">{article.summary}</p>
-          <RichTextContent content={article.content} imageAlt="新闻图片" />
+          <RichTextContent content={article.content} imageAlt="资讯图片" />
         </article>
         <Footer site={site} />
       </main>

@@ -22,14 +22,9 @@ export function ProductDetailActions({ productId }: { productId: string }) {
   };
 
   return (
-    <div className="hero-actions">
-      <Link className="btn primary large" href="/cart" onClick={addToCart}>
-        <ShoppingCart size={17} aria-hidden="true" />
-        加入询价车
-      </Link>
-      <Link className="btn large" href="/products">
-        继续浏览
-      </Link>
-    </div>
+    <Link className="btn primary large" href="/cart" onClick={addToCart}>
+      <ShoppingCart size={17} aria-hidden="true" />
+      加入询价车
+    </Link>
   );
 }

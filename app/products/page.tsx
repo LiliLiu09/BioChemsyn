@@ -1,3 +1,4 @@
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { ProductBrowser } from "@/components/ProductBrowser";
 import { getProducts, getSiteContent } from "@/lib/cms";
@@ -13,6 +14,7 @@ export default async function ProductsPage() {
       <Header site={site} />
       <main className="main">
         <ProductBrowser products={products} />
+        <Footer site={site} />
       </main>
     </div>
   );

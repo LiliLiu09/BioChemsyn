@@ -2,6 +2,7 @@
 
 import { Search, ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { cartStorageKey } from "@/lib/session";
 import type { Product } from "@/lib/types";
@@ -40,15 +41,16 @@ function valueOrDash(value: string | number) {
 }
 
 export function ProductBrowser({ compact = false, products }: { compact?: boolean; products: Product[] }) {
+  const searchParams = useSearchParams();
   const [keyword, setKeyword] = useState("");
-  const [category, setCategory] = useState("all");
+  const [category, setCategory] = useState(searchParams.get("category") || "all");
   const categories = useMemo(
     () => Array.from(new Set(products.map((product) => product.category || "未分类"))),
     [products]
   );
 
   const filtered = useMemo(
-    () => products.filter((product) => matches(product, keyword, category)).slice(0, compact ? 6 : undefined),
+    () => products.filter((product) => matches(product, keyword, category)).slice(0, compact ? 20 : undefined),
     [products, keyword, category, compact]
   );
 

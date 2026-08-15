@@ -7,6 +7,7 @@ export type Product = {
   nameEn: string;
   synonyms: string;
   category: string;
+  brand: string;
   formula: string;
   molecularWeight: string;
   purity: string;
@@ -16,6 +17,8 @@ export type Product = {
   leadTime: string;
   image: string;
   details: string;
+  references: string;
+  certificate: string;
   scaleNote: string;
   tags: string[];
 };
@@ -41,7 +44,7 @@ export type QuoteLine = {
 
 export type QuoteRequest = {
   id: string;
-  status: "待处理" | "已报价" | "已关闭";
+  status: "待处理" | "已报价" | "已关闭" | "已处理";
   createdAt: string;
   customer: QuoteCustomer;
   lines: QuoteLine[];
@@ -49,6 +52,21 @@ export type QuoteRequest = {
 };
 
 export type NewsArticle = {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  author: string;
+  source: string;
+  publishedAt: string;
+  summary: string;
+  content: string;
+  coverImage: string;
+  views: number;
+  published: boolean;
+};
+
+export type InfoArticle = {
   id: string;
   slug: string;
   title: string;
@@ -74,4 +92,11 @@ export type SiteContent = {
   companyName: string;
   contactEmail: string;
   address: string;
+  aboutTitle: string;
+  aboutDescription: string;
+  aboutQrImage: string;
+  contactTitle: string;
+  contactDescription: string;
+  contactQrImage: string;
+  contactCta: string;
 };
