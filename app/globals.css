@@ -240,7 +240,7 @@ textarea:focus-visible {
 .home-scroll-banner {
   position: relative;
   width: 100%;
-  height: 215px;
+  height: 430px;
   overflow: hidden;
   border-bottom: 1px solid rgba(216, 226, 234, 0.9);
   background:
@@ -273,7 +273,7 @@ textarea:focus-visible {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .home-scroll-dots {
@@ -2217,7 +2217,7 @@ textarea.field {
   }
 
   .home-scroll-banner {
-    height: 215px;
+    height: 430px;
   }
 
   .home-shell-layout {
@@ -2288,7 +2288,7 @@ textarea.field {
   }
 
   .home-scroll-banner {
-    height: 215px;
+    height: 430px;
   }
 
   .home-scroll-dots {
