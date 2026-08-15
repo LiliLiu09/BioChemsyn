@@ -18,12 +18,6 @@ export default async function AboutPage() {
             <h1>{site.aboutTitle}</h1>
             <RichTextContent content={site.aboutDescription} imageAlt="关于我们图片" />
           </div>
-
-          {site.aboutQrImage && (
-            <div className="about-qr">
-              <img src={site.aboutQrImage} alt="凯森斯生物二维码" />
-            </div>
-          )}
         </section>
       </main>
     </div>

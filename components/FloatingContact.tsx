@@ -24,7 +24,7 @@ export function FloatingContact({ site }: { site: SiteContent }) {
         <QrCode size={24} aria-hidden="true" />
         <div className="float-popover qr-popover">
           <b>微信</b>
-          {site.contactQrImage || site.aboutQrImage ? <img src={site.contactQrImage || site.aboutQrImage} alt="微信二维码" /> : <span>后台可上传二维码</span>}
+          {site.contactQrImage || site.aboutQrImage ? <img src={site.contactQrImage || site.aboutQrImage} alt="微信二维码" /> : <span>暂无二维码</span>}
         </div>
       </div>
       <div className="float-item">
