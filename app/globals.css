@@ -76,9 +76,13 @@ textarea:focus-visible {
 }
 
 .topbar-inner,
-.header-inner,
-.main {
+.header-inner {
   width: min(1360px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.main {
+  width: min(2800px, calc(100% - 48px));
   margin: 0 auto;
 }
 
