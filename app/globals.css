@@ -347,13 +347,13 @@ textarea:focus-visible {
 }
 
 .home-main {
-  width: min(1480px, calc(100% - 28px));
+  width: min(3200px, calc(100% - 48px));
 }
 
 .home-shell-layout {
   display: grid;
-  grid-template-columns: 87px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 22px;
   align-items: start;
 }
 
@@ -795,8 +795,8 @@ textarea:focus-visible {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
 }
 
 .product-card {
