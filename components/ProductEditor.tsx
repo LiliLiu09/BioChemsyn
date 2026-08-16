@@ -129,7 +129,7 @@ function createProduct(seed?: Partial<Product>): Product {
 }
 
 function normalizeHeader(header: string) {
-  return header.trim().replace(/[\s_-]+/g, " ").toLowerCase();
+  return header.replace(/^\ufeff/, "").trim().replace(/[\s_-]+/g, " ").toLowerCase();
 }
 
 function parseCsv(text: string) {
@@ -180,6 +180,54 @@ function productValue(product: Product, key: keyof Product) {
   const value = product[key];
   if (Array.isArray(value)) return value.join("，");
   return String(value ?? "");
+}
+
+function normalizeRows(rows: unknown[][]) {
+  return rows
+    .map((row) => row.map((value) => String(value ?? "").trim()))
+    .filter((row) => row.some((value) => value.length > 0));
+}
+
+function transposeVerticalRows(rows: string[][]) {
+  if (rows.length < 2) return rows;
+  const firstColumn = rows.map((row) => normalizeHeader(row[0] || ""));
+  const recognizedCount = firstColumn.filter((header) => csvHeaderMap[header]).length;
+  const maxColumns = Math.max(...rows.map((row) => row.length));
+  if (recognizedCount < 2 || maxColumns < 2) return rows;
+
+  const headers = rows.map((row) => row[0] || "");
+  const records: string[][] = [];
+  for (let columnIndex = 1; columnIndex < maxColumns; columnIndex += 1) {
+    records.push(rows.map((row) => row[columnIndex] || ""));
+  }
+  return [headers, ...records];
+}
+
+function draftHasProductData(draft: Partial<Product>) {
+  return Boolean(
+    draft.id ||
+      draft.sku ||
+      draft.catalogNo ||
+      draft.cas ||
+      draft.nameCn ||
+      draft.nameEn ||
+      draft.synonyms ||
+      draft.category ||
+      draft.brand ||
+      draft.formula ||
+      draft.molecularWeight ||
+      draft.purity ||
+      draft.packageSize ||
+      draft.leadTime ||
+      draft.image ||
+      draft.details ||
+      draft.references ||
+      draft.certificate ||
+      draft.scaleNote ||
+      (Array.isArray(draft.tags) && draft.tags.length > 0) ||
+      Number(draft.stock || 0) > 0 ||
+      Number(draft.price || 0) > 0
+  );
 }
 
 export function ProductEditor({ initialProducts }: { initialProducts: Product[] }) {
@@ -308,14 +356,23 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     setMessage("图片已上传，请保存全部产品");
   };
 
-  const importCsv = async (file: File | undefined) => {
+  const importSpreadsheet = async (file: File | undefined) => {
     if (!file) return;
     setMessage("");
     try {
-      const rows = parseCsv(await file.text());
+      const isCsv = file.name.toLowerCase().endsWith(".csv");
+      let rawRows: unknown[][];
+      if (isCsv) {
+        rawRows = parseCsv(await file.text());
+      } else {
+        const { read, utils } = await import("xlsx");
+        const workbook = read(await file.arrayBuffer(), { type: "array" });
+        rawRows = utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, blankrows: false, defval: "" }) as unknown[][];
+      }
+      const rows = transposeVerticalRows(normalizeRows(rawRows));
       const [headerRow, ...dataRows] = rows;
       if (!headerRow || dataRows.length === 0) {
-        setMessage("CSV 文件没有可导入的数据");
+        setMessage("表格文件没有可导入的数据");
         return;
       }
       const keys = headerRow.map((header) => csvHeaderMap[normalizeHeader(header)]);
@@ -333,12 +390,13 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
               draft[key] = value as never;
             }
           });
-          return createProduct(draft);
+          return draft;
         })
-        .filter((product) => product.catalogNo || product.sku || product.nameCn || product.nameEn);
+        .filter(draftHasProductData)
+        .map((draft) => createProduct(draft));
 
       if (imported.length === 0) {
-        setMessage("没有识别到可导入的产品。请确认 CSV 表头包含产品编号、中文名或英文名。");
+        setMessage("没有识别到可导入的产品。请确认表头包含产品编号、中文名、英文名、CAS 等字段。");
         return;
       }
 
@@ -346,9 +404,9 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       setSelectedIds([]);
       setMode("grid");
       setActiveId("");
-      setMessage(`已从 CSV 导入 ${imported.length} 个产品，请检查后保存全部产品。`);
+      setMessage(`已从表格导入 ${imported.length} 个产品，请检查后保存全部产品。`);
     } catch {
-      setMessage("CSV 解析失败，请检查文件格式。");
+      setMessage("表格解析失败，请上传 .xlsx、.xls 或 .csv 文件。");
     } finally {
       if (csvInputRef.current) csvInputRef.current.value = "";
     }
@@ -504,14 +562,14 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
           <button className="btn" type="button" onClick={save}>
             保存全部
           </button>
-          <input ref={csvInputRef} className="sr-only" type="file" accept=".csv,text/csv" onChange={(event) => importCsv(event.target.files?.[0])} />
+          <input ref={csvInputRef} className="sr-only" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" onChange={(event) => importSpreadsheet(event.target.files?.[0])} />
         </div>
       </div>
 
       {products.length === 0 ? (
         <div className="empty-state">
           <b>还没有产品</b>
-          <span>点击“添加产品”创建单个产品，或点击“批量上传”导入 CSV。</span>
+          <span>点击“添加产品”创建单个产品，或点击“批量上传”导入 Excel 表格。</span>
         </div>
       ) : (
         <div className="product-admin-grid-wrap">
