@@ -113,12 +113,19 @@ const gridColumns: Array<{ key: keyof Product; label: string }> = [
   { key: "scaleNote", label: "规模说明" }
 ];
 
-function createProduct(seed?: Partial<Product>): Product {
-  const now = Date.now();
-  const catalogNo = seed?.catalogNo || seed?.sku || `SKU-${now}`;
+function nextProductId(products: Array<Pick<Product, "id">>) {
+  const maxId = products.reduce((max, product) => {
+    const match = product.id.match(/^p-(\d+)$/);
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0);
+  return `p-${maxId + 1}`;
+}
+
+function createProduct(seed?: Partial<Product>, fallbackId = "p-1"): Product {
+  const catalogNo = seed?.catalogNo || seed?.sku || `SKU-${fallbackId.replace(/^p-/, "")}`;
   return {
     ...emptyProduct,
-    id: seed?.id || `p-${now}-${Math.random().toString(36).slice(2, 8)}`,
+    id: seed?.id || fallbackId,
     ...seed,
     catalogNo,
     sku: seed?.sku || catalogNo,
@@ -282,7 +289,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   };
 
   const addProduct = () => {
-    const product = createProduct({ nameCn: "新产品", nameEn: "New Product" });
+    const product = createProduct({ nameCn: "新产品", nameEn: "New Product" }, nextProductId(products));
     setProducts((current) => [...current, product]);
     setSelectedIds([]);
     setActiveId(product.id);
@@ -376,6 +383,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         return;
       }
       const keys = headerRow.map((header) => csvHeaderMap[normalizeHeader(header)]);
+      let nextImportedNumber = Number(nextProductId(products).replace(/^p-/, ""));
       const imported = dataRows
         .map((row) => {
           const draft: Partial<Product> = {};
@@ -393,7 +401,11 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
           return draft;
         })
         .filter(draftHasProductData)
-        .map((draft) => createProduct(draft));
+        .map((draft) => {
+          const product = createProduct(draft, `p-${nextImportedNumber}`);
+          if (!draft.id) nextImportedNumber += 1;
+          return product;
+        });
 
       if (imported.length === 0) {
         setMessage("没有识别到可导入的产品。请确认表头包含产品编号、中文名、英文名、CAS 等字段。");
