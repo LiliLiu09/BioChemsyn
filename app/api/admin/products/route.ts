@@ -3,10 +3,18 @@ import { requireAdmin } from "@/lib/adminAuth";
 import { getProducts, saveProducts } from "@/lib/cms";
 import type { Product } from "@/lib/types";
 
-function normalizeProduct(product: Product): Product {
+function nextProductId(products: Array<Pick<Product, "id">>) {
+  const maxId = products.reduce((max, product) => {
+    const match = product.id.match(/^p-(\d+)$/);
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0);
+  return `p-${maxId + 1}`;
+}
+
+function normalizeProduct(product: Product, fallbackId: string): Product {
   return {
     ...product,
-    id: product.id || `p-${Date.now()}`,
+    id: product.id || fallbackId,
     catalogNo: product.catalogNo || product.sku || "",
     sku: product.sku || product.catalogNo || "",
     synonyms: product.synonyms || "",
@@ -35,7 +43,12 @@ export async function GET() {
 export async function PUT(request: Request) {
   await requireAdmin();
   const body = (await request.json()) as { products?: Product[] };
-  const products = (body.products || []).map(normalizeProduct);
+  let nextIdNumber = Number(nextProductId(body.products || []).replace(/^p-/, ""));
+  const products = (body.products || []).map((product) => {
+    const normalized = normalizeProduct(product, `p-${nextIdNumber}`);
+    if (!product.id) nextIdNumber += 1;
+    return normalized;
+  });
 
   await saveProducts(products);
   return NextResponse.json({ ok: true, products });
