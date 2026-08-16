@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Product } from "@/lib/types";
 
 const emptyProduct: Product = {
@@ -28,14 +28,170 @@ const emptyProduct: Product = {
   tags: []
 };
 
+const csvHeaderMap: Record<string, keyof Product> = {
+  id: "id",
+  sku: "sku",
+  "catalog no": "catalogNo",
+  catalog: "catalogNo",
+  catalogno: "catalogNo",
+  "catalog #": "catalogNo",
+  "产品编号": "catalogNo",
+  "货号": "catalogNo",
+  cas: "cas",
+  "cas号": "cas",
+  "cas number": "cas",
+  "中文名": "nameCn",
+  "中文名称": "nameCn",
+  namecn: "nameCn",
+  "英文名": "nameEn",
+  "英文名称": "nameEn",
+  nameen: "nameEn",
+  synonyms: "synonyms",
+  "同义词": "synonyms",
+  category: "category",
+  "分类": "category",
+  "产品分类": "category",
+  brand: "brand",
+  "品牌": "brand",
+  formula: "formula",
+  "分子式": "formula",
+  molecularweight: "molecularWeight",
+  "molecular weight": "molecularWeight",
+  "分子量": "molecularWeight",
+  purity: "purity",
+  "纯度": "purity",
+  stock: "stock",
+  "库存": "stock",
+  "现货": "stock",
+  packagesize: "packageSize",
+  "pack size": "packageSize",
+  "package size": "packageSize",
+  "包装": "packageSize",
+  price: "price",
+  "价格": "price",
+  leadtime: "leadTime",
+  "lead time": "leadTime",
+  "货期": "leadTime",
+  image: "image",
+  "图片": "image",
+  "图片地址": "image",
+  details: "details",
+  "基本信息": "details",
+  references: "references",
+  "参考文献": "references",
+  certificate: "certificate",
+  "质检证书": "certificate",
+  scalenote: "scaleNote",
+  "scale note": "scaleNote",
+  "规模说明": "scaleNote",
+  tags: "tags",
+  "标签": "tags"
+};
+
+const gridColumns: Array<{ key: keyof Product; label: string }> = [
+  { key: "id", label: "ID" },
+  { key: "sku", label: "SKU" },
+  { key: "catalogNo", label: "产品编号" },
+  { key: "nameCn", label: "中文名" },
+  { key: "nameEn", label: "英文名" },
+  { key: "category", label: "产品分类" },
+  { key: "cas", label: "CAS 号" },
+  { key: "formula", label: "分子式" },
+  { key: "molecularWeight", label: "分子量" },
+  { key: "purity", label: "纯度" },
+  { key: "packageSize", label: "包装" },
+  { key: "leadTime", label: "货期" },
+  { key: "price", label: "价格" },
+  { key: "stock", label: "库存" },
+  { key: "brand", label: "品牌" },
+  { key: "synonyms", label: "同义词" },
+  { key: "image", label: "图片" },
+  { key: "tags", label: "标签" },
+  { key: "details", label: "基本信息" },
+  { key: "references", label: "参考文献" },
+  { key: "certificate", label: "质检证书" },
+  { key: "scaleNote", label: "规模说明" }
+];
+
+function createProduct(seed?: Partial<Product>): Product {
+  const now = Date.now();
+  const catalogNo = seed?.catalogNo || seed?.sku || `SKU-${now}`;
+  return {
+    ...emptyProduct,
+    id: seed?.id || `p-${now}-${Math.random().toString(36).slice(2, 8)}`,
+    ...seed,
+    catalogNo,
+    sku: seed?.sku || catalogNo,
+    stock: Number(seed?.stock || 0),
+    price: Number(seed?.price || 0),
+    tags: Array.isArray(seed?.tags) ? seed.tags : typeof seed?.tags === "string" ? String(seed.tags).split(/[;，,]/).map((tag) => tag.trim()).filter(Boolean) : []
+  };
+}
+
+function normalizeHeader(header: string) {
+  return header.trim().replace(/[\s_-]+/g, " ").toLowerCase();
+}
+
+function parseCsv(text: string) {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      cell += '"';
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (char === "," && !inQuotes) {
+      row.push(cell.trim());
+      cell = "";
+      continue;
+    }
+
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") index += 1;
+      row.push(cell.trim());
+      if (row.some((value) => value.length > 0)) rows.push(row);
+      row = [];
+      cell = "";
+      continue;
+    }
+
+    cell += char;
+  }
+
+  row.push(cell.trim());
+  if (row.some((value) => value.length > 0)) rows.push(row);
+  return rows;
+}
+
+function productValue(product: Product, key: keyof Product) {
+  const value = product[key];
+  if (Array.isArray(value)) return value.join("，");
+  return String(value ?? "");
+}
+
 export function ProductEditor({ initialProducts }: { initialProducts: Product[] }) {
-  const [products, setProducts] = useState(initialProducts.map((product) => ({ ...emptyProduct, ...product })));
-  const [activeId, setActiveId] = useState(initialProducts[0]?.id || "");
+  const [products, setProducts] = useState(initialProducts.map((product) => createProduct(product)));
+  const [activeId, setActiveId] = useState("");
+  const [mode, setMode] = useState<"grid" | "detail">("grid");
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
   const [newCategory, setNewCategory] = useState("");
-  const active = products.find((product) => product.id === activeId) || products[0];
+  const csvInputRef = useRef<HTMLInputElement>(null);
+  const active = products.find((product) => product.id === activeId);
   const categories = useMemo(() => Array.from(new Set(products.map((product) => product.category.trim()).filter(Boolean))).sort(), [products]);
 
   const update = (key: keyof Product, value: string | number | string[]) => {
@@ -53,6 +209,12 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     setErrors((current) => ({ ...current, [key]: "" }));
   };
 
+  const openDetail = (id: string) => {
+    setActiveId(id);
+    setMode("detail");
+    setMessage("");
+  };
+
   const addCategory = () => {
     const category = newCategory.trim();
     if (!category || !active) return;
@@ -62,25 +224,27 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   };
 
   const addProduct = () => {
-    const now = Date.now();
-    const catalogNo = `SKU-${now}`;
-    const product = { ...emptyProduct, id: `p-${now}`, nameCn: "新产品", nameEn: "New Product", sku: catalogNo, catalogNo };
+    const product = createProduct({ nameCn: "新产品", nameEn: "New Product" });
     setProducts((current) => [...current, product]);
     setActiveId(product.id);
+    setMode("detail");
+    setMessage("已创建新产品，请填写信息后保存全部产品。");
   };
 
   const removeProduct = () => {
     if (!active) return;
-    const next = products.filter((product) => product.id !== active.id);
-    setProducts(next);
-    setActiveId(next[0]?.id || "");
+    setProducts((current) => current.filter((product) => product.id !== active.id));
+    setActiveId("");
+    setMode("grid");
+    setMessage("已删除当前产品，请保存全部产品。");
   };
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
-    products.forEach((product) => {
-      if (!(product.catalogNo || product.sku).trim()) nextErrors.catalogNo = "产品编号不能为空";
-      if (!product.nameEn.trim() && !product.nameCn.trim()) nextErrors.nameEn = "产品名称不能为空";
+    products.forEach((product, index) => {
+      const label = product.catalogNo || product.sku || product.nameCn || product.nameEn || `第 ${index + 1} 行`;
+      if (!(product.catalogNo || product.sku).trim()) nextErrors.catalogNo = `${label}：产品编号不能为空`;
+      if (!product.nameEn.trim() && !product.nameCn.trim()) nextErrors.nameEn = `${label}：产品名称不能为空`;
     });
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -119,37 +283,63 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     setMessage("图片已上传，请保存全部产品");
   };
 
-  if (!active) {
-    return (
-      <div className="panel admin-panel">
-        <button className="btn primary" type="button" onClick={addProduct}>
-          新增第一个产品
-        </button>
-      </div>
-    );
-  }
+  const importCsv = async (file: File | undefined) => {
+    if (!file) return;
+    setMessage("");
+    try {
+      const rows = parseCsv(await file.text());
+      const [headerRow, ...dataRows] = rows;
+      if (!headerRow || dataRows.length === 0) {
+        setMessage("CSV 文件没有可导入的数据");
+        return;
+      }
+      const keys = headerRow.map((header) => csvHeaderMap[normalizeHeader(header)]);
+      const imported = dataRows
+        .map((row) => {
+          const draft: Partial<Product> = {};
+          row.forEach((value, index) => {
+            const key = keys[index];
+            if (!key || value === "") return;
+            if (key === "price" || key === "stock") {
+              draft[key] = Number(value) as never;
+            } else if (key === "tags") {
+              draft.tags = value.split(/[;，,]/).map((tag) => tag.trim()).filter(Boolean);
+            } else {
+              draft[key] = value as never;
+            }
+          });
+          return createProduct(draft);
+        })
+        .filter((product) => product.catalogNo || product.sku || product.nameCn || product.nameEn);
 
-  return (
-    <div className="admin-products">
-      <div className="panel admin-list">
+      if (imported.length === 0) {
+        setMessage("没有识别到可导入的产品。请确认 CSV 表头包含产品编号、中文名或英文名。");
+        return;
+      }
+
+      setProducts((current) => [...current, ...imported]);
+      setMode("grid");
+      setActiveId("");
+      setMessage(`已从 CSV 导入 ${imported.length} 个产品，请检查后保存全部产品。`);
+    } catch {
+      setMessage("CSV 解析失败，请检查文件格式。");
+    } finally {
+      if (csvInputRef.current) csvInputRef.current.value = "";
+    }
+  };
+
+  if (mode === "detail" && active) {
+    return (
+      <div className="panel admin-panel product-detail-editor">
         <div className="toolbar">
-          <h2>产品</h2>
-          <button className="btn primary" type="button" onClick={addProduct}>
-            新增
-          </button>
-        </div>
-        {products.map((product) => (
-          <button className={`admin-list-item ${product.id === active.id ? "active" : ""}`} key={product.id} type="button" onClick={() => setActiveId(product.id)}>
-            <b>{product.nameCn || product.nameEn || "未命名产品"}</b>
-            <span>{product.catalogNo || product.sku || "未填写产品编号"}</span>
-            {product.category && <span>{product.category}</span>}
-          </button>
-        ))}
-      </div>
-      <div className="panel admin-panel">
-        <div className="toolbar">
-          <h1>产品管理</h1>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div>
+            <h1>产品详情</h1>
+            <p className="admin-subtitle">{active.catalogNo || active.sku || "新产品"}</p>
+          </div>
+          <div className="admin-actions">
+            <button className="btn" type="button" onClick={() => setMode("grid")}>
+              返回产品列表
+            </button>
             <button className="btn" type="button" onClick={removeProduct}>
               删除
             </button>
@@ -199,6 +389,10 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             {errors.catalogNo && <span className="field-error">{errors.catalogNo}</span>}
           </label>
           <label className="admin-field">
+            <span>记录 ID</span>
+            <input className="field" value={active.id} readOnly />
+          </label>
+          <label className="admin-field">
             <span>品牌</span>
             <input className="field" value={active.brand} onChange={(event) => update("brand", event.target.value)} />
           </label>
@@ -231,8 +425,16 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             <input className="field" type="number" min={0} value={active.price} onChange={(event) => update("price", Number(event.target.value))} />
           </label>
           <label className="admin-field">
+            <span>库存</span>
+            <input className="field" type="number" min={0} value={active.stock} onChange={(event) => update("stock", Number(event.target.value))} />
+          </label>
+          <label className="admin-field full">
             <span>同义词</span>
             <input className="field" value={active.synonyms} onChange={(event) => update("synonyms", event.target.value)} />
+          </label>
+          <label className="admin-field full">
+            <span>标签</span>
+            <input className="field" value={active.tags.join("，")} onChange={(event) => update("tags", event.target.value.split(/[;，,]/).map((tag) => tag.trim()).filter(Boolean))} placeholder="多个标签用逗号分隔" />
           </label>
           <label className="admin-field full">
             <span>基本信息</span>
@@ -246,9 +448,74 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             <span>质检证书</span>
             <textarea className="field" value={active.certificate} onChange={(event) => update("certificate", event.target.value)} />
           </label>
+          <label className="admin-field full">
+            <span>规模说明</span>
+            <textarea className="field" value={active.scaleNote} onChange={(event) => update("scaleNote", event.target.value)} />
+          </label>
         </div>
         {message && <div className="notice">{message}</div>}
       </div>
+    );
+  }
+
+  return (
+    <div className="panel admin-panel product-grid-panel">
+      <div className="toolbar">
+        <div>
+          <h1>产品管理</h1>
+          <p className="admin-subtitle">以表格方式查看全部产品，点击详情进入单个产品表单。</p>
+        </div>
+        <div className="admin-actions">
+          <button className="btn primary" type="button" onClick={addProduct}>
+            添加产品
+          </button>
+          <button className="btn" type="button" onClick={() => csvInputRef.current?.click()}>
+            批量上传
+          </button>
+          <button className="btn" type="button" onClick={save}>
+            保存全部
+          </button>
+          <input ref={csvInputRef} className="sr-only" type="file" accept=".csv,text/csv" onChange={(event) => importCsv(event.target.files?.[0])} />
+        </div>
+      </div>
+
+      {products.length === 0 ? (
+        <div className="empty-state">
+          <b>还没有产品</b>
+          <span>点击“添加产品”创建单个产品，或点击“批量上传”导入 CSV。</span>
+        </div>
+      ) : (
+        <div className="product-admin-grid-wrap">
+          <table className="product-admin-grid">
+            <thead>
+              <tr>
+                <th>操作</th>
+                {gridColumns.map((column) => (
+                  <th key={column.key}>{column.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((product) => (
+                <tr key={product.id}>
+                  <td>
+                    <button className="btn small" type="button" onClick={() => openDetail(product.id)}>
+                      详情
+                    </button>
+                  </td>
+                  {gridColumns.map((column) => (
+                    <td key={column.key} title={productValue(product, column.key)}>
+                      {productValue(product, column.key) || "—"}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {message && <div className="notice">{message}</div>}
     </div>
   );
 }

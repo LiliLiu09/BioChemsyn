@@ -233,6 +233,12 @@ textarea:focus-visible {
   padding-inline: 18px;
 }
 
+.btn.small {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
 .main {
   padding: 34px 0 56px;
 }
@@ -1931,6 +1937,20 @@ textarea.field {
   padding: 20px;
 }
 
+.admin-subtitle {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .admin-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1981,6 +2001,91 @@ textarea.field {
 .admin-list-item.active {
   background: #eef7f5;
   border-color: #b7dcd6;
+}
+
+.product-grid-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.product-detail-editor {
+  display: grid;
+  gap: 16px;
+}
+
+.product-admin-grid-wrap {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.product-admin-grid {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.product-admin-grid th,
+.product-admin-grid td {
+  max-width: 220px;
+  padding: 10px 12px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-admin-grid th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #eef8fb;
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.product-admin-grid th:first-child,
+.product-admin-grid td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 82px;
+  background: #fff;
+}
+
+.product-admin-grid th:first-child {
+  z-index: 3;
+  background: #e7f6fb;
+}
+
+.product-admin-grid tbody tr:hover td {
+  background: #f8fbfc;
+}
+
+.product-admin-grid tbody tr:hover td:first-child {
+  background: #f8fbfc;
+}
+
+.empty-state {
+  display: grid;
+  gap: 6px;
+  padding: 28px;
+  border: 1px dashed #b7c9d6;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty-state b {
+  color: var(--ink);
+  font-size: 18px;
 }
 
 .quote-filter-row {
