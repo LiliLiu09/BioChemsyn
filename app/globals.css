@@ -240,7 +240,8 @@ textarea:focus-visible {
 .home-scroll-banner {
   position: relative;
   width: 100%;
-  height: 430px;
+  aspect-ratio: 1920 / 430;
+  height: auto;
   overflow: hidden;
   border-bottom: 1px solid rgba(216, 226, 234, 0.9);
   background:
@@ -275,7 +276,7 @@ textarea:focus-visible {
   max-width: 100% !important;
   height: 100% !important;
   max-height: 100% !important;
-  object-fit: fill !important;
+  object-fit: contain !important;
   object-position: center center;
 }
 
@@ -2219,10 +2220,6 @@ textarea.field {
     position: static;
   }
 
-  .home-scroll-banner {
-    height: 430px;
-  }
-
   .home-shell-layout {
     grid-template-columns: 1fr;
   }
@@ -2288,10 +2285,6 @@ textarea.field {
 
   .hero-copy {
     padding: 28px;
-  }
-
-  .home-scroll-banner {
-    height: 430px;
   }
 
   .home-scroll-dots {
