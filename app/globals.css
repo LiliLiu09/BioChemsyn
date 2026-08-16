@@ -347,7 +347,7 @@ textarea:focus-visible {
 }
 
 .home-main {
-  width: min(3200px, calc(100% - 48px));
+  width: min(2800px, calc(100% - 48px));
 }
 
 .home-shell-layout {
