@@ -2029,6 +2029,13 @@ textarea.field {
   gap: 16px;
 }
 
+.product-detail-editor .admin-field > span:first-child {
+  color: var(--ink);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
 .product-admin-grid-wrap {
   overflow: auto;
   border: 1px solid var(--line);
