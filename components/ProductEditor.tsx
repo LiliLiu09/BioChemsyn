@@ -190,9 +190,11 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const active = products.find((product) => product.id === activeId);
   const categories = useMemo(() => Array.from(new Set(products.map((product) => product.category.trim()).filter(Boolean))).sort(), [products]);
+  const allSelected = products.length > 0 && selectedIds.length === products.length;
 
   const update = (key: keyof Product, value: string | number | string[]) => {
     if (!active) return;
@@ -215,6 +217,14 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     setMessage("");
   };
 
+  const toggleSelected = (id: string, checked: boolean) => {
+    setSelectedIds((current) => (checked ? Array.from(new Set([...current, id])) : current.filter((item) => item !== id)));
+  };
+
+  const toggleAllSelected = (checked: boolean) => {
+    setSelectedIds(checked ? products.map((product) => product.id) : []);
+  };
+
   const addCategory = () => {
     const category = newCategory.trim();
     if (!category || !active) return;
@@ -226,6 +236,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const addProduct = () => {
     const product = createProduct({ nameCn: "新产品", nameEn: "New Product" });
     setProducts((current) => [...current, product]);
+    setSelectedIds([]);
     setActiveId(product.id);
     setMode("detail");
     setMessage("已创建新产品，请填写信息后保存全部产品。");
@@ -234,9 +245,23 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const removeProduct = () => {
     if (!active) return;
     setProducts((current) => current.filter((product) => product.id !== active.id));
+    setSelectedIds((current) => current.filter((id) => id !== active.id));
     setActiveId("");
     setMode("grid");
     setMessage("已删除当前产品，请保存全部产品。");
+  };
+
+  const removeSelectedProducts = () => {
+    if (selectedIds.length === 0) {
+      setMessage("请先选择要删除的产品。");
+      return;
+    }
+    const selected = new Set(selectedIds);
+    setProducts((current) => current.filter((product) => !selected.has(product.id)));
+    setSelectedIds([]);
+    setActiveId((current) => (selected.has(current) ? "" : current));
+    setMode("grid");
+    setMessage(`已删除 ${selected.size} 个选中产品，请保存全部产品。`);
   };
 
   const validate = () => {
@@ -318,6 +343,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       }
 
       setProducts((current) => [...current, ...imported]);
+      setSelectedIds([]);
       setMode("grid");
       setActiveId("");
       setMessage(`已从 CSV 导入 ${imported.length} 个产品，请检查后保存全部产品。`);
@@ -472,6 +498,9 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
           <button className="btn" type="button" onClick={() => csvInputRef.current?.click()}>
             批量上传
           </button>
+          <button className="btn danger" type="button" onClick={removeSelectedProducts} disabled={selectedIds.length === 0}>
+            删除选中{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
+          </button>
           <button className="btn" type="button" onClick={save}>
             保存全部
           </button>
@@ -489,6 +518,9 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
           <table className="product-admin-grid">
             <thead>
               <tr>
+                <th className="select-column">
+                  <input aria-label="选择全部产品" type="checkbox" checked={allSelected} onChange={(event) => toggleAllSelected(event.target.checked)} />
+                </th>
                 <th>操作</th>
                 {gridColumns.map((column) => (
                   <th key={column.key}>{column.label}</th>
@@ -498,6 +530,9 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             <tbody>
               {products.map((product) => (
                 <tr key={product.id}>
+                  <td className="select-column">
+                    <input aria-label={`选择 ${product.nameCn || product.nameEn || product.catalogNo || product.id}`} type="checkbox" checked={selectedIds.includes(product.id)} onChange={(event) => toggleSelected(product.id, event.target.checked)} />
+                  </td>
                   <td>
                     <button className="btn small" type="button" onClick={() => openDetail(product.id)}>
                       详情

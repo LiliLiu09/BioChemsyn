@@ -222,6 +222,22 @@ textarea:focus-visible {
   background: var(--brand-strong);
 }
 
+.btn.danger {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.btn.danger:hover {
+  border-color: #fb7185;
+  background: #ffe4e6;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .btn.ghost {
   border-color: rgba(255, 255, 255, 0.34);
   background: rgba(255, 255, 255, 0.1);
@@ -2055,7 +2071,7 @@ textarea.field {
   position: sticky;
   left: 0;
   z-index: 2;
-  min-width: 82px;
+  min-width: 44px;
   background: #fff;
 }
 
@@ -2064,11 +2080,36 @@ textarea.field {
   background: #e7f6fb;
 }
 
+.product-admin-grid th:nth-child(2),
+.product-admin-grid td:nth-child(2) {
+  position: sticky;
+  left: 44px;
+  z-index: 2;
+  min-width: 82px;
+  background: #fff;
+}
+
+.product-admin-grid th:nth-child(2) {
+  z-index: 3;
+  background: #e7f6fb;
+}
+
+.product-admin-grid .select-column {
+  text-align: center;
+}
+
+.product-admin-grid .select-column input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
 .product-admin-grid tbody tr:hover td {
   background: #f8fbfc;
 }
 
-.product-admin-grid tbody tr:hover td:first-child {
+.product-admin-grid tbody tr:hover td:first-child,
+.product-admin-grid tbody tr:hover td:nth-child(2) {
   background: #f8fbfc;
 }
 
