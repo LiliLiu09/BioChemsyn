@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { ProductBrowser } from "@/components/ProductBrowser";
 import { getNewsArticles, getProducts, getSiteContent } from "@/lib/cms";
+import { GlobalSearchForm } from "@/components/GlobalSearchForm";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -63,6 +64,14 @@ export default async function HomePage() {
 
           <div className="home-page-content">
             <div className="home-middle-content">
+              <section className="product-section">
+                <div className="section-heading">
+                  <span className="eyebrow">全站搜索</span>
+                  <h2>搜索产品、新闻与资讯</h2>
+                </div>
+
+                <GlobalSearchForm />
+              </section>
               <ProductBrowser compact products={products} />
 
               {latestNews.length > 0 && (

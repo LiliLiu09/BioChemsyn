@@ -104,6 +104,7 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
           搜索产品
         </button>
       </div>
+    
 
       <div className="toolbar">
         <span className="result-count">找到 {filtered.length} 个产品</span>
