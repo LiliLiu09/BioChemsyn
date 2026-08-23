@@ -9,7 +9,7 @@ export default async function AdminProductsPage() {
     redirect("/admin/login");
   }
 
-  const products = await getProducts();
+  const products = await getProducts({ includeInactive: true });
 
   return (
     <AdminShell>

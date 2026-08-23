@@ -26,16 +26,16 @@ export default async function HomePage() {
       <section className="home-scroll-banner" aria-label="首页轮播展示">
         <div className="home-scroll-track">
           <Link className="home-scroll-slide image-slide" href="/products">
-            <img className="home-carousel-image" src="/carousel-wide-brand.png?v=1" alt="KASONS 凯森斯生物 糖究未来 合成无限" />
+            <img className="home-carousel-image" src="/carousel-full-flow.png?v=5" alt="KASONS 询价流程" />
           </Link>
           <Link className="home-scroll-slide image-slide" href="/products">
-            <img className="home-carousel-image" src="/carousel-wide-inquiry.png?v=1" alt="公开展示产品基础资料，报价统一通过询价获取" />
+            <img className="home-carousel-image" src="/carousel-full-brand.png?v=5" alt="KASONS 凯森斯生物 糖究未来 合成无限" />
           </Link>
           <Link className="home-scroll-slide image-slide" href="/cart">
-            <img className="home-carousel-image" src="/carousel-wide-products.png?v=1" alt="科研试剂、标准品与化学品产品库" />
+            <img className="home-carousel-image" src="/carousel-full-search.png?v=5" alt="科研试剂、标准品与化学品检索" />
           </Link>
           <Link className="home-scroll-slide image-slide" href="/cart">
-            <img className="home-carousel-image" src="/carousel-wide-lab.png?v=1" alt="科研试剂、标准品与化学品" />
+            <img className="home-carousel-image" src="/carousel-full-lab.png?v=5" alt="科研试剂、标准品与化学品产品库" />
           </Link>
         </div>
         <div className="home-scroll-dots" aria-hidden="true">

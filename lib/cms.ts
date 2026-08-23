@@ -13,6 +13,8 @@ const infoFile = path.join(dataDir, "info.json");
 
 type ProductRow = {
   id: string;
+  status?: "draft" | "published";
+  deleted_at?: string | Date | null;
   sku: string;
   catalog_no: string;
   cas: string;
@@ -77,8 +79,11 @@ function requireWritableSupabase() {
 }
 
 function productFromRow(row: ProductRow): Product {
+  const deletedAt = row.deleted_at ? new Date(row.deleted_at).toISOString() : "";
   return {
     id: row.id,
+    status: row.status === "draft" ? "draft" : "published",
+    deletedAt,
     sku: row.sku || "",
     catalogNo: row.catalog_no || "",
     cas: row.cas || "",
@@ -106,6 +111,8 @@ function productFromRow(row: ProductRow): Product {
 function productToRow(product: Product): ProductRow {
   return {
     id: product.id,
+    status: product.status === "draft" ? "draft" : "published",
+    deleted_at: product.deletedAt || null,
     sku: product.sku || product.catalogNo || "",
     catalog_no: product.catalogNo || product.sku || "",
     cas: product.cas || "",
@@ -216,30 +223,67 @@ function siteFromRow(row: SiteRow): SiteContent {
   };
 }
 
-export async function getProducts() {
+export async function getProducts(options: { includeInactive?: boolean } = {}) {
+  const includeInactive = Boolean(options.includeInactive);
   if (hasDatabaseUrl()) {
-    const rows = await dbQuery<ProductRow>("select * from public.products order by catalog_no asc");
-    return rows.map(productFromRow);
+    const products = (await dbQuery<ProductRow>("select * from public.products order by catalog_no asc")).map(productFromRow);
+    return includeInactive ? products : products.filter((product) => product.status === "published" && !product.deletedAt);
   }
-  if (!useSupabase()) return readJson<Product[]>(productsFile);
-  const rows = await supabaseRest<ProductRow[]>("products", { query: "?select=*&order=catalog_no.asc" });
-  return rows.map(productFromRow);
+  if (!useSupabase()) {
+    const products = (await readJson<Product[]>(productsFile)).map((product) => ({
+      ...product,
+      status: product.status || "published",
+      deletedAt: product.deletedAt || ""
+    }));
+    return includeInactive ? products : products.filter((product) => product.status === "published" && !product.deletedAt);
+  }
+  const rows = await supabaseRest<ProductRow[]>("products", {
+    query: "?select=*&order=catalog_no.asc"
+  });
+  const products = rows.map(productFromRow);
+  return includeInactive ? products : products.filter((product) => product.status === "published" && !product.deletedAt);
 }
 
 export async function saveProducts(products: Product[]) {
   if (hasDatabaseUrl()) {
     const rows = products.map(productToRow);
     await dbTransaction(async (query) => {
-      await query("delete from public.products");
       for (const row of rows) {
         await query(
           `insert into public.products (
-            id, sku, catalog_no, cas, name_cn, name_en, synonyms, category, brand, formula,
+            id, status, deleted_at, sku, catalog_no, cas, name_cn, name_en, synonyms, category, brand, formula,
             molecular_weight, purity, stock, package_size, price, lead_time, image,
             details, reference_text, certificate, scale_note, tags
-          ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`,
+          ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+          on conflict (id) do update set
+            status = excluded.status,
+            deleted_at = excluded.deleted_at,
+            sku = excluded.sku,
+            catalog_no = excluded.catalog_no,
+            cas = excluded.cas,
+            name_cn = excluded.name_cn,
+            name_en = excluded.name_en,
+            synonyms = excluded.synonyms,
+            category = excluded.category,
+            brand = excluded.brand,
+            formula = excluded.formula,
+            molecular_weight = excluded.molecular_weight,
+            purity = excluded.purity,
+            stock = excluded.stock,
+            package_size = excluded.package_size,
+            price = excluded.price,
+            lead_time = excluded.lead_time,
+            image = excluded.image,
+            details = excluded.details,
+            reference_text = excluded.reference_text,
+            certificate = excluded.certificate,
+            scale_note = excluded.scale_note,
+            tags = excluded.tags,
+            updated_at = now()`,
           [
             row.id,
+            row.status,
+            row.deleted_at,
             row.sku,
             row.catalog_no,
             row.cas,
@@ -271,9 +315,8 @@ export async function saveProducts(products: Product[]) {
     await writeJson(productsFile, products);
     return;
   }
-  await supabaseRest("products", { method: "DELETE", query: "?id=not.is.null" });
   if (products.length > 0) {
-    await supabaseRest("products", { method: "POST", body: products.map(productToRow), prefer: "return=representation" });
+    await supabaseRest("products", { method: "POST", body: products.map(productToRow), prefer: "resolution=merge-duplicates,return=representation" });
   }
 }
 

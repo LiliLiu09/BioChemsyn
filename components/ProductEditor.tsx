@@ -5,6 +5,8 @@ import type { Product } from "@/lib/types";
 
 const emptyProduct: Product = {
   id: "",
+  status: "draft",
+  deletedAt: "",
   sku: "",
   catalogNo: "",
   cas: "",
@@ -30,6 +32,8 @@ const emptyProduct: Product = {
 
 const csvHeaderMap: Record<string, keyof Product> = {
   id: "id",
+  status: "status",
+  "状态": "status",
   sku: "sku",
   "catalog no": "catalogNo",
   catalog: "catalogNo",
@@ -90,6 +94,7 @@ const csvHeaderMap: Record<string, keyof Product> = {
 
 const gridColumns: Array<{ key: keyof Product; label: string }> = [
   { key: "id", label: "ID" },
+  { key: "status", label: "状态" },
   { key: "sku", label: "SKU" },
   { key: "catalogNo", label: "产品编号" },
   { key: "nameCn", label: "中文名" },
@@ -110,8 +115,11 @@ const gridColumns: Array<{ key: keyof Product; label: string }> = [
   { key: "details", label: "基本信息" },
   { key: "references", label: "参考文献" },
   { key: "certificate", label: "质检证书" },
-  { key: "scaleNote", label: "规模说明" }
+  { key: "scaleNote", label: "规模说明" },
+  { key: "deletedAt", label: "删除时间" }
 ];
+
+type ProductView = "all" | "deleted" | "draft" | "published";
 
 function nextProductId(products: Array<Pick<Product, "id">>) {
   const maxId = products.reduce((max, product) => {
@@ -127,6 +135,8 @@ function createProduct(seed?: Partial<Product>, fallbackId = "p-1"): Product {
     ...emptyProduct,
     id: seed?.id || fallbackId,
     ...seed,
+    status: seed?.status === "draft" ? "draft" : seed?.status === "published" ? "published" : "published",
+    deletedAt: seed?.deletedAt || "",
     catalogNo,
     sku: seed?.sku || catalogNo,
     stock: Number(seed?.stock || 0),
@@ -184,6 +194,8 @@ function parseCsv(text: string) {
 }
 
 function productValue(product: Product, key: keyof Product) {
+  if (key === "status") return product.deletedAt ? "已删除" : product.status === "draft" ? "草稿" : "已发布";
+  if (key === "deletedAt") return product.deletedAt ? new Date(product.deletedAt).toLocaleString("zh-CN") : "";
   const value = product[key];
   if (Array.isArray(value)) return value.join("，");
   return String(value ?? "");
@@ -241,6 +253,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const [products, setProducts] = useState(initialProducts.map((product) => createProduct(product)));
   const [activeId, setActiveId] = useState("");
   const [mode, setMode] = useState<"grid" | "detail">("grid");
+  const [view, setView] = useState<ProductView>("all");
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
@@ -249,7 +262,25 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const csvInputRef = useRef<HTMLInputElement>(null);
   const active = products.find((product) => product.id === activeId);
   const categories = useMemo(() => Array.from(new Set(products.map((product) => product.category.trim()).filter(Boolean))).sort(), [products]);
-  const allSelected = products.length > 0 && selectedIds.length === products.length;
+  const visibleProducts = useMemo(() => {
+    return products.filter((product) => {
+      if (view === "deleted") return Boolean(product.deletedAt);
+      if (product.deletedAt) return false;
+      if (view === "draft") return product.status === "draft";
+      if (view === "published") return product.status === "published";
+      return true;
+    });
+  }, [products, view]);
+  const counts = useMemo(() => {
+    const activeProducts = products.filter((product) => !product.deletedAt);
+    return {
+      all: activeProducts.length,
+      deleted: products.filter((product) => product.deletedAt).length,
+      draft: activeProducts.filter((product) => product.status === "draft").length,
+      published: activeProducts.filter((product) => product.status === "published").length
+    };
+  }, [products]);
+  const allSelected = visibleProducts.length > 0 && visibleProducts.every((product) => selectedIds.includes(product.id));
 
   const update = (key: keyof Product, value: string | number | string[]) => {
     if (!active) return;
@@ -277,7 +308,8 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   };
 
   const toggleAllSelected = (checked: boolean) => {
-    setSelectedIds(checked ? products.map((product) => product.id) : []);
+    const visibleIds = visibleProducts.map((product) => product.id);
+    setSelectedIds((current) => (checked ? Array.from(new Set([...current, ...visibleIds])) : current.filter((id) => !visibleIds.includes(id))));
   };
 
   const addCategory = () => {
@@ -285,64 +317,91 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     if (!category || !active) return;
     update("category", category);
     setNewCategory("");
-    setMessage(`已将当前产品分类设为：${category}。请保存全部产品。`);
+    setMessage(`已将当前产品分类设为：${category}。点击保存至草稿或发布产品后生效。`);
   };
 
   const addProduct = () => {
-    const product = createProduct({ nameCn: "新产品", nameEn: "New Product" }, nextProductId(products));
+    const product = createProduct({ nameCn: "新产品", nameEn: "New Product", status: "draft" }, nextProductId(products));
     setProducts((current) => [...current, product]);
     setSelectedIds([]);
     setActiveId(product.id);
     setMode("detail");
-    setMessage("已创建新产品，请填写信息后保存全部产品。");
+    setMessage("已创建草稿产品，请填写信息后保存至草稿或发布产品。");
   };
 
-  const removeProduct = () => {
+  const removeProduct = async () => {
     if (!active) return;
-    setProducts((current) => current.filter((product) => product.id !== active.id));
+    const deletedAt = new Date().toISOString();
+    const nextProducts = products.map((product) => (product.id === active.id ? { ...product, deletedAt } : product));
+    setProducts(nextProducts);
     setSelectedIds((current) => current.filter((id) => id !== active.id));
     setActiveId("");
     setMode("grid");
-    setMessage("已删除当前产品，请保存全部产品。");
+    setView("deleted");
+    await saveProductsToServer(nextProducts, "当前产品已移入已删除");
   };
 
-  const removeSelectedProducts = () => {
+  const removeSelectedProducts = async () => {
     if (selectedIds.length === 0) {
       setMessage("请先选择要删除的产品。");
       return;
     }
     const selected = new Set(selectedIds);
-    setProducts((current) => current.filter((product) => !selected.has(product.id)));
+    const deletedAt = new Date().toISOString();
+    const nextProducts = products.map((product) => (selected.has(product.id) ? { ...product, deletedAt } : product));
+    setProducts(nextProducts);
     setSelectedIds([]);
     setActiveId((current) => (selected.has(current) ? "" : current));
     setMode("grid");
-    setMessage(`已删除 ${selected.size} 个选中产品，请保存全部产品。`);
+    setView("deleted");
+    await saveProductsToServer(nextProducts, `已将 ${selected.size} 个选中产品移入已删除`);
   };
 
-  const validate = () => {
+  const restoreProduct = async () => {
+    if (!active) return;
+    const nextProducts = products.map((product) => (product.id === active.id ? { ...product, deletedAt: "", status: "draft" as const } : product));
+    setProducts(nextProducts);
+    await saveProductsToServer(nextProducts, "已恢复为草稿");
+  };
+
+  const validatePublish = (product: Product) => {
     const nextErrors: Record<string, string> = {};
-    products.forEach((product, index) => {
-      const label = product.catalogNo || product.sku || product.nameCn || product.nameEn || `第 ${index + 1} 行`;
-      if (!(product.catalogNo || product.sku).trim()) nextErrors.catalogNo = `${label}：产品编号不能为空`;
-      if (!product.nameEn.trim() && !product.nameCn.trim()) nextErrors.nameEn = `${label}：产品名称不能为空`;
-    });
+    const label = product.catalogNo || product.sku || product.nameCn || product.nameEn || product.id;
+    if (!(product.catalogNo || product.sku).trim()) nextErrors.catalogNo = `${label}：产品编号不能为空`;
+    if (!product.nameEn.trim() && !product.nameCn.trim()) nextErrors.nameEn = `${label}：产品名称不能为空`;
+    if (!product.image.trim()) nextErrors.image = `${label}：发布产品需要产品图片`;
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
-  const save = async () => {
+  const saveProductsToServer = async (nextProducts = products, successMessage = "已保存产品数据") => {
     setMessage("");
-    if (!validate()) {
-      setMessage("请先修正表单错误");
-      return;
-    }
-
     const response = await fetch("/api/admin/products", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ products })
+      body: JSON.stringify({ products: nextProducts })
     });
-    setMessage(response.ok ? "已保存产品数据" : "保存失败，请重新登录后台或检查 Supabase 配置");
+    setMessage(response.ok ? successMessage : "保存失败，请重新登录后台或检查 Supabase 配置");
+    return response.ok;
+  };
+
+  const saveActiveAsDraft = async () => {
+    if (!active) return;
+    const nextProducts = products.map((product) => (product.id === active.id ? { ...product, status: "draft" as const, deletedAt: "" } : product));
+    setProducts(nextProducts);
+    await saveProductsToServer(nextProducts, "已保存至草稿");
+  };
+
+  const publishActive = async () => {
+    if (!active) return;
+    const nextProduct = { ...active, status: "published" as const, deletedAt: "" };
+    if (!validatePublish(nextProduct)) {
+      setMessage("请先修正表单错误");
+      return;
+    }
+    const nextProducts = products.map((product) => (product.id === active.id ? nextProduct : product));
+    setProducts(nextProducts);
+    await saveProductsToServer(nextProducts, "产品已发布");
   };
 
   const uploadImage = async (file: File | undefined) => {
@@ -360,7 +419,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       return;
     }
     update("image", payload.url);
-    setMessage("图片已上传，请保存全部产品");
+    setMessage("图片已上传。点击保存至草稿或发布产品后生效。");
   };
 
   const importSpreadsheet = async (file: File | undefined) => {
@@ -402,7 +461,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         })
         .filter(draftHasProductData)
         .map((draft) => {
-          const product = createProduct(draft, `p-${nextImportedNumber}`);
+          const product = createProduct({ ...draft, status: draft.image ? "published" : "draft" }, `p-${nextImportedNumber}`);
           if (!draft.id) nextImportedNumber += 1;
           return product;
         });
@@ -412,11 +471,13 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         return;
       }
 
-      setProducts((current) => [...current, ...imported]);
+      const nextProducts = [...products, ...imported];
+      setProducts(nextProducts);
       setSelectedIds([]);
       setMode("grid");
       setActiveId("");
-      setMessage(`已从表格导入 ${imported.length} 个产品，请检查后保存全部产品。`);
+      setView("draft");
+      await saveProductsToServer(nextProducts, `已从表格导入 ${imported.length} 个产品；没有图片的产品已进入草稿。`);
     } catch {
       setMessage("表格解析失败，请上传 .xlsx、.xls 或 .csv 文件。");
     } finally {
@@ -430,18 +491,31 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         <div className="toolbar">
           <div>
             <h1>产品详情</h1>
-            <p className="admin-subtitle">{active.catalogNo || active.sku || "新产品"}</p>
+            <p className="admin-subtitle">
+              {active.catalogNo || active.sku || "新产品"} · <span className={`status-pill ${active.deletedAt ? "deleted" : active.status}`}>{productValue(active, "status")}</span>
+            </p>
           </div>
           <div className="admin-actions">
             <button className="btn" type="button" onClick={() => setMode("grid")}>
               返回产品列表
             </button>
-            <button className="btn" type="button" onClick={removeProduct}>
-              删除
-            </button>
-            <button className="btn primary" type="button" onClick={save}>
-              保存全部
-            </button>
+            {active.deletedAt ? (
+              <button className="btn" type="button" onClick={restoreProduct}>
+                恢复为草稿
+              </button>
+            ) : (
+              <>
+                <button className="btn" type="button" onClick={removeProduct}>
+                  删除
+                </button>
+                <button className="btn" type="button" onClick={saveActiveAsDraft}>
+                  保存至草稿
+                </button>
+                <button className="btn primary" type="button" onClick={publishActive}>
+                  发布产品
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -466,6 +540,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             <span>产品图片</span>
             <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder="上传后自动生成图片地址" />
             <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
+            {errors.image && <span className="field-error">{errors.image}</span>}
             {uploading && <span className="result-count">图片上传中...</span>}
             {active.image && <img className="admin-preview" src={active.image} alt="产品图片预览" />}
           </label>
@@ -571,17 +646,37 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
           <button className="btn danger" type="button" onClick={removeSelectedProducts} disabled={selectedIds.length === 0}>
             删除选中{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
           </button>
-          <button className="btn" type="button" onClick={save}>
+          <button className="btn" type="button" onClick={() => saveProductsToServer()}>
             保存全部
           </button>
           <input ref={csvInputRef} className="sr-only" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" onChange={(event) => importSpreadsheet(event.target.files?.[0])} />
         </div>
       </div>
 
+      <div className="product-status-tabs" role="tablist" aria-label="产品状态筛选">
+        <button className={view === "all" ? "active" : ""} type="button" onClick={() => { setView("all"); setSelectedIds([]); }}>
+          所有产品（{counts.all}）
+        </button>
+        <button className={view === "deleted" ? "active" : ""} type="button" onClick={() => { setView("deleted"); setSelectedIds([]); }}>
+          已删除（{counts.deleted}）
+        </button>
+        <button className={view === "draft" ? "active" : ""} type="button" onClick={() => { setView("draft"); setSelectedIds([]); }}>
+          草稿（{counts.draft}）
+        </button>
+        <button className={view === "published" ? "active" : ""} type="button" onClick={() => { setView("published"); setSelectedIds([]); }}>
+          所有已发布（{counts.published}）
+        </button>
+      </div>
+
       {products.length === 0 ? (
         <div className="empty-state">
           <b>还没有产品</b>
           <span>点击“添加产品”创建单个产品，或点击“批量上传”导入 Excel 表格。</span>
+        </div>
+      ) : visibleProducts.length === 0 ? (
+        <div className="empty-state">
+          <b>当前分类没有产品</b>
+          <span>可以切换上方状态，或添加/批量上传新的产品。</span>
         </div>
       ) : (
         <div className="product-admin-grid-wrap">
@@ -598,8 +693,8 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
-                <tr key={product.id}>
+              {visibleProducts.map((product) => (
+                <tr className={product.deletedAt ? "is-deleted" : product.status === "draft" ? "is-draft" : ""} key={product.id}>
                   <td className="select-column">
                     <input aria-label={`选择 ${product.nameCn || product.nameEn || product.catalogNo || product.id}`} type="checkbox" checked={selectedIds.includes(product.id)} onChange={(event) => toggleSelected(product.id, event.target.checked)} />
                   </td>

@@ -2,6 +2,8 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.products (
   id text primary key,
+  status text not null default 'published' check (status in ('draft', 'published')),
+  deleted_at timestamptz,
   sku text not null default '',
   catalog_no text not null default '',
   cas text not null default '',
@@ -30,10 +32,14 @@ create table if not exists public.products (
 create index if not exists products_catalog_no_idx on public.products (catalog_no);
 create index if not exists products_cas_idx on public.products (cas);
 create index if not exists products_category_idx on public.products (category);
+create index if not exists products_status_idx on public.products (status);
+create index if not exists products_deleted_at_idx on public.products (deleted_at);
 
 alter table public.products add column if not exists brand text not null default '';
 alter table public.products add column if not exists reference_text text not null default '';
 alter table public.products add column if not exists certificate text not null default '';
+alter table public.products add column if not exists status text not null default 'published';
+alter table public.products add column if not exists deleted_at timestamptz;
 
 create table if not exists public.news_articles (
   id text primary key,
@@ -183,7 +189,7 @@ alter table public.quotes enable row level security;
 drop policy if exists "Public read products" on public.products;
 create policy "Public read products"
 on public.products for select
-using (true);
+using (status = 'published' and deleted_at is null);
 
 drop policy if exists "Public read published news" on public.news_articles;
 create policy "Public read published news"

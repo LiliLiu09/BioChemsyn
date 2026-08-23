@@ -1,5 +1,7 @@
 export type Product = {
   id: string;
+  status: "draft" | "published";
+  deletedAt: string;
   sku: string;
   catalogNo: string;
   cas: string;

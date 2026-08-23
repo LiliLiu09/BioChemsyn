@@ -15,6 +15,8 @@ function normalizeProduct(product: Product, fallbackId: string): Product {
   return {
     ...product,
     id: product.id || fallbackId,
+    status: product.status === "draft" ? "draft" : "published",
+    deletedAt: product.deletedAt || "",
     catalogNo: product.catalogNo || product.sku || "",
     sku: product.sku || product.catalogNo || "",
     synonyms: product.synonyms || "",
@@ -36,7 +38,7 @@ function normalizeProduct(product: Product, fallbackId: string): Product {
 
 export async function GET() {
   await requireAdmin();
-  const products = await getProducts();
+  const products = await getProducts({ includeInactive: true });
   return NextResponse.json({ products });
 }
 

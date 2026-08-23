@@ -82,7 +82,8 @@ textarea:focus-visible {
 }
 
 .main {
-  width: min(2800px, calc(100% - 48px));
+  width: clamp(1120px, 88vw, 1800px);
+  max-width: calc(100% - 48px);
   margin: 0 auto;
 }
 
@@ -266,7 +267,7 @@ textarea:focus-visible {
 .home-scroll-banner {
   position: relative;
   width: 100%;
-  aspect-ratio: 1920 / 430;
+  aspect-ratio: 1875 / 492;
   height: auto;
   overflow: hidden;
   border-bottom: 1px solid rgba(216, 226, 234, 0.9);
@@ -351,7 +352,8 @@ textarea:focus-visible {
 }
 
 .home-main {
-  width: min(2800px, calc(100% - 48px));
+  width: clamp(1120px, 88vw, 1800px);
+  max-width: calc(100% - 48px);
 }
 
 .home-shell-layout {
@@ -2040,6 +2042,50 @@ textarea.field {
   line-height: 1.25;
 }
 
+.product-status-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.product-status-tabs button {
+  cursor: pointer;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #475569;
+  padding: 8px 4px 10px;
+  font-weight: 800;
+}
+
+.product-status-tabs button.active,
+.product-status-tabs button:hover {
+  border-bottom-color: var(--brand);
+  color: var(--brand-strong);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: #e8f7ff;
+  color: var(--brand-strong);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.status-pill.draft {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.status-pill.deleted {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 .product-admin-grid-wrap {
   overflow: auto;
   border: 1px solid var(--line);
@@ -2122,6 +2168,27 @@ textarea.field {
 .product-admin-grid tbody tr:hover td:first-child,
 .product-admin-grid tbody tr:hover td:nth-child(2) {
   background: #f8fbfc;
+}
+
+.product-admin-grid tbody tr.is-draft td {
+  background: #fffaf0;
+}
+
+.product-admin-grid tbody tr.is-deleted td {
+  background: #fff1f2;
+  color: #64748b;
+}
+
+.product-admin-grid tbody tr.is-draft:hover td,
+.product-admin-grid tbody tr.is-draft:hover td:first-child,
+.product-admin-grid tbody tr.is-draft:hover td:nth-child(2) {
+  background: #fff7e6;
+}
+
+.product-admin-grid tbody tr.is-deleted:hover td,
+.product-admin-grid tbody tr.is-deleted:hover td:first-child,
+.product-admin-grid tbody tr.is-deleted:hover td:nth-child(2) {
+  background: #ffe4e6;
 }
 
 .empty-state {
