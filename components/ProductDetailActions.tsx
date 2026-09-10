@@ -1,7 +1,8 @@
 "use client";
 
 import { ShoppingCart } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
+import { useLanguage } from "./LanguageProvider";
 import { cartStorageKey } from "@/lib/session";
 
 type CartLine = {
@@ -10,6 +11,7 @@ type CartLine = {
 };
 
 export function ProductDetailActions({ productId }: { productId: string }) {
+  const { t } = useLanguage();
   const addToCart = () => {
     const current = JSON.parse(localStorage.getItem(cartStorageKey) || "[]") as CartLine[];
     const existing = current.find((line) => line.id === productId);
@@ -24,7 +26,7 @@ export function ProductDetailActions({ productId }: { productId: string }) {
   return (
     <Link className="btn primary large" href="/cart" onClick={addToCart}>
       <ShoppingCart size={17} aria-hidden="true" />
-      加入询价车
+      {t("加入询价车", "Add to inquiry cart")}
     </Link>
   );
 }

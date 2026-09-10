@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { Footer } from "@/components/Footer";
 import { GlobalSearchForm } from "@/components/GlobalSearchForm";
 import { Header } from "@/components/Header";
@@ -8,6 +8,14 @@ import {
   getProducts,
   getSiteContent
 } from "@/lib/cms";
+import { isArticleAvailable, isProductAvailable, localizeArticle, localizeProduct, localizeSiteContent } from "@/lib/content-locale";
+import { getLocale } from "@/lib/locale-server";
+import { translate } from "@/lib/i18n";
+
+export async function generateMetadata() {
+  const locale = await getLocale();
+  return { title: translate(locale, "全站搜索", "Search the website"), robots: { index: false, follow: true } };
+}
 
 type SearchPageProps = {
   searchParams: Promise<{
@@ -40,17 +48,28 @@ function cleanText(value: string) {
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
-  const params = await searchParams;
+  const [params, locale] = await Promise.all([searchParams, getLocale()]);
+  const t = (zh: string, en: string) => translate(locale, zh, en);
   const rawQuery = Array.isArray(params.q) ? params.q[0] : params.q;
   const query = (rawQuery || "").trim();
   const keyword = query.toLowerCase();
 
-  const [site, products, news, info] = await Promise.all([
+  const [rawSite, rawProducts, rawNews, rawInfo] = await Promise.all([
     getSiteContent(),
-    getProducts(),
-    getNewsArticles(),
-    getInfoArticles()
+    keyword ? getProducts() : Promise.resolve([]),
+    keyword ? getNewsArticles() : Promise.resolve([]),
+    keyword ? getInfoArticles() : Promise.resolve([])
   ]);
+  const site = localizeSiteContent(rawSite, locale);
+  const products = rawProducts
+    .filter((product) => isProductAvailable(product, locale))
+    .map((product) => localizeProduct(product, locale));
+  const news = rawNews
+    .filter((article) => isArticleAvailable(article, locale))
+    .map((article) => localizeArticle(article, locale));
+  const info = rawInfo
+    .filter((article) => isArticleAvailable(article, locale))
+    .map((article) => localizeArticle(article, locale));
 
   const productResults: SearchResult[] = keyword
     ? products
@@ -75,7 +94,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           summary:
             [product.nameEn, product.synonyms, product.formula]
               .filter(Boolean)
-              .join(" · ") || "查看产品详情",
+              .join(" · ") || t("查看产品详情", "View product details"),
           meta: [product.catalogNo || product.sku, product.cas && `CAS ${product.cas}`]
             .filter(Boolean)
             .join(" · ")
@@ -100,7 +119,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           href: `/news/${article.slug}`,
           title: article.title,
           summary: cleanText(article.summary || article.content),
-          meta: `新闻 · ${article.category}`
+          meta: `${t("新闻", "News")} · ${article.category}`
         }))
     : [];
 
@@ -122,28 +141,28 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           href: `/info/${article.slug}`,
           title: article.title,
           summary: cleanText(article.summary || article.content),
-          meta: `资讯 · ${article.category}`
+          meta: `${t("资讯", "Resources")} · ${article.category}`
         }))
     : [];
 
   const publicPages = [
     {
       href: "/",
-      title: site.heroTitle || "凯森斯生物",
+      title: site.heroTitle || t("凯森斯生物", "KASONS"),
       summary: site.heroDescription,
-      meta: "网站页面"
+      meta: t("网站页面", "Website page")
     },
     {
       href: "/about",
-      title: site.aboutTitle || "关于我们",
+      title: site.aboutTitle || t("关于我们", "About us"),
       summary: site.aboutDescription,
-      meta: "网站页面"
+      meta: t("网站页面", "Website page")
     },
     {
       href: "/contact",
-      title: site.contactTitle || "联系我们",
+      title: site.contactTitle || t("联系我们", "Contact us"),
       summary: site.contactDescription,
-      meta: "网站页面"
+      meta: t("网站页面", "Website page")
     }
   ];
 
@@ -159,10 +178,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     : [];
 
   const groups = [
-    { label: "产品", results: productResults },
-    { label: "新闻", results: newsResults },
-    { label: "资讯", results: infoResults },
-    { label: "网站页面", results: pageResults }
+    { label: t("产品", "Products"), results: productResults },
+    { label: t("新闻", "News"), results: newsResults },
+    { label: t("资讯", "Resources"), results: infoResults },
+    { label: t("网站页面", "Website pages"), results: pageResults }
   ];
 
   const total = groups.reduce((count, group) => count + group.results.length, 0);
@@ -173,23 +192,23 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
       <main className="main global-search-page">
         <div className="section-heading">
-          <span className="eyebrow">全站搜索</span>
-          <h1>搜索凯森斯网站内容</h1>
+          <span className="eyebrow">{t("全站搜索", "Search the website")}</span>
+          <h1>{t("搜索凯森斯网站内容", "Search KASONS")}</h1>
         </div>
 
         <GlobalSearchForm defaultValue={query} />
 
-        {!query && <div className="empty-state">请输入需要搜索的关键词。</div>}
+        {!query && <div className="empty-state">{t("请输入需要搜索的关键词。", "Enter a keyword to start searching.")}</div>}
 
         {query && (
           <p className="global-search-summary">
-            搜索“{query}”，共找到 {total} 条结果
+            {t(`搜索“${query}”，共找到 ${total} 条结果`, `${total} results for “${query}”`)}
           </p>
         )}
 
         {query && total === 0 && (
           <div className="empty-state">
-            没有找到相关内容，请尝试产品名称、CAS、货号或其他关键词。
+            {t("没有找到相关内容，请尝试产品名称、CAS、货号或其他关键词。", "No results found. Try a product name, CAS number, catalog number or another keyword.")}
           </div>
         )}
 
@@ -198,7 +217,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             group.results.length > 0 && (
               <section className="global-result-group" key={group.label}>
                 <h2>
-                  {group.label}（{group.results.length}）
+                  {group.label} {t(`（${group.results.length}）`, `(${group.results.length})`)}
                 </h2>
 
                 <div className="global-result-list">

@@ -22,7 +22,18 @@
       "维生素",
       "现货",
       "热销"
-    ]
+    ],
+    "translations": {
+      "en": {
+        "published": true,
+        "nameEn": "Nicotinamide",
+        "category": "Biochemical reagents",
+        "leadTime": "In stock",
+        "details": "Nicotinamide is a commonly used biochemical reagent for research experiments, reference-standard preparation and related method development. Applications, specifications and supply details are subject to confirmation in the sales quotation.",
+        "scaleNote": "KASONS can provide gram, hundred-gram and larger pack sizes according to your requirements.",
+        "tags": ["Vitamins", "In stock", "Popular"]
+      }
+    }
   },
   {
     "id": "p-1002",
@@ -46,7 +57,18 @@
     "tags": [
       "糖醇",
       "标准品"
-    ]
+    ],
+    "translations": {
+      "en": {
+        "published": true,
+        "nameEn": "D-Mannitol",
+        "category": "Reference standards",
+        "leadTime": "In stock",
+        "details": "D-Mannitol can be used as a sugar-alcohol reference standard or research reagent for laboratory testing, comparison and method validation.",
+        "scaleNote": "KASONS can provide different pack sizes according to your requirements.",
+        "tags": ["Sugar alcohols", "Reference standards"]
+      }
+    }
   },
   {
     "id": "p-1003",
@@ -70,7 +92,18 @@
     "tags": [
       "植物",
       "小包装"
-    ]
+    ],
+    "translations": {
+      "en": {
+        "published": true,
+        "nameEn": "Gibberellic Acid",
+        "category": "Plant hormones",
+        "leadTime": "1-2 days",
+        "details": "Gibberellic acid is a commonly used reagent in plant-hormone research, including plant physiology, agricultural research and experimental method development.",
+        "scaleNote": "Small and custom pack sizes are available. Lead times will be confirmed in our quotation response.",
+        "tags": ["Plants", "Small packs"]
+      }
+    }
   },
   {
     "id": "p-1004",
@@ -94,7 +127,19 @@
     "tags": [
       "PEG",
       "大包装"
-    ]
+    ],
+    "translations": {
+      "en": {
+        "published": true,
+        "nameEn": "Polyethylene Glycol 2000",
+        "category": "PEG",
+        "molecularWeight": "Approximately 2000",
+        "leadTime": "In stock",
+        "details": "Polyethylene glycol 2000 can be used in materials, formulation and research experiments, for customers requiring specified PEG-series products.",
+        "scaleNote": "Bulk-pack orders and volume enquiries are supported.",
+        "tags": ["PEG", "Bulk packs"]
+      }
+    }
   },
   {
     "id": "p-1784125880875",
@@ -115,7 +160,8 @@
     "image": "",
     "details": "",
     "scaleNote": "",
-    "tags": []
+    "tags": [],
+    "translations": { "en": { "published": false } }
   },
   {
     "id": "p-1784126029000",
@@ -136,6 +182,7 @@
     "image": "",
     "details": "",
     "scaleNote": "",
-    "tags": []
+    "tags": [],
+    "translations": { "en": { "published": false } }
   }
 ]

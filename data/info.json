@@ -11,6 +11,17 @@
     "content": "如需确认产品规格、包装、交期或批量供货能力，请将目标产品加入询价车并提交联系方式。销售团队会根据产品清单、数量和备注进行回复。",
     "coverImage": "",
     "views": 0,
-    "published": true
+    "published": true,
+    "translations": {
+      "en": {
+        "published": true,
+        "title": "How to request product information",
+        "category": "Service information",
+        "author": "KASONS",
+        "source": "KASONS",
+        "summary": "Use product pages and the enquiry basket to submit the products, specifications, quantities and notes you need. Our sales team will follow up to confirm the details.",
+        "content": "To confirm product specifications, packaging, lead times or bulk supply, add the products to your enquiry basket and submit your contact details. Our sales team will respond based on your product list, quantities and notes."
+      }
+    }
   }
 ]

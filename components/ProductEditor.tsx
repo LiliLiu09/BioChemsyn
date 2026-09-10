@@ -2,6 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import type { Product } from "@/lib/types";
+import { localizeProduct } from "@/lib/content-locale";
+import type { Locale } from "@/lib/i18n";
 
 const emptyProduct: Product = {
   id: "",
@@ -193,11 +195,11 @@ function parseCsv(text: string) {
   return rows;
 }
 
-function productValue(product: Product, key: keyof Product) {
+function productValue(product: Product, key: keyof Product, locale: Locale) {
   if (key === "status") return product.deletedAt ? "已删除" : product.status === "draft" ? "草稿" : "已发布";
-  if (key === "deletedAt") return product.deletedAt ? new Date(product.deletedAt).toLocaleString("zh-CN") : "";
+  if (key === "deletedAt") return product.deletedAt ? new Date(product.deletedAt).toLocaleString(locale === "en" ? "en-US" : "zh-CN") : "";
   const value = product[key];
-  if (Array.isArray(value)) return value.join("，");
+  if (Array.isArray(value)) return value.join(locale === "en" ? ", " : "，");
   return String(value ?? "");
 }
 
@@ -249,7 +251,14 @@ function draftHasProductData(draft: Partial<Product>) {
   );
 }
 
+import { useAdminLanguage, contentErrorMessage } from "@/components/admin-language";
+import { useLanguage } from "@/components/LanguageProvider";
+import { ContentLanguageTabs, isEnglishReady, TranslationEditor, type ContentLanguage } from "@/components/TranslationEditor";
+import { productTranslationFields } from "@/components/admin-content-fields";
 export function ProductEditor({ initialProducts }: { initialProducts: Product[] }) {
+  const { locale, t } = useAdminLanguage();
+  const { t: translate } = useLanguage();
+  const [contentLanguage, setContentLanguage] = useState<ContentLanguage>(locale);
   const [products, setProducts] = useState(initialProducts.map((product) => createProduct(product)));
   const [activeId, setActiveId] = useState("");
   const [mode, setMode] = useState<"grid" | "detail">("grid");
@@ -261,6 +270,17 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const active = products.find((product) => product.id === activeId);
+  const english = { nameEn: active?.nameEn || "", published: active?.translations?.en ? active.translations.en.published === true : isEnglishReady({ nameEn: active?.nameEn }, ["nameEn"]), ...active?.translations?.en };
+  const englishReady = isEnglishReady(english, ["nameEn"]);
+  const updateEnglish = (key: string, value: string | string[] | boolean) => {
+    if (!active) return;
+    setProducts((current) => current.map((item) => {
+      if (item.id !== active.id) return item;
+      const en = { nameEn: item.nameEn, published: false, ...item.translations?.en, [key]: value };
+      if (!isEnglishReady(en, ["nameEn"])) en.published = false;
+      return { ...item, translations: { ...item.translations, en } };
+    }));
+  };
   const categories = useMemo(() => Array.from(new Set(products.map((product) => product.category.trim()).filter(Boolean))).sort(), [products]);
   const visibleProducts = useMemo(() => {
     return products.filter((product) => {
@@ -281,6 +301,12 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     };
   }, [products]);
   const allSelected = visibleProducts.length > 0 && visibleProducts.every((product) => selectedIds.includes(product.id));
+  const columns = gridColumns.filter((column) => locale === "zh" || column.key !== "nameCn");
+  // Admins may preview their English drafts; public pages still enforce publication.
+  const gridProducts = visibleProducts.map((product) => locale === "en" ? localizeProduct({
+    ...product,
+    translations: product.translations?.en ? { en: { ...product.translations.en, published: true } } : undefined
+  }, "en") : product);
 
   const update = (key: keyof Product, value: string | number | string[]) => {
     if (!active) return;
@@ -317,7 +343,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     if (!category || !active) return;
     update("category", category);
     setNewCategory("");
-    setMessage(`已将当前产品分类设为：${category}。点击保存至草稿或发布产品后生效。`);
+    setMessage(translate(`已将当前产品分类设为：${category}。点击保存至草稿或发布产品后生效。`, `Category set to ${category}. Save as a draft or publish to apply.`));
   };
 
   const addProduct = () => {
@@ -326,7 +352,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     setSelectedIds([]);
     setActiveId(product.id);
     setMode("detail");
-    setMessage("已创建草稿产品，请填写信息后保存至草稿或发布产品。");
+    setMessage(t("已创建草稿产品，请填写信息后保存至草稿或发布产品。"));
   };
 
   const removeProduct = async () => {
@@ -338,12 +364,12 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     setActiveId("");
     setMode("grid");
     setView("deleted");
-    await saveProductsToServer(nextProducts, "当前产品已移入已删除");
+    await saveProductsToServer(nextProducts, t("当前产品已移入已删除"));
   };
 
   const removeSelectedProducts = async () => {
     if (selectedIds.length === 0) {
-      setMessage("请先选择要删除的产品。");
+      setMessage(t("请先选择要删除的产品。"));
       return;
     }
     const selected = new Set(selectedIds);
@@ -354,34 +380,34 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     setActiveId((current) => (selected.has(current) ? "" : current));
     setMode("grid");
     setView("deleted");
-    await saveProductsToServer(nextProducts, `已将 ${selected.size} 个选中产品移入已删除`);
+    await saveProductsToServer(nextProducts, translate(`已将 ${selected.size} 个选中产品移入已删除`, `${selected.size} products moved to deleted`));
   };
 
   const restoreProduct = async () => {
     if (!active) return;
     const nextProducts = products.map((product) => (product.id === active.id ? { ...product, deletedAt: "", status: "draft" as const } : product));
     setProducts(nextProducts);
-    await saveProductsToServer(nextProducts, "已恢复为草稿");
+    await saveProductsToServer(nextProducts, t("已恢复为草稿"));
   };
 
   const validatePublish = (product: Product) => {
     const nextErrors: Record<string, string> = {};
     const label = product.catalogNo || product.sku || product.nameCn || product.nameEn || product.id;
-    if (!(product.catalogNo || product.sku).trim()) nextErrors.catalogNo = `${label}：产品编号不能为空`;
-    if (!product.nameEn.trim() && !product.nameCn.trim()) nextErrors.nameEn = `${label}：产品名称不能为空`;
-    if (!product.image.trim()) nextErrors.image = `${label}：发布产品需要产品图片`;
+    if (!(product.catalogNo || product.sku).trim()) nextErrors.catalogNo = translate(`${label}：产品编号不能为空`, `${label}: Catalog number is required`);
+    if (!product.nameEn.trim() && !product.nameCn.trim()) nextErrors.nameEn = translate(`${label}：产品名称不能为空`, `${label}: Product name is required`);
+    if (!product.image.trim()) nextErrors.image = translate(`${label}：发布产品需要产品图片`, `${label}: A product image is required to publish`);
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
-  const saveProductsToServer = async (nextProducts = products, successMessage = "已保存产品数据") => {
+  const saveProductsToServer = async (nextProducts = products, successMessage = t("已保存产品数据")) => {
     setMessage("");
     const response = await fetch("/api/admin/products", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ products: nextProducts })
     });
-    setMessage(response.ok ? successMessage : "保存失败，请重新登录后台或检查 Supabase 配置");
+    setMessage(response.ok ? successMessage : await contentErrorMessage(response, t("保存失败，请重新登录后台或检查 Supabase 配置")));
     return response.ok;
   };
 
@@ -389,19 +415,20 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     if (!active) return;
     const nextProducts = products.map((product) => (product.id === active.id ? { ...product, status: "draft" as const, deletedAt: "" } : product));
     setProducts(nextProducts);
-    await saveProductsToServer(nextProducts, "已保存至草稿");
+    await saveProductsToServer(nextProducts, t("已保存至草稿"));
   };
 
   const publishActive = async () => {
     if (!active) return;
     const nextProduct = { ...active, status: "published" as const, deletedAt: "" };
     if (!validatePublish(nextProduct)) {
-      setMessage("请先修正表单错误");
+      setContentLanguage("zh");
+      setMessage(t("请先修正表单错误"));
       return;
     }
     const nextProducts = products.map((product) => (product.id === active.id ? nextProduct : product));
     setProducts(nextProducts);
-    await saveProductsToServer(nextProducts, "产品已发布");
+    await saveProductsToServer(nextProducts, t("产品已发布"));
   };
 
   const uploadImage = async (file: File | undefined) => {
@@ -415,11 +442,11 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     const payload = (await response.json()) as { url?: string; message?: string };
     setUploading(false);
     if (!response.ok || !payload.url) {
-      setMessage(payload.message || "图片上传失败");
+      setMessage(locale === "en" ? t("图片上传失败") : payload.message || t("图片上传失败"));
       return;
     }
     update("image", payload.url);
-    setMessage("图片已上传。点击保存至草稿或发布产品后生效。");
+    setMessage(t("图片已上传。点击保存至草稿或发布产品后生效。"));
   };
 
   const importSpreadsheet = async (file: File | undefined) => {
@@ -438,7 +465,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       const rows = transposeVerticalRows(normalizeRows(rawRows));
       const [headerRow, ...dataRows] = rows;
       if (!headerRow || dataRows.length === 0) {
-        setMessage("表格文件没有可导入的数据");
+        setMessage(t("表格文件没有可导入的数据"));
         return;
       }
       const keys = headerRow.map((header) => csvHeaderMap[normalizeHeader(header)]);
@@ -467,7 +494,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         });
 
       if (imported.length === 0) {
-        setMessage("没有识别到可导入的产品。请确认表头包含产品编号、中文名、英文名、CAS 等字段。");
+        setMessage(t("没有识别到可导入的产品。请确认表头包含产品编号、中文名、英文名、CAS 等字段。"));
         return;
       }
 
@@ -477,9 +504,9 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       setMode("grid");
       setActiveId("");
       setView("draft");
-      await saveProductsToServer(nextProducts, `已从表格导入 ${imported.length} 个产品；没有图片的产品已进入草稿。`);
+      await saveProductsToServer(nextProducts, translate(`已从表格导入 ${imported.length} 个产品；没有图片的产品已进入草稿。`, `Imported ${imported.length} products. Products without images were saved as drafts.`));
     } catch {
-      setMessage("表格解析失败，请上传 .xlsx、.xls 或 .csv 文件。");
+      setMessage(t("表格解析失败，请上传 .xlsx、.xls 或 .csv 文件。"));
     } finally {
       if (csvInputRef.current) csvInputRef.current.value = "";
     }
@@ -490,140 +517,134 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       <div className="panel admin-panel product-detail-editor">
         <div className="toolbar">
           <div>
-            <h1>产品详情</h1>
+            <h1>{t("产品详情")}</h1>
             <p className="admin-subtitle">
-              {active.catalogNo || active.sku || "新产品"} · <span className={`status-pill ${active.deletedAt ? "deleted" : active.status}`}>{productValue(active, "status")}</span>
+              {active.catalogNo || active.sku || t("新产品")} · <span className={`status-pill ${active.deletedAt ? "deleted" : active.status}`}>{t(productValue(active, "status", locale))}</span>
             </p>
           </div>
           <div className="admin-actions">
-            <button className="btn" type="button" onClick={() => setMode("grid")}>
-              返回产品列表
-            </button>
+            <button className="btn" type="button" onClick={() => setMode("grid")}>{t("返回产品列表")}</button>
             {active.deletedAt ? (
-              <button className="btn" type="button" onClick={restoreProduct}>
-                恢复为草稿
-              </button>
+              <button className="btn" type="button" onClick={restoreProduct}>{t("恢复为草稿")}</button>
             ) : (
               <>
-                <button className="btn" type="button" onClick={removeProduct}>
-                  删除
-                </button>
-                <button className="btn" type="button" onClick={saveActiveAsDraft}>
-                  保存至草稿
-                </button>
-                <button className="btn primary" type="button" onClick={publishActive}>
-                  发布产品
-                </button>
+                <button className="btn" type="button" onClick={removeProduct}>{t("删除")}</button>
+                <button className="btn" type="button" onClick={saveActiveAsDraft}>{t("保存至草稿")}</button>
+                <button className="btn primary" type="button" onClick={publishActive}>{t("发布产品")}</button>
               </>
             )}
           </div>
         </div>
 
-        <div className="admin-form-grid">
+        <ContentLanguageTabs value={contentLanguage} onChange={setContentLanguage} ready={englishReady} />
+        {contentLanguage === "en" ? <>
+          <TranslationEditor values={english} fields={productTranslationFields} onChange={updateEnglish} uploadFolder="products" ready={englishReady} />
+          <p className="result-count">{translate("英文版本仅在产品已发布且未删除时公开；货号、CAS、分子式、价格和库存与中文共用。", "The English version is public only when the product is published and not deleted. Catalog number, CAS, formula, price, and stock are shared.")}</p>
+          <button className="btn primary" type="button" onClick={() => saveProductsToServer()}>{translate("保存中英文内容", "Save Chinese and English content")}</button>
+        </> : <div className="admin-form-grid">
           <label className="admin-field full">
-            <span>产品分类</span>
-            <input className="field" list="product-categories" value={active.category} onChange={(event) => update("category", event.target.value)} placeholder="选择或输入产品分类" />
+            <span>{t("产品分类")}</span>
+            <input className="field" list="product-categories" value={active.category} onChange={(event) => update("category", event.target.value)} placeholder={t("选择或输入产品分类")} />
             <datalist id="product-categories">
               {categories.map((category) => (
                 <option key={category} value={category} />
               ))}
             </datalist>
             <div className="inline-controls">
-              <input className="field" value={newCategory} onChange={(event) => setNewCategory(event.target.value)} placeholder="新增类别名称" />
-              <button className="btn" type="button" onClick={addCategory}>
-                添加并应用
-              </button>
+              <input className="field" value={newCategory} onChange={(event) => setNewCategory(event.target.value)} placeholder={t("新增类别名称")} />
+              <button className="btn" type="button" onClick={addCategory}>{t("添加并应用")}</button>
             </div>
           </label>
 
           <label className="admin-field full">
-            <span>产品图片</span>
-            <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder="上传后自动生成图片地址" />
+            <span>{t("产品图片")}</span>
+            <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder={t("上传后自动生成图片地址")} />
             <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
             {errors.image && <span className="field-error">{errors.image}</span>}
-            {uploading && <span className="result-count">图片上传中...</span>}
-            {active.image && <img className="admin-preview" src={active.image} alt="产品图片预览" />}
+            {uploading && <span className="result-count">{t("图片上传中...")}</span>}
+            {active.image && <img className="admin-preview" src={active.image} alt={t("产品图片预览")} />}
           </label>
 
           <label className="admin-field">
-            <span>中文名</span>
+            <span>{t("中文名")}</span>
             <input className="field" value={active.nameCn} onChange={(event) => update("nameCn", event.target.value)} />
           </label>
           <label className="admin-field">
-            <span>英文名 *</span>
+            <span>{t("英文名 *")}</span>
             <input className="field" value={active.nameEn} onChange={(event) => update("nameEn", event.target.value)} />
             {errors.nameEn && <span className="field-error">{errors.nameEn}</span>}
           </label>
           <label className="admin-field">
-            <span>产品编号 *</span>
+            <span>{t("产品编号 *")}</span>
             <input className="field" value={active.catalogNo || active.sku} onChange={(event) => update("catalogNo", event.target.value)} />
             {errors.catalogNo && <span className="field-error">{errors.catalogNo}</span>}
           </label>
           <label className="admin-field">
-            <span>记录 ID</span>
+            <span>{t("记录 ID")}</span>
             <input className="field" value={active.id} readOnly />
           </label>
           <label className="admin-field">
-            <span>品牌</span>
+            <span>{t("品牌")}</span>
             <input className="field" value={active.brand} onChange={(event) => update("brand", event.target.value)} />
           </label>
           <label className="admin-field">
-            <span>CAS 号</span>
+            <span>{t("CAS 号")}</span>
             <input className="field" value={active.cas} onChange={(event) => update("cas", event.target.value)} />
           </label>
           <label className="admin-field">
-            <span>分子式</span>
+            <span>{t("分子式")}</span>
             <input className="field" value={active.formula} onChange={(event) => update("formula", event.target.value)} />
           </label>
           <label className="admin-field">
-            <span>分子量</span>
+            <span>{t("分子量")}</span>
             <input className="field" value={active.molecularWeight} onChange={(event) => update("molecularWeight", event.target.value)} />
           </label>
           <label className="admin-field">
-            <span>纯度</span>
+            <span>{t("纯度")}</span>
             <input className="field" value={active.purity} onChange={(event) => update("purity", event.target.value)} />
           </label>
           <label className="admin-field">
-            <span>包装</span>
+            <span>{t("包装")}</span>
             <input className="field" value={active.packageSize} onChange={(event) => update("packageSize", event.target.value)} />
           </label>
           <label className="admin-field">
-            <span>货期</span>
+            <span>{t("货期")}</span>
             <input className="field" value={active.leadTime} onChange={(event) => update("leadTime", event.target.value)} />
           </label>
           <label className="admin-field">
-            <span>价格</span>
+            <span>{t("价格")}</span>
             <input className="field" type="number" min={0} value={active.price} onChange={(event) => update("price", Number(event.target.value))} />
           </label>
           <label className="admin-field">
-            <span>库存</span>
+            <span>{t("库存")}</span>
             <input className="field" type="number" min={0} value={active.stock} onChange={(event) => update("stock", Number(event.target.value))} />
           </label>
           <label className="admin-field full">
-            <span>同义词</span>
+            <span>{t("同义词")}</span>
             <input className="field" value={active.synonyms} onChange={(event) => update("synonyms", event.target.value)} />
           </label>
           <label className="admin-field full">
-            <span>标签</span>
-            <input className="field" value={active.tags.join("，")} onChange={(event) => update("tags", event.target.value.split(/[;，,]/).map((tag) => tag.trim()).filter(Boolean))} placeholder="多个标签用逗号分隔" />
+            <span>{t("标签")}</span>
+            <input className="field" value={active.tags.join("，")} onChange={(event) => update("tags", event.target.value.split(/[;，,]/).map((tag) => tag.trim()).filter(Boolean))} placeholder={t("多个标签用逗号分隔")} />
           </label>
           <label className="admin-field full">
-            <span>基本信息</span>
+            <span>{t("基本信息")}</span>
             <textarea className="field" value={active.details} onChange={(event) => update("details", event.target.value)} />
           </label>
           <label className="admin-field full">
-            <span>参考文献</span>
+            <span>{t("参考文献")}</span>
             <textarea className="field" value={active.references} onChange={(event) => update("references", event.target.value)} />
           </label>
           <label className="admin-field full">
-            <span>质检证书</span>
+            <span>{t("质检证书")}</span>
             <textarea className="field" value={active.certificate} onChange={(event) => update("certificate", event.target.value)} />
           </label>
           <label className="admin-field full">
-            <span>规模说明</span>
+            <span>{t("规模说明")}</span>
             <textarea className="field" value={active.scaleNote} onChange={(event) => update("scaleNote", event.target.value)} />
           </label>
         </div>
+        }
         {message && <div className="notice">{message}</div>}
       </div>
     );
@@ -633,50 +654,44 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     <div className="panel admin-panel product-grid-panel">
       <div className="toolbar">
         <div>
-          <h1>产品管理</h1>
-          <p className="admin-subtitle">以表格方式查看全部产品，点击详情进入单个产品表单。</p>
+          <h1>{t("产品管理")}</h1>
+          <p className="admin-subtitle">{t("以表格方式查看全部产品，点击详情进入单个产品表单。")}</p>
         </div>
         <div className="admin-actions">
-          <button className="btn primary" type="button" onClick={addProduct}>
-            添加产品
-          </button>
-          <button className="btn" type="button" onClick={() => csvInputRef.current?.click()}>
-            批量上传
-          </button>
+          <button className="btn primary" type="button" onClick={addProduct}>{t("添加产品")}</button>
+          <button className="btn" type="button" onClick={() => csvInputRef.current?.click()}>{t("批量上传")}</button>
           <button className="btn danger" type="button" onClick={removeSelectedProducts} disabled={selectedIds.length === 0}>
-            删除选中{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
+            {t("删除选中")}{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
           </button>
-          <button className="btn" type="button" onClick={() => saveProductsToServer()}>
-            保存全部
-          </button>
+          <button className="btn" type="button" onClick={() => saveProductsToServer()}>{t("保存全部")}</button>
           <input ref={csvInputRef} className="sr-only" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" onChange={(event) => importSpreadsheet(event.target.files?.[0])} />
         </div>
       </div>
 
-      <div className="product-status-tabs" role="tablist" aria-label="产品状态筛选">
+      <div className="product-status-tabs" role="tablist" aria-label={t("产品状态筛选")}>
         <button className={view === "all" ? "active" : ""} type="button" onClick={() => { setView("all"); setSelectedIds([]); }}>
-          所有产品（{counts.all}）
+          {translate("所有产品", "All products")}（{counts.all}）
         </button>
         <button className={view === "deleted" ? "active" : ""} type="button" onClick={() => { setView("deleted"); setSelectedIds([]); }}>
-          已删除（{counts.deleted}）
+          {t("已删除")}（{counts.deleted}）
         </button>
         <button className={view === "draft" ? "active" : ""} type="button" onClick={() => { setView("draft"); setSelectedIds([]); }}>
-          草稿（{counts.draft}）
+          {t("草稿")}（{counts.draft}）
         </button>
         <button className={view === "published" ? "active" : ""} type="button" onClick={() => { setView("published"); setSelectedIds([]); }}>
-          所有已发布（{counts.published}）
+          {translate("所有已发布", "All published")}（{counts.published}）
         </button>
       </div>
 
       {products.length === 0 ? (
         <div className="empty-state">
-          <b>还没有产品</b>
-          <span>点击“添加产品”创建单个产品，或点击“批量上传”导入 Excel 表格。</span>
+          <b>{t("还没有产品")}</b>
+          <span>{t("点击“添加产品”创建单个产品，或点击“批量上传”导入 Excel 表格。")}</span>
         </div>
       ) : visibleProducts.length === 0 ? (
         <div className="empty-state">
-          <b>当前分类没有产品</b>
-          <span>可以切换上方状态，或添加/批量上传新的产品。</span>
+          <b>{t("当前分类没有产品")}</b>
+          <span>{t("可以切换上方状态，或添加/批量上传新的产品。")}</span>
         </div>
       ) : (
         <div className="product-admin-grid-wrap">
@@ -684,28 +699,26 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             <thead>
               <tr>
                 <th className="select-column">
-                  <input aria-label="选择全部产品" type="checkbox" checked={allSelected} onChange={(event) => toggleAllSelected(event.target.checked)} />
+                  <input aria-label={t("选择全部产品")} type="checkbox" checked={allSelected} onChange={(event) => toggleAllSelected(event.target.checked)} />
                 </th>
-                <th>操作</th>
-                {gridColumns.map((column) => (
-                  <th key={column.key}>{column.label}</th>
+                <th>{t("操作")}</th>
+                {columns.map((column) => (
+                  <th key={column.key}>{t(column.label)}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {visibleProducts.map((product) => (
+              {gridProducts.map((product) => (
                 <tr className={product.deletedAt ? "is-deleted" : product.status === "draft" ? "is-draft" : ""} key={product.id}>
                   <td className="select-column">
-                    <input aria-label={`选择 ${product.nameCn || product.nameEn || product.catalogNo || product.id}`} type="checkbox" checked={selectedIds.includes(product.id)} onChange={(event) => toggleSelected(product.id, event.target.checked)} />
+                    <input aria-label={translate(`选择 ${product.nameCn || product.nameEn || product.catalogNo || product.id}`, `Select ${product.nameEn || product.catalogNo || product.id}`)} type="checkbox" checked={selectedIds.includes(product.id)} onChange={(event) => toggleSelected(product.id, event.target.checked)} />
                   </td>
                   <td>
-                    <button className="btn small" type="button" onClick={() => openDetail(product.id)}>
-                      详情
-                    </button>
+                    <button className="btn small" type="button" onClick={() => openDetail(product.id)}>{t("详情")}</button>
                   </td>
-                  {gridColumns.map((column) => (
-                    <td key={column.key} title={productValue(product, column.key)}>
-                      {productValue(product, column.key) || "—"}
+                  {columns.map((column) => (
+                    <td key={column.key} title={t(productValue(product, column.key, locale))}>
+                      {t(productValue(product, column.key, locale)) || "—"}
                     </td>
                   ))}
                 </tr>

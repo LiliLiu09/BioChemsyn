@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import { getNewsArticles, saveNewsArticles } from "@/lib/cms";
 import type { NewsArticle } from "@/lib/types";
+import { isEnglishContent } from "@/lib/content-locale";
+import { translate } from "@/lib/i18n";
+import { contentSaveError, requestLocale } from "../content-errors";
 
 function slugify(value: string) {
   return value
@@ -42,6 +45,9 @@ export async function PUT(request: Request) {
   await requireAdmin();
   const body = (await request.json()) as { news?: NewsArticle[] };
   const news = (body.news || []).map(normalizeArticle);
-  await saveNewsArticles(news);
+  if (news.some((article) => article.translations?.en?.published === true && (!isEnglishContent(article.translations.en.title) || !isEnglishContent(article.translations.en.content)))) {
+    return NextResponse.json({ code: "ENGLISH_TRANSLATION_INCOMPLETE", error: translate(requestLocale(request), "发布英文新闻前，请填写英文标题和正文。", "Enter an English title and body before publishing the English news article.") }, { status: 400 });
+  }
+  try { await saveNewsArticles(news); } catch (error) { return contentSaveError(error, request); }
   return NextResponse.json({ ok: true, news });
 }

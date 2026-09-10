@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import { getProducts, saveProducts } from "@/lib/cms";
 import type { Product } from "@/lib/types";
+import { isEnglishContent } from "@/lib/content-locale";
+import { translate } from "@/lib/i18n";
+import { contentSaveError, requestLocale } from "../content-errors";
 
 function nextProductId(products: Array<Pick<Product, "id">>) {
   const maxId = products.reduce((max, product) => {
@@ -52,6 +55,9 @@ export async function PUT(request: Request) {
     return normalized;
   });
 
-  await saveProducts(products);
+  if (products.some((product) => product.translations?.en?.published === true && !isEnglishContent(product.translations.en.nameEn || product.nameEn))) {
+    return NextResponse.json({ code: "ENGLISH_TRANSLATION_INCOMPLETE", error: translate(requestLocale(request), "发布英文产品前，请填写正确的英文名称。", "Enter an English product name before publishing the English version.") }, { status: 400 });
+  }
+  try { await saveProducts(products); } catch (error) { return contentSaveError(error, request); }
   return NextResponse.json({ ok: true, products });
 }

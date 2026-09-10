@@ -1,9 +1,10 @@
 "use client";
 
 import { Search, ShoppingCart } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
+import { useLanguage } from "./LanguageProvider";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useId } from "react";
 import { cartStorageKey } from "@/lib/session";
 import type { Product } from "@/lib/types";
 
@@ -14,8 +15,8 @@ type CartLine = {
 
 function matches(product: Product, keyword: string, category: string) {
   const query = keyword.trim().toLowerCase();
-  const productCategory = product.category || "未分类";
-  const inCategory = category === "all" || productCategory === category;
+  const productCategory = product.categoryKey || product.category || "未分类";
+  const inCategory = category === "all" || productCategory === category || product.category === category;
   const inText =
     !query ||
     [
@@ -36,17 +37,22 @@ function matches(product: Product, keyword: string, category: string) {
   return inCategory && inText;
 }
 
-function valueOrDash(value: string | number) {
-  return value || "待确认";
-}
-
 export function ProductBrowser({ compact = false, products }: { compact?: boolean; products: Product[] }) {
+  const { locale, t } = useLanguage();
+  const filterId = useId();
+  const valueOrDash = (value: string | number) => value || t("待确认", "On request");
   const searchParams = useSearchParams();
-  const [keyword, setKeyword] = useState("");
-  const [category, setCategory] = useState(searchParams.get("category") || "all");
+  const keyword = searchParams.get("q") || "";
+  const category = searchParams.get("category") || "all";
+  const updateFilter = (key: "q" | "category", value: string) => {
+    const url = new URL(window.location.href);
+    if (!value || (key === "category" && value === "all")) url.searchParams.delete(key);
+    else url.searchParams.set(key, value);
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  };
   const categories = useMemo(
-    () => Array.from(new Set(products.map((product) => product.category || "未分类"))),
-    [products]
+    () => Array.from(new Map(products.map((product) => [product.categoryKey || product.category || "未分类", product.category || t("未分类", "Uncategorized")])).entries()),
+    [products, t]
   );
 
   const filtered = useMemo(
@@ -69,51 +75,51 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
     <section className="product-section" id="products">
       <div className="section-heading product-heading">
         <div>
-          <span className="eyebrow">{compact ? "精选产品" : "产品数据库"}</span>
-          <h2>{compact ? "近期热门与现货产品" : "产品库"}</h2>
+          <span className="eyebrow">{compact ? t("精选产品", "Featured products") : t("产品数据库", "Product database")}</span>
+          <h2>{compact ? t("近期热门与现货产品", "Popular & in-stock products") : t("产品库", "Product catalog")}</h2>
         </div>
         {compact && (
           <Link className="btn" href="/products">
-            查看全部产品
+            {t("查看全部产品", "View all products")}
           </Link>
         )}
       </div>
 
-      <div className="search-card">
+      <form className="search-card" onSubmit={(event) => event.preventDefault()}>
         <label className="search-field">
           <Search size={18} aria-hidden="true" />
-          <span className="sr-only">搜索产品</span>
+          <span className="sr-only">{t("搜索产品", "Search products")}</span>
           <input
             value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
-            placeholder="输入 CAS、Catalog #、货号、产品名、Synonyms 或分子式"
+            onChange={(event) => updateFilter("q", event.target.value)}
+            placeholder={t("输入 CAS、货号、产品名、别名或分子式", "Search CAS, catalog number, name, synonyms or formula")}
           />
         </label>
-        <label className="sr-only" htmlFor="category-filter">
-          产品分类
+        <label className="sr-only" htmlFor={filterId}>
+          {t("产品分类", "Product category")}
         </label>
-        <select id="category-filter" className="field" value={category} onChange={(event) => setCategory(event.target.value)}>
-          <option value="all">全部分类</option>
-          {categories.map((item) => (
-            <option key={item} value={item}>
-              {item}
+        <select id={filterId} className="field" value={category} onChange={(event) => updateFilter("category", event.target.value)}>
+          <option value="all">{t("全部分类", "All categories")}</option>
+          {categories.map(([key, label]) => (
+            <option key={key} value={key}>
+              {label}
             </option>
           ))}
         </select>
-        <button className="btn primary" type="button">
-          搜索产品
+        <button className="btn primary" type="submit">
+          {t("搜索产品", "Search products")}
         </button>
-      </div>
+      </form>
     
 
       <div className="toolbar">
-        <span className="result-count">找到 {filtered.length} 个产品</span>
+        <span className="result-count">{t(`找到 ${filtered.length} 个产品`, `${filtered.length} products found`)}</span>
       </div>
 
       <div className="grid">
         {filtered.map((product) => (
           <article className="product-card" key={product.id}>
-            <Link className="product-thumb" href={`/products/${product.id}`} aria-label={`查看${product.nameCn || product.nameEn || product.sku}详情`}>
+            <Link className="product-thumb" href={`/products/${product.id}`} aria-label={t(`查看${product.nameCn || product.nameEn || product.sku}详情`, `View ${product.nameEn || product.sku}`)}>
               {product.image ? (
                 <img src={product.image} alt={product.nameCn || product.nameEn || product.sku} />
               ) : (
@@ -125,34 +131,34 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
             </Link>
             <div className="product-head">
               <span className="sku">{product.catalogNo || product.sku}</span>
-              <span className="pill">{product.category || "未分类"}</span>
+              <span className="pill">{product.category || t("未分类", "Uncategorized")}</span>
             </div>
             <div>
               <h3>
-                <Link href={`/products/${product.id}`}>{product.nameCn || product.nameEn || "未命名产品"}</Link>
+                <Link href={`/products/${product.id}`}>{product.nameCn || product.nameEn || t("未命名产品", "Unnamed product")}</Link>
               </h3>
-              <p>{product.nameEn || "英文名称待补充"}</p>
+              {locale === "zh" && <p>{product.nameEn || "英文名称待补充"}</p>}
             </div>
             <div className="specs">
               <span>
-                <b>CAS Number</b>
+                <b>{t("CAS 号", "CAS Number")}</b>
                 {valueOrDash(product.cas)}
               </span>
               <span>
-                <b>Synonyms</b>
+                <b>{t("别名", "Synonyms")}</b>
                 {valueOrDash(product.synonyms)}
               </span>
               <span>
-                <b>Chemical Formula</b>
+                <b>{t("分子式", "Chemical Formula")}</b>
                 {valueOrDash(product.formula)}
               </span>
               <span>
-                <b>Pack Size</b>
+                <b>{t("包装规格", "Pack Size")}</b>
                 {valueOrDash(product.packageSize)}
               </span>
             </div>
             <div className="tag-row">
-              {(product.tags.length ? product.tags : ["询价确认"]).map((tag) => (
+              {(product.tags.length ? product.tags : [t("询价确认", "Request a quote")]).map((tag) => (
                 <span className="pill subtle" key={tag}>
                   {tag}
                 </span>
@@ -160,11 +166,11 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
             </div>
             <div className="price-row">
               <Link className="locked" href="/cart">
-                提交后报价
+                {t("提交后报价", "Price on request")}
               </Link>
               <button className="btn primary" type="button" onClick={() => addToCart(product)}>
                 <ShoppingCart size={16} aria-hidden="true" />
-                加入询价车
+                {t("加入询价车", "Add to inquiry cart")}
               </button>
             </div>
           </article>

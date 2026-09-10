@@ -36,7 +36,9 @@ function cleanEditorHtml(editor: HTMLDivElement) {
   return clone.innerHTML;
 }
 
+import { useAdminLanguage } from "@/components/admin-language";
 export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: RichTextEditorProps) {
+  const { locale, t } = useAdminLanguage();
   const editorRef = useRef<HTMLDivElement>(null);
   const selectionRef = useRef<Range | null>(null);
   const selectedImageRef = useRef<HTMLImageElement | null>(null);
@@ -147,17 +149,17 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
     setUploading(false);
 
     if (!response.ok || !payload.url) {
-      setMessage(payload.message || "图片上传失败");
+      setMessage(locale === "en" ? t("图片上传失败") : payload.message || t("图片上传失败"));
       return;
     }
 
     apply("insertHTML", `<p><img src="${payload.url}" alt="${imageAlt}" style="width: 100%; height: auto; max-width: 100%;" /></p>`);
-    setMessage("图片已插入，请保存内容。点击图片可调整宽度。");
+    setMessage(t("图片已插入，请保存内容。点击图片可调整宽度。"));
   };
 
   return (
     <div className="rich-editor">
-      <div className="rich-toolbar" aria-label="富文本工具栏">
+      <div className="rich-toolbar" aria-label={t("富文本工具栏")}>
         <select
           className="field"
           defaultValue=""
@@ -166,14 +168,12 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
             apply("fontName", event.target.value);
             event.currentTarget.blur();
           }}
-          aria-label="字体"
+          aria-label={t("字体")}
         >
-          <option value="" disabled>
-            字体
-          </option>
+          <option value="" disabled>{t("字体")}</option>
           {fontOptions.map((font) => (
             <option key={font.value} value={font.value}>
-              {font.label}
+              {t(font.label)}
             </option>
           ))}
         </select>
@@ -185,14 +185,12 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
             apply("fontSize", event.target.value);
             event.currentTarget.blur();
           }}
-          aria-label="字号"
+          aria-label={t("字号")}
         >
-          <option value="" disabled>
-            字号
-          </option>
+          <option value="" disabled>{t("字号")}</option>
           {sizeOptions.map((size) => (
             <option key={size.value} value={size.value}>
-              {size.label}
+              {t(size.label)}
             </option>
           ))}
         </select>
@@ -205,24 +203,16 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
         <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("underline")}>
           U
         </button>
-        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("justifyLeft")}>
-          左
-        </button>
-        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("justifyCenter")}>
-          中
-        </button>
-        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("justifyRight")}>
-          右
-        </button>
-        <label className="btn rich-upload">
-          图片
-          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
+        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("justifyLeft")}>{t("左")}</button>
+        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("justifyCenter")}>{t("中")}</button>
+        <button type="button" className="btn" onMouseDown={(event) => event.preventDefault()} onClick={() => apply("justifyRight")}>{t("右")}</button>
+        <label className="btn rich-upload">{t("图片")}<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
         </label>
       </div>
 
       {selectedImageRef.current && (
         <div className="rich-image-toolbar">
-          <span>图片宽度</span>
+          <span>{t("图片宽度")}</span>
           {imageWidths.map((width) => (
             <button className="btn" type="button" key={width} onMouseDown={(event) => event.preventDefault()} onClick={() => updateSelectedImageWidth(width)}>
               {width}
@@ -232,8 +222,8 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
             className="field"
             value={selectedImageWidth}
             onChange={(event) => updateSelectedImageWidth(event.target.value)}
-            placeholder="例如 300px"
-            aria-label="自定义图片宽度"
+            placeholder={t("例如 300px")}
+            aria-label={t("自定义图片宽度")}
           />
         </div>
       )}
@@ -254,7 +244,7 @@ export function RichTextEditor({ value, onChange, uploadFolder, imageAlt }: Rich
           selectImage(target instanceof HTMLImageElement ? target : null);
         }}
       />
-      {uploading && <span className="result-count">图片上传中...</span>}
+      {uploading && <span className="result-count">{t("图片上传中...")}</span>}
       {message && <span className="result-count">{message}</span>}
     </div>
   );

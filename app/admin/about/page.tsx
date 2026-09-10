@@ -1,3 +1,5 @@
+import { getLocale } from "@/lib/locale-server";
+import { localizePath } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { isAdminAuthed } from "@/lib/adminAuth";
 import { getSiteContent } from "@/lib/cms";
@@ -6,7 +8,7 @@ import { AboutEditor } from "@/components/AboutEditor";
 
 export default async function AdminAboutPage() {
   if (!(await isAdminAuthed())) {
-    redirect("/admin/login");
+    redirect(localizePath("/admin/login", await getLocale()));
   }
 
   const site = await getSiteContent();

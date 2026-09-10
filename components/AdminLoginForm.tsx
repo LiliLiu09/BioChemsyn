@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { localizePath } from "@/lib/i18n";
+import { useAdminLanguage } from "@/components/admin-language";
 export function AdminLoginForm() {
+  const { locale, t } = useAdminLanguage();
   const router = useRouter();
   const [email, setEmail] = useState("admin@example.com");
   const [password, setPassword] = useState("admin123456");
@@ -21,31 +24,28 @@ export function AdminLoginForm() {
 
     setLoading(false);
     if (!response.ok) {
-      setMessage("账号或密码错误");
+      setMessage(t("账号或密码错误"));
       return;
     }
 
-    router.push("/admin");
+    router.push(localizePath("/admin", locale));
   };
 
   return (
     <div className="login-card">
-      <h1>后台登录</h1>
+      <h1>{t("后台登录")}</h1>
       <div className="form-stack">
-        <input className="field" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="管理员邮箱" />
+        <input className="field" value={email} onChange={(event) => setEmail(event.target.value)} placeholder={t("管理员邮箱")} />
         <input
           className="field"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           type="password"
-          placeholder="管理员密码"
+          placeholder={t("管理员密码")}
         />
         <button className="btn primary" type="button" onClick={login} disabled={loading}>
-          {loading ? "登录中..." : "进入后台"}
+          {loading ? t("登录中...") : t("进入后台")}
         </button>
-        <div className="notice">
-          默认账号：admin@example.com，默认密码：admin123456。正式部署时请用环境变量 ADMIN_EMAIL / ADMIN_PASSWORD 修改。
-        </div>
         {message && <div className="notice">{message}</div>}
       </div>
     </div>

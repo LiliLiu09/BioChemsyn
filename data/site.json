@@ -15,5 +15,23 @@
   "contactTitle": "提交需求或联系凯森斯生物",
   "contactDescription": "如需产品规格、批量供货、交期或替代品确认，可以通过电话、邮箱或询价表单提交需求。",
   "contactQrImage": "",
-  "contactCta": "前往询价车"
+  "contactCta": "前往询价车",
+  "translations": {
+    "en": {
+      "published": true,
+      "brandName": "KASONS",
+      "tagline": "Research reagent and chemical sourcing platform",
+      "heroTitle": "KASONS research reagents, reference standards and chemical catalogue",
+      "heroDescription": "Browse product information and request a quotation. Search by CAS number, catalogue number, product name or molecular formula, then send your requirements using the enquiry basket.",
+      "primaryCta": "Browse products",
+      "notice": "",
+      "companyName": "KASONS",
+      "address": "168 Demo Road, Pudong New Area, Shanghai",
+      "aboutTitle": "About KASONS",
+      "aboutDescription": "KASONS provides product information and procurement enquiry services for research reagents, reference standards and chemicals. We help research, quality-control and procurement teams find product information, confirm specifications and request quotations efficiently.",
+      "contactTitle": "Send your requirements or contact KASONS",
+      "contactDescription": "Contact us by phone, email or the enquiry form to confirm product specifications, bulk supply, lead times or alternatives.",
+      "contactCta": "Go to enquiry basket"
+    }
+  }
 }

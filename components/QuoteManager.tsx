@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "./LanguageProvider";
 import type { QuoteRequest } from "@/lib/types";
 
 const statuses: QuoteRequest["status"][] = ["待处理", "已报价", "已关闭", "已处理"];
 
+import { useAdminLanguage } from "@/components/admin-language";
 export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] }) {
+  const { locale, t } = useAdminLanguage();
+  const { t: translate } = useLanguage();
   const [quotes, setQuotes] = useState(initialQuotes);
   const [showAll, setShowAll] = useState(false);
   const [activeId, setActiveId] = useState(initialQuotes.find((quote) => quote.status === "待处理")?.id || initialQuotes[0]?.id || "");
@@ -45,19 +49,19 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
       return true;
     }
 
-    setMessage("保存失败，请重新登录后台或检查 Supabase 配置");
+    setMessage(t("保存失败，请重新登录后台或检查 Supabase 配置"));
     return false;
   };
 
   const save = async () => {
-    await persistQuotes(quotes, "询价记录已保存");
+    await persistQuotes(quotes, t("询价记录已保存"));
   };
 
   const markProcessed = async () => {
     if (!active) return;
 
     const nextQuotes = quotes.map((quote) => (quote.id === active.id ? { ...quote, status: "已处理" as const } : quote));
-    const saved = await persistQuotes(nextQuotes, "询价已标记为已处理");
+    const saved = await persistQuotes(nextQuotes, t("询价已标记为已处理"));
     if (saved && !showAll) {
       setActiveId(nextQuotes.find((quote) => quote.status === "待处理")?.id || "");
     }
@@ -65,7 +69,7 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
 
   const filterButton = (
     <button className="btn primary quote-filter-button" type="button" onClick={toggleShowAll} disabled={quotes.length === 0}>
-      {showAll ? "只显示待处理询价" : `显示全部询价（${quotes.length}）`}
+      {showAll ? t("只显示待处理询价") : translate(`显示全部询价（${quotes.length}）`, `Show all inquiries (${quotes.length})`)}
     </button>
   );
 
@@ -74,14 +78,14 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
       <div className="panel admin-panel">
         <div className="toolbar">
           <div>
-            <h1>询价管理</h1>
+            <h1>{t("询价管理")}</h1>
             <span className="result-count">
-              默认只显示待处理询价。待处理 {pendingCount} 条，其他状态 {hiddenCount} 条。
+              {translate(`默认只显示待处理询价。待处理 ${pendingCount} 条，其他状态 ${hiddenCount} 条。`, `Pending inquiries are shown by default. ${pendingCount} pending; ${hiddenCount} in other statuses.`)}
             </span>
           </div>
         </div>
         <div className="quote-filter-row">{filterButton}</div>
-        <div className="notice">{quotes.length > 0 ? "暂无待处理询价记录。" : "暂无询价记录。"}</div>
+        <div className="notice">{quotes.length > 0 ? t("暂无待处理询价记录。") : t("暂无询价记录。")}</div>
       </div>
     );
   }
@@ -91,9 +95,9 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
       <div className="panel admin-list">
         <div className="toolbar">
           <div>
-            <h2>询价单</h2>
+            <h2>{t("询价单")}</h2>
             <span className="result-count">
-              {showAll ? `全部 ${quotes.length} 条` : `待处理 ${pendingCount} 条，其他状态 ${hiddenCount} 条已隐藏`}
+              {showAll ? translate(`全部 ${quotes.length} 条`, `${quotes.length} inquiries`) : translate(`待处理 ${pendingCount} 条，其他状态 ${hiddenCount} 条已隐藏`, `${pendingCount} pending; ${hiddenCount} other inquiries hidden`)}
             </span>
           </div>
         </div>
@@ -105,9 +109,9 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
             type="button"
             onClick={() => setActiveId(quote.id)}
           >
-            <b>{quote.customer.name || "未填写联系人"}</b>
+            <b>{quote.customer.name || t("未填写联系人")}</b>
             <span>
-              {quote.customer.company || "未填写公司"} · {quote.id} · {quote.status}
+              {quote.customer.company || t("未填写公司")} · {quote.id} · {t(quote.status)}
             </span>
           </button>
         ))}
@@ -116,88 +120,84 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
       <div className="panel admin-panel">
         <div className="toolbar">
           <div>
-            <h1>询价详情</h1>
+            <h1>{t("询价详情")}</h1>
             <span className="result-count">
-              {active.id} · {new Date(active.createdAt).toLocaleString("zh-CN")}
+              {active.id} · {new Date(active.createdAt).toLocaleString(locale === "en" ? "en-GB" : "zh-CN")}
             </span>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {active.status !== "已处理" && (
-              <button className="btn ghost" type="button" onClick={markProcessed}>
-                标记已处理
-              </button>
+              <button className="btn ghost" type="button" onClick={markProcessed}>{t("标记已处理")}</button>
             )}
-            <button className="btn primary" type="button" onClick={save}>
-              保存
-            </button>
+            <button className="btn primary" type="button" onClick={save}>{t("保存")}</button>
           </div>
         </div>
 
         <div className="admin-form-grid">
           <label className="admin-field">
-            <span>处理状态</span>
+            <span>{t("处理状态")}</span>
             <select className="field" value={active.status} onChange={(event) => updateQuote(active.id, { status: event.target.value as QuoteRequest["status"] })}>
               {statuses.map((status) => (
                 <option key={status} value={status}>
-                  {status}
+                  {t(status)}
                 </option>
               ))}
             </select>
           </label>
           <label className="admin-field">
-            <span>联系人</span>
+            <span>{t("联系人")}</span>
             <input className="field" value={active.customer.name} readOnly />
           </label>
           <label className="admin-field">
-            <span>公司</span>
+            <span>{t("公司")}</span>
             <input className="field" value={active.customer.company} readOnly />
           </label>
           <label className="admin-field">
-            <span>电话</span>
+            <span>{t("电话")}</span>
             <input className="field" value={active.customer.phone} readOnly />
           </label>
           <label className="admin-field">
-            <span>邮箱</span>
+            <span>{t("邮箱")}</span>
             <input className="field" value={active.customer.email} readOnly />
           </label>
           <label className="admin-field">
-            <span>地区</span>
-            <input className="field" value={active.customer.region || "未填写"} readOnly />
+            <span>{t("地区")}</span>
+            <input className="field" value={active.customer.region || t("未填写")} readOnly />
           </label>
           <label className="admin-field full">
-            <span>客户备注</span>
-            <textarea className="field" value={active.customer.remark || "未填写"} readOnly />
+            <span>{t("客户备注")}</span>
+            <textarea className="field" value={active.customer.remark || t("未填写")} readOnly />
           </label>
           <label className="admin-field full">
-            <span>销售备注</span>
+            <span>{t("销售备注")}</span>
             <textarea className="field" value={active.salesNote} onChange={(event) => updateQuote(active.id, { salesNote: event.target.value })} />
           </label>
         </div>
 
-        <h2>产品清单</h2>
+        <h2>{t("产品清单")}</h2>
         <table className="cart-table">
           <thead>
             <tr>
-              <th>产品</th>
-              <th>CAS / 货号</th>
-              <th>规格</th>
-              <th>数量</th>
+              <th>{t("产品")}</th>
+              <th>{t("CAS / 货号")}</th>
+              <th>{t("规格")}</th>
+              <th>{t("数量")}</th>
             </tr>
           </thead>
           <tbody>
             {active.lines.map((line) => (
               <tr key={`${active.id}-${line.productId}`}>
                 <td>
-                  <b>{line.nameCn || line.nameEn}</b>
+                  <b>{locale === "en" ? line.nameEn || line.sku : line.nameCn || line.nameEn}</b>
                   <br />
-                  <span style={{ color: "#667382" }}>{line.nameEn}</span>
+                  {locale === "zh" && <span style={{ color: "#667382" }}>{line.nameEn}</span>}
                 </td>
                 <td>
-                  {line.cas || "待确认"}
+                  {line.cas || t("待确认")}
                   <br />
                   {line.sku}
                 </td>
-                <td>{line.packageSize || "待确认"}</td>
+                <td>{line.packageSize || t("待确认")}</td>
                 <td>{line.qty}</td>
               </tr>
             ))}

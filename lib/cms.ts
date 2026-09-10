@@ -36,6 +36,7 @@ type ProductRow = {
   certificate: string;
   scale_note: string;
   tags: string[];
+  translations?: Product["translations"];
 };
 
 type SiteRow = SiteContent & { id: string };
@@ -67,7 +68,11 @@ async function writeJson<T>(filePath: string, value: T) {
 }
 
 function useSupabase() {
-  return getSupabaseConfig().enabled;
+  const config = getSupabaseConfig();
+  if (config.url && !config.canWrite) {
+    throw new Error("CMS reads require a server-side SUPABASE_SECRET_KEY, SUPABASE_SERVICE_ROLE_KEY or DATABASE_URL. Anonymous access to bilingual content is disabled to protect drafts.");
+  }
+  return config.enabled;
 }
 
 function requireWritableSupabase() {
@@ -104,7 +109,8 @@ function productFromRow(row: ProductRow): Product {
     references: row.reference_text || "",
     certificate: row.certificate || "",
     scaleNote: row.scale_note || "",
-    tags: Array.isArray(row.tags) ? row.tags : []
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    translations: row.translations || {}
   };
 }
 
@@ -133,7 +139,8 @@ function productToRow(product: Product): ProductRow {
     reference_text: product.references || "",
     certificate: product.certificate || "",
     scale_note: product.scaleNote || "",
-    tags: Array.isArray(product.tags) ? product.tags : []
+    tags: Array.isArray(product.tags) ? product.tags : [],
+    translations: product.translations || {}
   };
 }
 
@@ -173,7 +180,8 @@ function newsFromRow(row: NewsRow): NewsArticle {
     content: row.content,
     coverImage: row.cover_image || "",
     views: Number(row.views || 0),
-    published: Boolean(row.published)
+    published: Boolean(row.published),
+    translations: row.translations || {}
   };
 }
 
@@ -190,7 +198,8 @@ function newsToRow(article: NewsArticle): NewsRow {
     content: article.content || "",
     cover_image: article.coverImage || "",
     views: Number(article.views || 0),
-    published: Boolean(article.published)
+    published: Boolean(article.published),
+    translations: article.translations || {}
   };
 }
 
@@ -216,11 +225,55 @@ const siteDefaults: SiteContent = {
 };
 
 function siteFromRow(row: SiteRow): SiteContent {
-  const { id: _id, ...site } = row;
-  return {
-    ...siteDefaults,
-    ...site
-  };
+  // Old schema revisions also contain retired CMS fields; do not serialize those to public clients.
+  const site = { ...siteDefaults };
+  for (const key of Object.keys(siteDefaults) as Array<keyof typeof siteDefaults>) {
+    if (key !== "translations" && key !== "contentLocale" && typeof row[key] === "string") {
+      site[key] = row[key];
+    }
+  }
+  return { ...site, translations: row.translations || {} };
+}
+
+type ArticleTable = "news_articles" | "info_articles";
+
+async function saveArticlesInDatabase(table: ArticleTable, articles: NewsArticle[]) {
+  const rows = articles.map(newsToRow);
+  await dbTransaction(async (query) => {
+    await query(`delete from public.${table}`);
+    for (const row of rows) {
+      await query(
+        `insert into public.${table} (
+          id, slug, title, category, author, source, published_at, summary,
+          content, cover_image, views, published, translations
+        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb)`,
+        [
+          row.id, row.slug, row.title, row.category, row.author, row.source,
+          row.published_at, row.summary, row.content, row.cover_image,
+          row.views, row.published, JSON.stringify(row.translations || {})
+        ]
+      );
+    }
+  });
+}
+
+async function saveArticlesWithSupabase(table: ArticleTable, articles: NewsArticle[]) {
+  // Preserve existing rows if the bulk upsert fails. Delete only records absent from the saved list.
+  const previous = await supabaseRest<Array<{ id: string }>>(table, { query: "?select=id" });
+  const keepIds = new Set(articles.map((article) => article.id));
+  if (articles.length > 0) {
+    await supabaseRest(table, {
+      method: "POST",
+      query: "?on_conflict=id",
+      body: articles.map(newsToRow),
+      prefer: "resolution=merge-duplicates,return=representation"
+    });
+  }
+  for (const row of previous) {
+    if (!keepIds.has(row.id)) {
+      await supabaseRest(table, { method: "DELETE", query: `?id=eq.${encodeURIComponent(row.id)}` });
+    }
+  }
 }
 
 export async function getProducts(options: { includeInactive?: boolean } = {}) {
@@ -244,7 +297,31 @@ export async function getProducts(options: { includeInactive?: boolean } = {}) {
   return includeInactive ? products : products.filter((product) => product.status === "published" && !product.deletedAt);
 }
 
+export class BilingualMigrationRequiredError extends Error {
+  constructor() {
+    super("The bilingual content database migration is required before saving.");
+    this.name = "BilingualMigrationRequiredError";
+  }
+}
+
+async function ensureTranslationsColumn(table: "products" | "site_content" | "news_articles" | "info_articles") {
+  try {
+    if (hasDatabaseUrl()) {
+      await dbQuery(`select translations from public.${table} limit 0`);
+    } else if (useSupabase()) {
+      await supabaseRest(table, { query: "?select=translations&limit=0" });
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/translations/i.test(message) && /does not exist|schema cache|42703|PGRST20[04]/i.test(message)) {
+      throw new BilingualMigrationRequiredError();
+    }
+    throw error;
+  }
+}
+
 export async function saveProducts(products: Product[]) {
+  await ensureTranslationsColumn("products");
   if (hasDatabaseUrl()) {
     const rows = products.map(productToRow);
     await dbTransaction(async (query) => {
@@ -253,8 +330,8 @@ export async function saveProducts(products: Product[]) {
           `insert into public.products (
             id, status, deleted_at, sku, catalog_no, cas, name_cn, name_en, synonyms, category, brand, formula,
             molecular_weight, purity, stock, package_size, price, lead_time, image,
-            details, reference_text, certificate, scale_note, tags
-          ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+            details, reference_text, certificate, scale_note, tags, translations
+          ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25::jsonb)
           on conflict (id) do update set
             status = excluded.status,
             deleted_at = excluded.deleted_at,
@@ -279,6 +356,7 @@ export async function saveProducts(products: Product[]) {
             certificate = excluded.certificate,
             scale_note = excluded.scale_note,
             tags = excluded.tags,
+            translations = excluded.translations,
             updated_at = now()`,
           [
             row.id,
@@ -304,7 +382,8 @@ export async function saveProducts(products: Product[]) {
             row.reference_text,
             row.certificate,
             row.scale_note,
-            row.tags
+            row.tags,
+            JSON.stringify(row.translations || {})
           ]
         );
       }
@@ -337,15 +416,17 @@ export async function getSiteContent() {
 }
 
 export async function saveSiteContent(site: SiteContent) {
-  const normalizedSite = { ...siteDefaults, ...site };
+  await ensureTranslationsColumn("site_content");
+  const { contentLocale: _locale, ...siteFields } = site;
+  const normalizedSite = { ...siteDefaults, ...siteFields, translations: site.translations || {} };
   if (hasDatabaseUrl()) {
     await dbQuery(
       `insert into public.site_content (
         id, "brandName", tagline, "supportPhone", "heroTitle", "heroDescription",
         "primaryCta", notice, "companyName", "contactEmail", address,
         "aboutTitle", "aboutDescription", "aboutQrImage",
-        "contactTitle", "contactDescription", "contactQrImage", "contactCta"
-      ) values ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        "contactTitle", "contactDescription", "contactQrImage", "contactCta", translations
+      ) values ('main', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18::jsonb)
       on conflict (id) do update set
         "brandName" = excluded."brandName",
         tagline = excluded.tagline,
@@ -363,7 +444,8 @@ export async function saveSiteContent(site: SiteContent) {
         "contactTitle" = excluded."contactTitle",
         "contactDescription" = excluded."contactDescription",
         "contactQrImage" = excluded."contactQrImage",
-        "contactCta" = excluded."contactCta"`,
+        "contactCta" = excluded."contactCta",
+        translations = excluded.translations`,
       [
         normalizedSite.brandName,
         normalizedSite.tagline,
@@ -381,7 +463,8 @@ export async function saveSiteContent(site: SiteContent) {
         normalizedSite.contactTitle,
         normalizedSite.contactDescription,
         normalizedSite.contactQrImage,
-        normalizedSite.contactCta
+        normalizedSite.contactCta,
+        JSON.stringify(normalizedSite.translations)
       ]
     );
     return;
@@ -440,41 +523,17 @@ export async function getNewsArticles() {
 }
 
 export async function saveNewsArticles(news: NewsArticle[]) {
+  // Check before any writes so a missing migration cannot affect existing content.
+  await ensureTranslationsColumn("news_articles");
   if (hasDatabaseUrl()) {
-    await dbQuery("delete from public.news_articles");
-    for (const article of news) {
-      const row = newsToRow(article);
-      await dbQuery(
-        `insert into public.news_articles (
-          id, slug, title, category, author, source, published_at, summary,
-          content, cover_image, views, published
-        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-        [
-          row.id,
-          row.slug,
-          row.title,
-          row.category,
-          row.author,
-          row.source,
-          row.published_at,
-          row.summary,
-          row.content,
-          row.cover_image,
-          row.views,
-          row.published
-        ]
-      );
-    }
+    await saveArticlesInDatabase("news_articles", news);
     return;
   }
   if (!requireWritableSupabase()) {
     await writeJson(newsFile, news);
     return;
   }
-  await supabaseRest("news_articles", { method: "DELETE", query: "?id=not.is.null" });
-  if (news.length > 0) {
-    await supabaseRest("news_articles", { method: "POST", body: news.map(newsToRow), prefer: "return=representation" });
-  }
+  await saveArticlesWithSupabase("news_articles", news);
 }
 
 export async function getInfoArticles() {
@@ -488,41 +547,16 @@ export async function getInfoArticles() {
 }
 
 export async function saveInfoArticles(info: InfoArticle[]) {
+  await ensureTranslationsColumn("info_articles");
   if (hasDatabaseUrl()) {
-    await dbQuery("delete from public.info_articles");
-    for (const article of info) {
-      const row = newsToRow(article);
-      await dbQuery(
-        `insert into public.info_articles (
-          id, slug, title, category, author, source, published_at, summary,
-          content, cover_image, views, published
-        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-        [
-          row.id,
-          row.slug,
-          row.title,
-          row.category,
-          row.author,
-          row.source,
-          row.published_at,
-          row.summary,
-          row.content,
-          row.cover_image,
-          row.views,
-          row.published
-        ]
-      );
-    }
+    await saveArticlesInDatabase("info_articles", info);
     return;
   }
   if (!requireWritableSupabase()) {
     await writeJson(infoFile, info);
     return;
   }
-  await supabaseRest("info_articles", { method: "DELETE", query: "?id=not.is.null" });
-  if (info.length > 0) {
-    await supabaseRest("info_articles", { method: "POST", body: info.map(newsToRow), prefer: "return=representation" });
-  }
+  await saveArticlesWithSupabase("info_articles", info);
 }
 
 export async function getCategories() {

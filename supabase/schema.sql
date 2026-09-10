@@ -25,6 +25,7 @@ create table if not exists public.products (
   certificate text not null default '',
   scale_note text not null default '',
   tags text[] not null default '{}',
+  translations jsonb not null default '{}'::jsonb check (jsonb_typeof(translations) = 'object'),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -32,14 +33,16 @@ create table if not exists public.products (
 create index if not exists products_catalog_no_idx on public.products (catalog_no);
 create index if not exists products_cas_idx on public.products (cas);
 create index if not exists products_category_idx on public.products (category);
-create index if not exists products_status_idx on public.products (status);
-create index if not exists products_deleted_at_idx on public.products (deleted_at);
 
 alter table public.products add column if not exists brand text not null default '';
 alter table public.products add column if not exists reference_text text not null default '';
 alter table public.products add column if not exists certificate text not null default '';
 alter table public.products add column if not exists status text not null default 'published';
 alter table public.products add column if not exists deleted_at timestamptz;
+alter table public.products add column if not exists translations jsonb not null default '{}'::jsonb check (jsonb_typeof(translations) = 'object');
+
+create index if not exists products_status_idx on public.products (status);
+create index if not exists products_deleted_at_idx on public.products (deleted_at);
 
 create table if not exists public.news_articles (
   id text primary key,
@@ -59,6 +62,7 @@ create table if not exists public.news_articles (
 );
 
 create index if not exists news_articles_published_at_idx on public.news_articles (published_at desc);
+alter table public.news_articles add column if not exists translations jsonb not null default '{}'::jsonb check (jsonb_typeof(translations) = 'object');
 
 create table if not exists public.info_articles (
   id text primary key,
@@ -79,6 +83,7 @@ create table if not exists public.info_articles (
 
 create index if not exists info_articles_published_at_idx on public.info_articles (published_at desc);
 create index if not exists info_articles_category_idx on public.info_articles (category);
+alter table public.info_articles add column if not exists translations jsonb not null default '{}'::jsonb check (jsonb_typeof(translations) = 'object');
 
 alter table public.news_articles alter column category set default '公司新闻';
 alter table public.news_articles alter column author set default '凯森斯生物';
@@ -128,6 +133,7 @@ alter table public.site_content add column if not exists "contactTitle" text not
 alter table public.site_content add column if not exists "contactDescription" text not null default '如需产品规格、批量供货、交期或替代品确认，可以通过电话、邮箱或询价表单提交需求。';
 alter table public.site_content add column if not exists "contactQrImage" text not null default '';
 alter table public.site_content add column if not exists "contactCta" text not null default '前往询价车';
+alter table public.site_content add column if not exists translations jsonb not null default '{}'::jsonb check (jsonb_typeof(translations) = 'object');
 
 create table if not exists public.quotes (
   id text primary key,
@@ -187,24 +193,16 @@ alter table public.site_content enable row level security;
 alter table public.quotes enable row level security;
 
 drop policy if exists "Public read products" on public.products;
-create policy "Public read products"
-on public.products for select
-using (status = 'published' and deleted_at is null);
-
 drop policy if exists "Public read published news" on public.news_articles;
-create policy "Public read published news"
-on public.news_articles for select
-using (published = true);
-
 drop policy if exists "Public read published info" on public.info_articles;
-create policy "Public read published info"
-on public.info_articles for select
-using (published = true);
-
 drop policy if exists "Public read site content" on public.site_content;
-create policy "Public read site content"
-on public.site_content for select
-using (true);
+
+-- Raw CMS rows contain unpublished translations. Only the server may read them.
+-- Public website pages use the server CMS and expose localized, published content.
+revoke select on table public.products, public.news_articles, public.info_articles, public.site_content
+  from public, anon, authenticated;
+grant select on table public.products, public.news_articles, public.info_articles, public.site_content
+  to service_role;
 
 insert into storage.buckets (id, name, public)
 values ('media', 'media', true)

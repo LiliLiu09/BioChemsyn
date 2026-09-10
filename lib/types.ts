@@ -1,4 +1,6 @@
 export type Product = {
+  categoryKey?: string;
+  contentLocale?: "zh" | "en";
   id: string;
   status: "draft" | "published";
   deletedAt: string;
@@ -23,7 +25,14 @@ export type Product = {
   certificate: string;
   scaleNote: string;
   tags: string[];
+  translations?: { en?: ProductTranslation };
 };
+
+export type ProductTranslation = Partial<Pick<Product,
+  "nameEn" | "synonyms" | "category" | "brand" | "molecularWeight" |
+  "purity" | "packageSize" | "leadTime" | "image" | "details" |
+  "references" | "certificate" | "scaleNote" | "tags"
+>> & { published?: boolean };
 
 export type QuoteCustomer = {
   name: string;
@@ -54,6 +63,8 @@ export type QuoteRequest = {
 };
 
 export type NewsArticle = {
+  categoryKey?: string;
+  contentLocale?: "zh" | "en";
   id: string;
   slug: string;
   title: string;
@@ -66,9 +77,12 @@ export type NewsArticle = {
   coverImage: string;
   views: number;
   published: boolean;
+  translations?: { en?: ArticleTranslation };
 };
 
 export type InfoArticle = {
+  categoryKey?: string;
+  contentLocale?: "zh" | "en";
   id: string;
   slug: string;
   title: string;
@@ -81,9 +95,15 @@ export type InfoArticle = {
   coverImage: string;
   views: number;
   published: boolean;
+  translations?: { en?: ArticleTranslation };
 };
 
+export type ArticleTranslation = Partial<Pick<NewsArticle,
+  "title" | "category" | "author" | "source" | "summary" | "content" | "coverImage"
+>> & { published?: boolean };
+
 export type SiteContent = {
+  contentLocale?: "zh" | "en";
   brandName: string;
   tagline: string;
   supportPhone: string;
@@ -101,4 +121,12 @@ export type SiteContent = {
   contactDescription: string;
   contactQrImage: string;
   contactCta: string;
+  translations?: { en?: SiteContentTranslation };
+};
+
+export type SiteContentTranslation = Partial<Omit<SiteContent, "translations" | "contentLocale">> & {
+  published?: boolean;
+  sitePublished?: boolean;
+  aboutPublished?: boolean;
+  contactPublished?: boolean;
 };

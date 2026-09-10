@@ -1,3 +1,5 @@
+import { getLocale } from "@/lib/locale-server";
+import { localizePath } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { isAdminAuthed } from "@/lib/adminAuth";
 import { getNewsArticles } from "@/lib/cms";
@@ -6,7 +8,7 @@ import { NewsEditor } from "@/components/NewsEditor";
 
 export default async function AdminNewsPage() {
   if (!(await isAdminAuthed())) {
-    redirect("/admin/login");
+    redirect(localizePath("/admin/login", await getLocale()));
   }
 
   const news = await getNewsArticles();

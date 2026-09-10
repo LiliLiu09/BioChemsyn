@@ -11,6 +11,17 @@
     "content": "凯森斯生物新闻中心正式上线。后续我们将在这里发布公司动态、产品资讯、服务更新和行业相关内容，帮助客户更及时地了解产品供应与服务能力。",
     "coverImage": "",
     "views": 0,
-    "published": true
+    "published": true,
+    "translations": {
+      "en": {
+        "published": true,
+        "title": "KASONS news centre is now online",
+        "category": "Company news",
+        "author": "KASONS",
+        "source": "KASONS",
+        "summary": "The KASONS news centre is now online, sharing company news, product information and service updates.",
+        "content": "The KASONS news centre has officially launched. We will publish company news, product information, service updates and industry-related content here to keep customers informed about product supply and our services."
+      }
+    }
   }
 ]

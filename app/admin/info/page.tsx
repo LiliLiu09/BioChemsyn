@@ -1,3 +1,5 @@
+import { getLocale } from "@/lib/locale-server";
+import { localizePath } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { isAdminAuthed } from "@/lib/adminAuth";
 import { getInfoArticles } from "@/lib/cms";
@@ -6,7 +8,7 @@ import { InfoEditor } from "@/components/InfoEditor";
 
 export default async function AdminInfoPage() {
   if (!(await isAdminAuthed())) {
-    redirect("/admin/login");
+    redirect(localizePath("/admin/login", await getLocale()));
   }
 
   const info = await getInfoArticles();

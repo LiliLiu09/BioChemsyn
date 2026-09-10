@@ -1,0 +1,76 @@
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+}
+
+.language-switcher a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.language-switcher a[aria-current="true"] {
+  background: var(--brand);
+  color: #fff;
+}
+
+.language-switcher a:focus-visible {
+  outline: 2px solid var(--brand-strong);
+  outline-offset: 2px;
+}
+
+.admin-language-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 20px;
+}
+
+.content-language-controls { margin-bottom: 20px; }
+.content-language-controls .result-count { margin-top: 10px; }
+.admin-form-grid .admin-field > label > span { display: block; margin-bottom: 6px; }
+html[lang="en"] .header-inner { flex-wrap: wrap; }
+html[lang="en"] .header-actions,
+html[lang="en"] .nav { flex-wrap: wrap; }
+html[lang="en"] .search-card { grid-template-columns: minmax(0, 1fr) 190px max-content; }
+html[lang="en"] .search-card.global-search-form { grid-template-columns: minmax(0, 1fr) max-content; }
+html[lang="en"] .product-card .price-row { flex-wrap: wrap; }
+html[lang="en"] .product-card .btn { white-space: normal; }
+
+@media (max-width: 760px) {
+  .topbar-inner { gap: 8px; flex-wrap: wrap; }
+  .topbar-actions { gap: 8px; }
+  html[lang="en"] .search-card,
+  html[lang="en"] .search-card.global-search-form { grid-template-columns: 1fr; }
+  .cart-table { display: block; overflow-x: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-scroll-track { animation: none; }
+}
+html[lang="en"] .rich-content:empty::before {
+  content: "Write content here. Format text or insert images using the toolbar.";
+}
