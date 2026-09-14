@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, Phone, ShoppingCart } from "lucide-react";
+import { Phone, ShoppingCart } from "lucide-react";
 import Link from "@/components/LocaleLink";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useLanguage } from "./LanguageProvider";
@@ -58,10 +58,6 @@ export function Header({ site }: { site: SiteContent }) {
             <Link href="/contact">{t("联系我们", "Contact")}</Link>
           </nav>
           <div className="header-actions">
-            <Link className="icon-link" href="/admin" aria-label={t("管理后台", "Administration")}>
-              <LayoutDashboard size={18} aria-hidden="true" />
-              <span>{t("后台", "Admin")}</span>
-            </Link>
             <Link className="btn primary" href="/cart">
               <ShoppingCart size={17} aria-hidden="true" />
               {t("询价车", "Inquiry cart")} {cartCount > 0 ? `(${cartCount})` : ""}
