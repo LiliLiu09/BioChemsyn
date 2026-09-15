@@ -193,11 +193,11 @@ export function QuoteManager({ initialQuotes }: { initialQuotes: QuoteRequest[] 
                   {locale === "zh" && <span style={{ color: "#667382" }}>{line.nameEn}</span>}
                 </td>
                 <td>
-                  {line.cas || t("待确认")}
+                  {line.cas}
                   <br />
                   {line.sku}
                 </td>
-                <td>{line.packageSize || t("待确认")}</td>
+                <td>{line.packageSize}</td>
                 <td>{line.qty}</td>
               </tr>
             ))}

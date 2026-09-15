@@ -138,14 +138,14 @@ export function CartClient({ products }: { products: Product[] }) {
                     <td>
                       <b>{product.nameCn || product.nameEn || t("未命名产品", "Product")}</b>
                       <br />
-                      {locale === "zh" && <span style={{ color: "#667382" }}>{product.nameEn || "英文名称待补充"}</span>}
+                      {locale === "zh" && product.nameEn && <span style={{ color: "#667382" }}>{product.nameEn}</span>}
                     </td>
                     <td>
-                      {product.cas || t("待确认", "On request")}
+                      {product.cas}
                       <br />
                       {product.sku}
                     </td>
-                    <td>{product.packageSize || t("待确认", "On request")}</td>
+                    <td>{product.packageSize}</td>
                     <td>
                       <input
                         aria-label={`${product.nameCn || product.sku} ${t("数量", "quantity")}`}

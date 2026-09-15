@@ -40,7 +40,6 @@ function matches(product: Product, keyword: string, category: string) {
 export function ProductBrowser({ compact = false, products }: { compact?: boolean; products: Product[] }) {
   const { locale, t } = useLanguage();
   const filterId = useId();
-  const valueOrDash = (value: string | number) => value || t("待确认", "On request");
   const searchParams = useSearchParams();
   const keyword = searchParams.get("q") || "";
   const category = searchParams.get("category") || "all";
@@ -131,39 +130,39 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
             </Link>
             <div className="product-head">
               <span className="sku">{product.catalogNo || product.sku}</span>
-              <span className="pill">{product.category || t("未分类", "Uncategorized")}</span>
+              <span className="pill">{product.category}</span>
             </div>
             <div>
               <h3>
                 <Link href={`/products/${product.id}`}>{product.nameCn || product.nameEn || t("未命名产品", "Unnamed product")}</Link>
               </h3>
-              {locale === "zh" && <p>{product.nameEn || "英文名称待补充"}</p>}
+              {locale === "zh" && product.nameEn && <p>{product.nameEn}</p>}
             </div>
             <div className="specs">
               <span>
                 <b>{t("CAS 号", "CAS Number")}</b>
-                {valueOrDash(product.cas)}
+                {product.cas}
               </span>
               <span>
                 <b>{t("别名", "Synonyms")}</b>
-                {valueOrDash(product.synonyms)}
+                {product.synonyms}
               </span>
               <span>
                 <b>{t("分子式", "Chemical Formula")}</b>
-                {valueOrDash(product.formula)}
+                {product.formula}
               </span>
               <span>
                 <b>{t("包装规格", "Pack Size")}</b>
-                {valueOrDash(product.packageSize)}
+                {product.packageSize}
               </span>
             </div>
-            <div className="tag-row">
-              {(product.tags.length ? product.tags : [t("询价确认", "Request a quote")]).map((tag) => (
+            {product.tags.length > 0 && <div className="tag-row">
+              {product.tags.map((tag) => (
                 <span className="pill subtle" key={tag}>
                   {tag}
                 </span>
               ))}
-            </div>
+            </div>}
             <div className="price-row">
               <Link className="locked" href="/cart">
                 {t("提交后报价", "Price on request")}

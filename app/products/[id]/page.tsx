@@ -52,10 +52,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }
 
   const product = localizeProduct(rawProduct, locale);
-  const valueOrDash = (value: string | number) => value || t("待确认", "Available on request");
-  const basicInfo = product.details || t("产品基本信息待补充。", "Please contact us for product details.");
-  const references = product.references || t("参考文献待补充。", "References are available on request.");
-  const certificate = product.certificate || t("质检证书待补充。", "Quality certificates are available on request.");
+  const basicInfo = product.details;
+  const references = product.references;
+  const certificate = product.certificate;
 
   return (
     <div className="shell">
@@ -81,27 +80,27 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             <dl className="product-field-list">
               <div>
                 <dt>{t("英文名", "Product name")}</dt>
-                <dd>{valueOrDash(product.nameEn)}</dd>
+                <dd>{product.nameEn}</dd>
               </div>
               <div>
                 <dt>{t("产品编号", "Catalog number")}</dt>
-                <dd>{valueOrDash(product.catalogNo || product.sku)}</dd>
+                <dd>{product.catalogNo || product.sku}</dd>
               </div>
               <div>
                 <dt>{t("产品分类", "Category")}</dt>
-                <dd>{valueOrDash(product.category)}</dd>
+                <dd>{product.category}</dd>
               </div>
               <div>
                 <dt>{t("CAS 号", "CAS number")}</dt>
-                <dd>{valueOrDash(product.cas)}</dd>
+                <dd>{product.cas}</dd>
               </div>
               <div>
                 <dt>{t("分子式", "Molecular formula")}</dt>
-                <dd>{valueOrDash(product.formula)}</dd>
+                <dd>{product.formula}</dd>
               </div>
               <div>
                 <dt>{t("分子量", "Molecular weight")}</dt>
-                <dd>{valueOrDash(product.molecularWeight)}</dd>
+                <dd>{product.molecularWeight}</dd>
               </div>
             </dl>
           </div>
@@ -111,23 +110,23 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <div className="offer-grid">
             <div>
               <span>{t("编号", "Catalog number")}</span>
-              <b>{valueOrDash(product.catalogNo || product.sku)}</b>
+              <b>{product.catalogNo || product.sku}</b>
             </div>
             <div>
               <span>{t("品牌", "Brand")}</span>
-              <b>{valueOrDash(product.brand)}</b>
+              <b>{product.brand}</b>
             </div>
             <div>
               <span>{t("纯度", "Purity")}</span>
-              <b>{valueOrDash(product.purity)}</b>
+              <b>{product.purity}</b>
             </div>
             <div>
               <span>{t("包装", "Pack size")}</span>
-              <b>{valueOrDash(product.packageSize)}</b>
+              <b>{product.packageSize}</b>
             </div>
             <div>
               <span>{t("货期", "Lead time")}</span>
-              <b>{valueOrDash(product.leadTime)}</b>
+              <b>{product.leadTime}</b>
             </div>
             <div className="offer-price">
               <span>{t("价格", "Price")}</span>
