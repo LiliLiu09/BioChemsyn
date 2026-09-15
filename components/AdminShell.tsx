@@ -25,7 +25,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <Link href="/admin/about">{t("关于我们管理")}</Link>
           <Link href="/admin/contact">{t("联系我们管理")}</Link>
           <Link href="/admin/quotes">{t("询价管理")}</Link>
-          <Link href="/">{t("返回前台")}</Link>
+          <a href="/">{t("返回前台")}</a>
         </nav>
       </aside>
       <main className="admin-main"><div className="admin-language-toolbar"><LanguageSwitcher /></div>{children}</main>

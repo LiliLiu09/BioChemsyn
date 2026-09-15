@@ -5,6 +5,8 @@ import type { Product } from "@/lib/types";
 import { localizeProduct } from "@/lib/content-locale";
 import type { Locale } from "@/lib/i18n";
 
+const defaultProductImage = "/product-default-kasons.png";
+
 const emptyProduct: Product = {
   id: "",
   status: "draft",
@@ -24,7 +26,7 @@ const emptyProduct: Product = {
   packageSize: "",
   price: 0,
   leadTime: "",
-  image: "",
+  image: defaultProductImage,
   details: "",
   references: "",
   certificate: "",
@@ -143,6 +145,7 @@ function createProduct(seed?: Partial<Product>, fallbackId = "p-1"): Product {
     sku: seed?.sku || catalogNo,
     stock: Number(seed?.stock || 0),
     price: Number(seed?.price || 0),
+    image: seed?.image?.trim() || defaultProductImage,
     tags: Array.isArray(seed?.tags) ? seed.tags : typeof seed?.tags === "string" ? String(seed.tags).split(/[;，,]/).map((tag) => tag.trim()).filter(Boolean) : []
   };
 }
@@ -431,6 +434,33 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     await saveProductsToServer(nextProducts, t("产品已发布"));
   };
 
+  const publishSelectedProducts = async () => {
+    const selected = new Set(selectedIds);
+    const selectedProducts = products.filter((product) => selected.has(product.id) && !product.deletedAt);
+    if (selectedProducts.length === 0) {
+      setMessage(t("请先选择要上架的产品。"));
+      return;
+    }
+
+    const invalidProduct = selectedProducts.find((product) => !(product.catalogNo || product.sku).trim() || (!product.nameCn.trim() && !product.nameEn.trim()));
+    if (invalidProduct) {
+      setActiveId(invalidProduct.id);
+      setMode("detail");
+      setContentLanguage("zh");
+      validatePublish(invalidProduct);
+      setMessage(t("批量上架前，请补充产品编号和产品名称。"));
+      return;
+    }
+
+    const nextProducts = products.map((product) => selected.has(product.id) && !product.deletedAt
+      ? { ...product, image: product.image.trim() || defaultProductImage, status: "published" as const }
+      : product);
+    setProducts(nextProducts);
+    setSelectedIds([]);
+    setView("published");
+    await saveProductsToServer(nextProducts, translate(`已批量上架 ${selectedProducts.length} 个产品`, `${selectedProducts.length} products published`));
+  };
+
   const uploadImage = async (file: File | undefined) => {
     if (!file || !active) return;
     setUploading(true);
@@ -504,7 +534,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       setMode("grid");
       setActiveId("");
       setView("draft");
-      await saveProductsToServer(nextProducts, translate(`已从表格导入 ${imported.length} 个产品；没有图片的产品已进入草稿。`, `Imported ${imported.length} products. Products without images were saved as drafts.`));
+      await saveProductsToServer(nextProducts, translate(`已从表格导入 ${imported.length} 个产品；未提供图片的产品已使用公司默认图并进入草稿。`, `Imported ${imported.length} products. Products without images now use the company default image and were saved as drafts.`));
     } catch {
       setMessage(t("表格解析失败，请上传 .xlsx、.xls 或 .csv 文件。"));
     } finally {
@@ -660,6 +690,9 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         <div className="admin-actions">
           <button className="btn primary" type="button" onClick={addProduct}>{t("添加产品")}</button>
           <button className="btn" type="button" onClick={() => csvInputRef.current?.click()}>{t("批量上传")}</button>
+          <button className="btn primary" type="button" onClick={publishSelectedProducts} disabled={selectedIds.length === 0 || view === "deleted"}>
+            {t("批量上架")}{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
+          </button>
           <button className="btn danger" type="button" onClick={removeSelectedProducts} disabled={selectedIds.length === 0}>
             {t("删除选中")}{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
           </button>

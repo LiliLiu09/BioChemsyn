@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/adminAuth";
 import { getProducts, saveProducts } from "@/lib/cms";
 import type { Product } from "@/lib/types";
@@ -59,5 +60,6 @@ export async function PUT(request: Request) {
     return NextResponse.json({ code: "ENGLISH_TRANSLATION_INCOMPLETE", error: translate(requestLocale(request), "发布英文产品前，请填写正确的英文名称。", "Enter an English product name before publishing the English version.") }, { status: 400 });
   }
   try { await saveProducts(products); } catch (error) { return contentSaveError(error, request); }
+  revalidatePath("/", "layout");
   return NextResponse.json({ ok: true, products });
 }
