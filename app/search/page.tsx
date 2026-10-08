@@ -11,6 +11,7 @@ import {
 import { isArticleAvailable, isProductAvailable, localizeArticle, localizeProduct, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
+import { publicProductTags } from "@/lib/product-tags";
 
 export async function generateMetadata() {
   const locale = await getLocale();
@@ -85,7 +86,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             product.brand,
             product.formula,
             product.molecularWeight,
-            product.tags
+            publicProductTags(product.tags)
           ]).includes(keyword)
         )
         .map((product) => ({

@@ -136,6 +136,7 @@ const messages: Record<string, string> = {
   "产品编号 *": "Catalog number *",
   "记录 ID": "Record ID",
   "多个标签用逗号分隔": "Separate tags with commas",
+  "明星产品（仅后台可见）": "Featured product (admin only)",
   "以表格方式查看全部产品，点击详情进入单个产品表单。": "Browse products in the table. Open Details to edit a product.",
   "添加产品": "Add product",
   "批量上传": "Bulk upload",

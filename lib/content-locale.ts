@@ -1,5 +1,6 @@
 import type { Locale } from "@/lib/i18n";
 import type { InfoArticle, NewsArticle, Product, SiteContent } from "@/lib/types";
+import { publicProductTags } from "@/lib/product-tags";
 
 // Never substitute a guessed chemical name or silently show Chinese copy on an English page.
 const hanCharacters = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/;
@@ -25,6 +26,7 @@ const knownTerms: Record<string, string> = {
   "现货": "In stock",
   "维生素": "Vitamins",
   "热销": "Popular",
+  "明星产品": "Featured product",
   "糖醇": "Sugar alcohols",
   "植物": "Plants",
   "小包装": "Small packs",
@@ -49,12 +51,14 @@ export function isProductAvailable(product: Product, locale: Locale) {
   return isEnglishContent(product.translations?.en?.nameEn) || isEnglishContent(product.nameEn);
 }
 
-export function localizeProduct(product: Product, locale: Locale): Product {
-  if (product.contentLocale === locale) return product;
+export function localizeProduct(product: Product, locale: Locale, options?: { includeInternalTags?: boolean }): Product {
+  const visibleTags = options?.includeInternalTags ? (product.tags || []) : publicProductTags(product.tags);
+  if (product.contentLocale === locale) return { ...product, tags: visibleTags };
   const { translations, ...base } = product;
-  if (locale === "zh") return { ...base, categoryKey: product.categoryKey || product.category || "未分类", contentLocale: locale };
+  if (locale === "zh") return { ...base, tags: visibleTags, categoryKey: product.categoryKey || product.category || "未分类", contentLocale: locale };
   const en = translations?.en?.published === true ? translations.en : undefined;
   const name = englishText(en?.nameEn, englishText(product.nameEn, product.catalogNo || product.sku || "Product"));
+  const localizedTags = en?.tags ?? product.tags ?? [];
   return {
     ...base,
     contentLocale: locale,
@@ -73,7 +77,7 @@ export function localizeProduct(product: Product, locale: Locale): Product {
     references: englishText(en?.references, englishText(product.references)),
     certificate: englishText(en?.certificate, englishText(product.certificate)),
     scaleNote: englishText(en?.scaleNote, englishText(product.scaleNote, "Please enquire about available pack sizes.")),
-    tags: (en?.tags ?? product.tags ?? []).map((tag) => sharedText(tag)).filter(Boolean)
+    tags: (options?.includeInternalTags ? localizedTags : publicProductTags(localizedTags)).map((tag) => sharedText(tag)).filter(Boolean)
   };
 }
 

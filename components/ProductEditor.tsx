@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import type { Product } from "@/lib/types";
 import { localizeProduct } from "@/lib/content-locale";
 import type { Locale } from "@/lib/i18n";
+import { FEATURED_PRODUCT_TAG } from "@/lib/product-tags";
 
 const defaultProductImage = "/product-default-kasons.png";
 
@@ -309,7 +310,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const gridProducts = visibleProducts.map((product) => locale === "en" ? localizeProduct({
     ...product,
     translations: product.translations?.en ? { en: { ...product.translations.en, published: true } } : undefined
-  }, "en") : product);
+  }, "en", { includeInternalTags: true }) : product);
 
   const update = (key: keyof Product, value: string | number | string[]) => {
     if (!active) return;
@@ -656,6 +657,19 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
           <label className="admin-field full">
             <span>{t("标签")}</span>
             <input className="field" value={active.tags.join("，")} onChange={(event) => update("tags", event.target.value.split(/[;，,]/).map((tag) => tag.trim()).filter(Boolean))} placeholder={t("多个标签用逗号分隔")} />
+          </label>
+          <label className="admin-field full checkbox-field">
+            <input
+              type="checkbox"
+              checked={active.tags.includes(FEATURED_PRODUCT_TAG)}
+              onChange={(event) => update(
+                "tags",
+                event.target.checked
+                  ? Array.from(new Set([...active.tags, FEATURED_PRODUCT_TAG]))
+                  : active.tags.filter((tag) => tag !== FEATURED_PRODUCT_TAG)
+              )}
+            />
+            <span>{t("明星产品（仅后台可见）")}</span>
           </label>
           <label className="admin-field full">
             <span>{t("基本信息")}</span>

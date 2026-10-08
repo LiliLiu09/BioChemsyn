@@ -6,6 +6,7 @@ import { useLanguage } from "./LanguageProvider";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useId } from "react";
 import { cartStorageKey } from "@/lib/session";
+import { publicProductTags } from "@/lib/product-tags";
 import type { Product } from "@/lib/types";
 
 type CartLine = {
@@ -28,7 +29,7 @@ function matches(product: Product, keyword: string, category: string) {
       product.synonyms,
       product.formula,
       product.molecularWeight,
-      ...product.tags
+      ...publicProductTags(product.tags)
     ]
       .join(" ")
       .toLowerCase()
@@ -116,7 +117,9 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
       </div>
 
       <div className="grid">
-        {filtered.map((product) => (
+        {filtered.map((product) => {
+          const visibleTags = publicProductTags(product.tags);
+          return (
           <article className="product-card" key={product.id}>
             <Link className="product-thumb" href={`/products/${product.id}`} aria-label={t(`查看${product.nameCn || product.nameEn || product.sku}详情`, `View ${product.nameEn || product.sku}`)}>
               {product.image ? (
@@ -156,8 +159,8 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
                 {product.packageSize}
               </span>
             </div>
-            {product.tags.length > 0 && <div className="tag-row">
-              {product.tags.map((tag) => (
+            {visibleTags.length > 0 && <div className="tag-row">
+              {visibleTags.map((tag) => (
                 <span className="pill subtle" key={tag}>
                   {tag}
                 </span>
@@ -173,7 +176,8 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
               </button>
             </div>
           </article>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
