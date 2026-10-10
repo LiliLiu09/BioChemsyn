@@ -3,6 +3,8 @@ import { adminCookieName, adminSessionMaxAge, authenticateAdmin, createAdminSess
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { email?: string; password?: string };
+  const forwardedProtocol = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const secureCookie = forwardedProtocol ? forwardedProtocol === "https" : new URL(request.url).protocol === "https:";
 
   try {
     const user = await authenticateAdmin(body.email || "", body.password || "");
@@ -15,7 +17,7 @@ export async function POST(request: Request) {
     response.cookies.set(adminCookieName, token, {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: secureCookie,
       path: "/",
       maxAge: adminSessionMaxAge
     });
