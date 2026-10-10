@@ -125,6 +125,9 @@ const gridColumns: Array<{ key: keyof Product; label: string }> = [
 ];
 
 type ProductView = "all" | "deleted" | "draft" | "published";
+type FeaturedFilter = "all" | "featured" | "regular";
+type CompletenessFilter = "all" | "missing-image" | "missing-name" | "missing-cas" | "missing-formula" | "missing-weight";
+type SortConfig = { key: keyof Product; direction: "asc" | "desc" } | null;
 
 function nextProductId(products: Array<Pick<Product, "id">>) {
   const maxId = products.reduce((max, product) => {
@@ -207,6 +210,16 @@ function productValue(product: Product, key: keyof Product, locale: Locale) {
   return String(value ?? "");
 }
 
+function sortableProductValue(product: Product, key: keyof Product, locale: Locale) {
+  if (key === "price" || key === "stock") return Number(product[key] || 0);
+  if (key === "molecularWeight") {
+    const numericValue = Number.parseFloat(product.molecularWeight);
+    if (Number.isFinite(numericValue)) return numericValue;
+  }
+  if (key === "deletedAt") return product.deletedAt ? new Date(product.deletedAt).getTime() : 0;
+  return productValue(product, key, locale).trim().toLocaleLowerCase(locale === "en" ? "en-US" : "zh-CN");
+}
+
 function normalizeRows(rows: unknown[][]) {
   return rows
     .map((row) => row.map((value) => String(value ?? "").trim()))
@@ -272,6 +285,11 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const [uploading, setUploading] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [featuredFilter, setFeaturedFilter] = useState<FeaturedFilter>("all");
+  const [completenessFilter, setCompletenessFilter] = useState<CompletenessFilter>("all");
+  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const active = products.find((product) => product.id === activeId);
   const english = { nameEn: active?.nameEn || "", published: active?.translations?.en ? active.translations.en.published === true : isEnglishReady({ nameEn: active?.nameEn }, ["nameEn"]), ...active?.translations?.en };
@@ -287,14 +305,45 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   };
   const categories = useMemo(() => Array.from(new Set(products.map((product) => product.category.trim()).filter(Boolean))).sort(), [products]);
   const visibleProducts = useMemo(() => {
-    return products.filter((product) => {
-      if (view === "deleted") return Boolean(product.deletedAt);
-      if (product.deletedAt) return false;
-      if (view === "draft") return product.status === "draft";
-      if (view === "published") return product.status === "published";
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase(locale === "en" ? "en-US" : "zh-CN");
+    const filtered = products.filter((product) => {
+      const matchesView = view === "deleted"
+        ? Boolean(product.deletedAt)
+        : !product.deletedAt && (view === "all" || product.status === view);
+      if (!matchesView) return false;
+
+      if (normalizedQuery) {
+        const searchable = [
+          product.id, product.sku, product.catalogNo, product.nameCn, product.nameEn,
+          product.cas, product.synonyms, product.category, product.formula, ...product.tags
+        ].join(" ").toLocaleLowerCase(locale === "en" ? "en-US" : "zh-CN");
+        if (!searchable.includes(normalizedQuery)) return false;
+      }
+      if (categoryFilter !== "all" && product.category !== categoryFilter) return false;
+      const isFeatured = product.tags.includes(FEATURED_PRODUCT_TAG);
+      if (featuredFilter === "featured" && !isFeatured) return false;
+      if (featuredFilter === "regular" && isFeatured) return false;
+      if (completenessFilter === "missing-image" && product.image.trim() && product.image.trim() !== defaultProductImage) return false;
+      if (completenessFilter === "missing-name" && (product.nameCn.trim() || product.nameEn.trim())) return false;
+      if (completenessFilter === "missing-cas" && product.cas.trim()) return false;
+      if (completenessFilter === "missing-formula" && product.formula.trim()) return false;
+      if (completenessFilter === "missing-weight" && product.molecularWeight.trim()) return false;
       return true;
     });
-  }, [products, view]);
+
+    if (!sortConfig) return filtered;
+    return filtered
+      .map((product, index) => ({ product, index }))
+      .sort((left, right) => {
+        const a = sortableProductValue(left.product, sortConfig.key, locale);
+        const b = sortableProductValue(right.product, sortConfig.key, locale);
+        const comparison = typeof a === "number" && typeof b === "number"
+          ? a - b
+          : String(a).localeCompare(String(b), locale === "en" ? "en-US" : "zh-CN", { numeric: true, sensitivity: "base" });
+        return comparison === 0 ? left.index - right.index : comparison * (sortConfig.direction === "asc" ? 1 : -1);
+      })
+      .map(({ product }) => product);
+  }, [products, view, searchQuery, categoryFilter, featuredFilter, completenessFilter, sortConfig, locale]);
   const counts = useMemo(() => {
     const activeProducts = products.filter((product) => !product.deletedAt);
     return {
@@ -325,6 +374,22 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       })
     );
     setErrors((current) => ({ ...current, [key]: "" }));
+  };
+
+  const toggleSort = (key: keyof Product) => {
+    setSortConfig((current) => {
+      if (!current || current.key !== key) return { key, direction: "asc" };
+      if (current.direction === "asc") return { key, direction: "desc" };
+      return null;
+    });
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setCategoryFilter("all");
+    setFeaturedFilter("all");
+    setCompletenessFilter("all");
+    setSelectedIds([]);
   };
 
   const openDetail = (id: string) => {
@@ -730,6 +795,47 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         </button>
       </div>
 
+      <div className="product-admin-filters" aria-label={t("筛选产品")}>
+        <label className="product-filter-search">
+          <span>{t("关键词")}</span>
+          <input
+            className="field"
+            type="search"
+            value={searchQuery}
+            onChange={(event) => { setSearchQuery(event.target.value); setSelectedIds([]); }}
+            placeholder={t("搜索产品编号、名称、CAS、同义词或分子式")}
+          />
+        </label>
+        <label>
+          <span>{t("产品分类")}</span>
+          <select className="field" value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setSelectedIds([]); }}>
+            <option value="all">{t("全部分类")}</option>
+            {categories.map((category) => <option value={category} key={category}>{category}</option>)}
+          </select>
+        </label>
+        <label>
+          <span>{t("明星产品")}</span>
+          <select className="field" value={featuredFilter} onChange={(event) => { setFeaturedFilter(event.target.value as FeaturedFilter); setSelectedIds([]); }}>
+            <option value="all">{t("全部产品")}</option>
+            <option value="featured">{t("仅明星产品")}</option>
+            <option value="regular">{t("非明星产品")}</option>
+          </select>
+        </label>
+        <label>
+          <span>{t("信息完整度")}</span>
+          <select className="field" value={completenessFilter} onChange={(event) => { setCompletenessFilter(event.target.value as CompletenessFilter); setSelectedIds([]); }}>
+            <option value="all">{t("全部信息状态")}</option>
+            <option value="missing-image">{t("缺图片")}</option>
+            <option value="missing-name">{t("缺产品名称")}</option>
+            <option value="missing-cas">{t("缺 CAS 号")}</option>
+            <option value="missing-formula">{t("缺分子式")}</option>
+            <option value="missing-weight">{t("缺分子量")}</option>
+          </select>
+        </label>
+        <button className="btn product-filter-clear" type="button" onClick={clearFilters}>{t("清除筛选")}</button>
+        <span className="product-filter-result">{translate(`显示 ${visibleProducts.length} 个产品`, `${visibleProducts.length} products shown`)}</span>
+      </div>
+
       {products.length === 0 ? (
         <div className="empty-state">
           <b>{t("还没有产品")}</b>
@@ -750,7 +856,12 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
                 </th>
                 <th>{t("操作")}</th>
                 {columns.map((column) => (
-                  <th key={column.key}>{t(column.label)}</th>
+                  <th key={column.key} aria-sort={sortConfig?.key === column.key ? (sortConfig.direction === "asc" ? "ascending" : "descending") : "none"}>
+                    <button className="product-sort-button" type="button" onClick={() => toggleSort(column.key)}>
+                      <span>{t(column.label)}</span>
+                      <span aria-hidden="true">{sortConfig?.key === column.key ? (sortConfig.direction === "asc" ? "↑" : "↓") : "↕"}</span>
+                    </button>
+                  </th>
                 ))}
               </tr>
             </thead>

@@ -2040,9 +2040,9 @@ textarea.field {
 
 .product-detail-editor .admin-field > span:first-child {
   color: var(--ink);
-  font-size: 26px;
-  font-weight: 900;
-  line-height: 1.25;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .product-status-tabs {
@@ -2066,6 +2066,35 @@ textarea.field {
 .product-status-tabs button:hover {
   border-bottom-color: var(--brand);
   color: var(--brand-strong);
+}
+
+.product-admin-filters {
+  display: grid;
+  grid-template-columns: minmax(280px, 2fr) repeat(3, minmax(150px, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbfc;
+}
+
+.product-admin-filters label {
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.product-filter-clear {
+  white-space: nowrap;
+}
+
+.product-filter-result {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .status-pill {
@@ -2124,6 +2153,47 @@ textarea.field {
   background: #eef8fb;
   color: var(--ink);
   font-weight: 900;
+}
+
+.product-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.product-sort-button:hover,
+.product-sort-button:focus-visible {
+  color: var(--brand-strong);
+}
+
+@media (max-width: 1100px) {
+  .product-admin-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .product-filter-search,
+  .product-filter-result {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .product-admin-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .product-filter-search,
+  .product-filter-result {
+    grid-column: auto;
+  }
 }
 
 .product-admin-grid th:first-child,

@@ -82,6 +82,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 <dt>{t("英文名", "Product name")}</dt>
                 <dd>{product.nameEn}</dd>
               </div>
+              {product.synonyms && (
+                <div>
+                  <dt>{t("同义词", "Synonyms")}</dt>
+                  <dd>{product.synonyms}</dd>
+                </div>
+              )}
               <div>
                 <dt>{t("产品编号", "Catalog number")}</dt>
                 <dd>{product.catalogNo || product.sku}</dd>
