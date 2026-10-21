@@ -147,10 +147,6 @@ export function ProductBrowser({ compact = false, products }: { compact?: boolea
                 {product.cas}
               </span>
               <span>
-                <b>{t("别名", "Synonyms")}</b>
-                {product.synonyms}
-              </span>
-              <span>
                 <b>{t("分子式", "Chemical Formula")}</b>
                 {product.formula}
               </span>
