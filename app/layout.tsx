@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/components/LanguageProvider";
 import { getLocale } from "@/lib/locale-server";
 import { localizePath, translate } from "@/lib/i18n";
 import { localizeSiteContent } from "@/lib/content-locale";
+import { PageViewTracker } from "@/components/PageViewTracker";
 import "./globals.css";
 import "./i18n.css";
 
@@ -32,6 +33,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang={locale === "en" ? "en" : "zh-CN"}>
       <body>
         <LanguageProvider locale={locale}>
+          <PageViewTracker />
           {children}
           <FloatingContact site={site} />
         </LanguageProvider>

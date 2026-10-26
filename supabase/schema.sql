@@ -173,6 +173,14 @@ alter table public.quotes add constraint quotes_status_check check (status in ('
 create index if not exists quotes_created_at_idx on public.quotes (created_at desc);
 create index if not exists quotes_status_idx on public.quotes (status);
 
+create table if not exists public.page_views_daily (
+  view_date date not null,
+  path text not null check (char_length(path) between 1 and 500),
+  views bigint not null default 0 check (views >= 0),
+  updated_at timestamptz not null default now(),
+  primary key (view_date, path)
+);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -221,6 +229,7 @@ alter table public.news_articles enable row level security;
 alter table public.info_articles enable row level security;
 alter table public.site_content enable row level security;
 alter table public.quotes enable row level security;
+alter table public.page_views_daily enable row level security;
 
 drop policy if exists "Public read products" on public.products;
 drop policy if exists "Public read published news" on public.news_articles;
@@ -236,6 +245,9 @@ grant select on table public.products, public.news_articles, public.info_article
 
 revoke all on table public.admin_users, public.admin_sessions from public, anon, authenticated;
 grant all on table public.admin_users, public.admin_sessions to service_role;
+
+revoke all on table public.page_views_daily from public, anon, authenticated;
+grant select, insert, update on table public.page_views_daily to service_role;
 
 create or replace function public.authenticate_admin(p_email text, p_password text)
 returns table (id uuid, email text)

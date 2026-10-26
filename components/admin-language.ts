@@ -12,6 +12,7 @@ const messages: Record<string, string> = {
   "关于我们管理": "About us",
   "联系我们管理": "Contact us",
   "询价管理": "Inquiries",
+  "浏览量统计": "Website analytics",
   "返回前台": "View website",
   "后台登录": "Admin sign in",
   "管理员邮箱": "Admin email",

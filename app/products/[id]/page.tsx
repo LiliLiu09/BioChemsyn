@@ -4,7 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { ProductDetailActions } from "@/components/ProductDetailActions";
 import { RichTextContent } from "@/components/RichTextContent";
-import { getProducts, getSiteContent } from "@/lib/cms";
+import { getProductById, getSiteContent } from "@/lib/cms";
 import { isProductAvailable, localizeProduct, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
@@ -25,11 +25,9 @@ export async function generateMetadata() {
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const [{ id }, rawSite, products, locale] = await Promise.all([params, getSiteContent(), getProducts(), getLocale()]);
+  const [{ id }, rawSite, rawProduct, locale] = await Promise.all([params, getSiteContent(), params.then(({ id: productId }) => getProductById(productId)), getLocale()]);
   const t = (zh: string, en: string) => translate(locale, zh, en);
   const site = localizeSiteContent(rawSite, locale);
-  const rawProduct = products.find((item) => item.id === id);
-
   if (!rawProduct) {
     notFound();
   }

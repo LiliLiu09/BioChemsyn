@@ -2,7 +2,7 @@ import Link from "@/components/LocaleLink";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { ProductBrowser } from "@/components/ProductBrowser";
-import { getNewsArticles, getProducts, getSiteContent } from "@/lib/cms";
+import { getProducts, getPublishedNewsArticles, getSiteContent } from "@/lib/cms";
 import { GlobalSearchForm } from "@/components/GlobalSearchForm";
 import { isArticleAvailable, isProductAvailable, localizeArticle, localizeProduct, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function HomePage() {
-  const [rawSite, rawProducts, news, locale] = await Promise.all([getSiteContent(), getProducts(), getNewsArticles(), getLocale()]);
+  const [rawSite, rawProducts, news, locale] = await Promise.all([getSiteContent(), getProducts(), getPublishedNewsArticles(3), getLocale()]);
   const t = (zh: string, en: string) => translate(locale, zh, en);
   const site = localizeSiteContent(rawSite, locale);
   const products = rawProducts

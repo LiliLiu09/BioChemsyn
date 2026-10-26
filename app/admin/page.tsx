@@ -4,7 +4,7 @@ import { translate, localizePath } from "@/lib/i18n";
 import { localizeSiteContent } from "@/lib/content-locale";
 import { redirect } from "next/navigation";
 import { isAdminAuthed } from "@/lib/adminAuth";
-import { getInfoArticles, getNewsArticles, getProducts, getQuotes, getSiteContent } from "@/lib/cms";
+import { getAdminOverviewCounts, getSiteContent } from "@/lib/cms";
 import { AdminShell } from "@/components/AdminShell";
 import { AdminLogoutButton } from "@/components/AdminLogoutButton";
 
@@ -15,11 +15,7 @@ export default async function AdminPage() {
     redirect(localizePath("/admin/login", locale));
   }
 
-  const [site, products, quotes, news, info] = await Promise.all([getSiteContent(), getProducts(), getQuotes(), getNewsArticles(), getInfoArticles()]);
-  const pendingQuotes = quotes.filter((quote) => quote.status !== "已处理").length;
-  const processedQuotes = quotes.filter((quote) => quote.status === "已处理").length;
-  const publishedNews = news.filter((article) => article.published).length;
-  const publishedInfo = info.filter((article) => article.published).length;
+  const [site, counts] = await Promise.all([getSiteContent(), getAdminOverviewCounts()]);
 
   return (
     <AdminShell>
@@ -29,23 +25,23 @@ export default async function AdminPage() {
       </div>
       <div className="stats">
         <div className="stat">
-          <b>{products.length}</b>
+          <b>{counts.products}</b>
           <span>{t("产品数量", "Products")}</span>
         </div>
         <div className="stat">
-          <b>{pendingQuotes}</b>
+          <b>{counts.pendingQuotes}</b>
           <span>{t("待跟进询价", "Open inquiries")}</span>
         </div>
         <div className="stat">
-          <b>{processedQuotes}</b>
+          <b>{counts.processedQuotes}</b>
           <span>{t("已处理询价", "Processed inquiries")}</span>
         </div>
         <div className="stat">
-          <b>{publishedNews}</b>
+          <b>{counts.publishedNews}</b>
           <span>{t("已发布新闻", "Published news")}</span>
         </div>
         <div className="stat">
-          <b>{publishedInfo}</b>
+          <b>{counts.publishedInfo}</b>
           <span>{t("已发布资讯信息", "Published resources")}</span>
         </div>
       </div>
@@ -77,6 +73,10 @@ export default async function AdminPage() {
         <Link className="product-card" href="/admin/quotes">
           <h3>{t("询价管理", "Inquiries")}</h3>
           <p>{t("查看客户信息、产品清单、处理状态和销售备注。", "Review customer details, products, inquiry status and sales notes.")}</p>
+        </Link>
+        <Link className="product-card" href="/admin/analytics">
+          <h3>{t("浏览量统计", "Website analytics")}</h3>
+          <p>{t("查看今日、近 7 天、近 30 天浏览量和热门页面。", "Review today, 7-day and 30-day page views and the most visited pages.")}</p>
         </Link>
         <div className="product-card">
           <h3>{t("站点品牌", "Website brand")}</h3>

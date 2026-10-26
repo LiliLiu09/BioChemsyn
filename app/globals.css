@@ -1958,6 +1958,97 @@ textarea.field {
   padding: 28px;
 }
 
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.stat {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.stat b {
+  color: var(--brand-strong);
+  font-size: 28px;
+}
+
+.stat span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.analytics-stats {
+  margin-bottom: 18px;
+}
+
+.analytics-panel {
+  margin-top: 18px;
+}
+
+.analytics-panel h2 {
+  margin: 0 0 18px;
+}
+
+.analytics-bars {
+  display: flex;
+  min-height: 200px;
+  align-items: flex-end;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 16px 4px 4px;
+}
+
+.analytics-bar-item {
+  display: grid;
+  min-width: 34px;
+  justify-items: center;
+  align-items: end;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.analytics-bar-item b {
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.analytics-bar {
+  display: block;
+  width: 24px;
+  min-height: 4px;
+  border-radius: 5px 5px 2px 2px;
+  background: linear-gradient(180deg, var(--brand), var(--brand-green));
+}
+
+.analytics-table-wrap {
+  overflow-x: auto;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.analytics-table th,
+.analytics-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.analytics-table th:last-child,
+.analytics-table td:last-child {
+  width: 120px;
+  text-align: right;
+}
+
 .admin-panel {
   padding: 20px;
 }

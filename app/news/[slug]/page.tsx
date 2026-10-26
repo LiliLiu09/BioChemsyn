@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { RichTextContent } from "@/components/RichTextContent";
-import { getNewsArticles, getSiteContent } from "@/lib/cms";
+import { getPublishedNewsArticleBySlug, getSiteContent } from "@/lib/cms";
 import { isArticleAvailable, localizeArticle, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
@@ -17,11 +17,9 @@ export async function generateMetadata() {
 }
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const [{ slug }, rawSite, news, locale] = await Promise.all([params, getSiteContent(), getNewsArticles(), getLocale()]);
+  const [{ slug }, rawSite, rawArticle, locale] = await Promise.all([params, getSiteContent(), params.then(({ slug: articleSlug }) => getPublishedNewsArticleBySlug(articleSlug)), getLocale()]);
   const t = (zh: string, en: string) => translate(locale, zh, en);
   const site = localizeSiteContent(rawSite, locale);
-  const rawArticle = news.find((item) => item.slug === slug && item.published);
-
   if (!rawArticle) {
     notFound();
   }

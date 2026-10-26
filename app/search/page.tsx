@@ -3,15 +3,12 @@ import { Footer } from "@/components/Footer";
 import { GlobalSearchForm } from "@/components/GlobalSearchForm";
 import { Header } from "@/components/Header";
 import {
-  getInfoArticles,
-  getNewsArticles,
-  getProducts,
+  searchPublicContent,
   getSiteContent
 } from "@/lib/cms";
 import { isArticleAvailable, isProductAvailable, localizeArticle, localizeProduct, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
-import { publicProductTags } from "@/lib/product-tags";
 
 export async function generateMetadata() {
   const locale = await getLocale();
@@ -55,12 +52,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const query = (rawQuery || "").trim();
   const keyword = query.toLowerCase();
 
-  const [rawSite, rawProducts, rawNews, rawInfo] = await Promise.all([
+  const [rawSite, searchData] = await Promise.all([
     getSiteContent(),
-    keyword ? getProducts() : Promise.resolve([]),
-    keyword ? getNewsArticles() : Promise.resolve([]),
-    keyword ? getInfoArticles() : Promise.resolve([])
+    keyword ? searchPublicContent(query) : Promise.resolve({ products: [], news: [], info: [] })
   ]);
+  const { products: rawProducts, news: rawNews, info: rawInfo } = searchData;
   const site = localizeSiteContent(rawSite, locale);
   const products = rawProducts
     .filter((product) => isProductAvailable(product, locale))
@@ -74,21 +70,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const productResults: SearchResult[] = keyword
     ? products
-        .filter((product) =>
-          searchableText([
-            product.sku,
-            product.catalogNo,
-            product.cas,
-            product.nameCn,
-            product.nameEn,
-            product.synonyms,
-            product.category,
-            product.brand,
-            product.formula,
-            product.molecularWeight,
-            publicProductTags(product.tags)
-          ]).includes(keyword)
-        )
         .map((product) => ({
           href: `/products/${product.id}`,
           title: product.nameCn || product.nameEn || product.catalogNo,
@@ -104,18 +85,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const newsResults: SearchResult[] = keyword
     ? news
-        .filter(
-          (article) =>
-            article.published &&
-            searchableText([
-              article.title,
-              article.category,
-              article.summary,
-              article.content,
-              article.author,
-              article.source
-            ]).includes(keyword)
-        )
         .map((article) => ({
           href: `/news/${article.slug}`,
           title: article.title,
@@ -126,18 +95,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const infoResults: SearchResult[] = keyword
     ? info
-        .filter(
-          (article) =>
-            article.published &&
-            searchableText([
-              article.title,
-              article.category,
-              article.summary,
-              article.content,
-              article.author,
-              article.source
-            ]).includes(keyword)
-        )
         .map((article) => ({
           href: `/info/${article.slug}`,
           title: article.title,

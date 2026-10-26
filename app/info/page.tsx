@@ -1,7 +1,7 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { InfoExplorer } from "@/components/InfoExplorer";
-import { getInfoArticles, getSiteContent } from "@/lib/cms";
+import { getPublishedInfoArticles, getSiteContent } from "@/lib/cms";
 import { isArticleAvailable, localizeArticle, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
@@ -16,7 +16,7 @@ export async function generateMetadata() {
 }
 
 export default async function InfoPage() {
-  const [rawSite, info, locale] = await Promise.all([getSiteContent(), getInfoArticles(), getLocale()]);
+  const [rawSite, info, locale] = await Promise.all([getSiteContent(), getPublishedInfoArticles(), getLocale()]);
   const site = localizeSiteContent(rawSite, locale);
   const publishedInfo = info
     .filter((article) => isArticleAvailable(article, locale))

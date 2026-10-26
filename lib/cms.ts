@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { dbQuery, dbTransaction, hasDatabaseUrl } from "./db";
 import { getSupabaseConfig, supabaseRest } from "./supabase";
 import type { InfoArticle, NewsArticle, Product, QuoteRequest, SiteContent } from "./types";
@@ -237,6 +238,46 @@ function siteFromRow(row: SiteRow): SiteContent {
 
 type ArticleTable = "news_articles" | "info_articles";
 
+const CACHE_SECONDS = 60 * 60;
+const cacheTags = {
+  products: "cms-products",
+  site: "cms-site",
+  news: "cms-news",
+  info: "cms-info"
+} as const;
+
+const productListColumns = `
+  id, status, deleted_at, sku, catalog_no, cas, name_cn, name_en, synonyms,
+  category, brand, formula, molecular_weight, purity, stock, package_size,
+  price, lead_time, image, ''::text as details, ''::text as reference_text,
+  ''::text as certificate, scale_note, tags,
+  jsonb_build_object('en', coalesce(translations->'en', '{}'::jsonb) - array['details','references','certificate']) as translations
+`;
+
+const articleListColumns = `
+  id, slug, title, category, author, source, published_at, summary,
+  ''::text as content, cover_image, views, published,
+  jsonb_build_object(
+    'en',
+    (coalesce(translations->'en', '{}'::jsonb) - 'content') ||
+      jsonb_build_object('content', case when coalesce(translations->'en'->>'content', '') <> '' then 'available' else '' end)
+  ) as translations
+`;
+
+function compactArticle(article: NewsArticle): NewsArticle {
+  const english = article.translations?.en;
+  const { content: _content, ...englishListFields } = english || {};
+  return {
+    ...article,
+    content: "",
+    translations: english ? { en: { ...englishListFields, content: english.content ? "available" : "" } } : {}
+  };
+}
+
+function invalidateCmsCache(tag: keyof typeof cacheTags) {
+  revalidateTag(cacheTags[tag]);
+}
+
 async function saveArticlesInDatabase(table: ArticleTable, articles: NewsArticle[]) {
   const rows = articles.map(newsToRow);
   await dbTransaction(async (query) => {
@@ -276,11 +317,11 @@ async function saveArticlesWithSupabase(table: ArticleTable, articles: NewsArtic
   }
 }
 
-export async function getProducts(options: { includeInactive?: boolean } = {}) {
-  const includeInactive = Boolean(options.includeInactive);
+async function loadProducts(includeInactive: boolean) {
   if (hasDatabaseUrl()) {
-    const products = (await dbQuery<ProductRow>("select * from public.products order by catalog_no asc")).map(productFromRow);
-    return includeInactive ? products : products.filter((product) => product.status === "published" && !product.deletedAt);
+    const where = includeInactive ? "" : "where status = 'published' and deleted_at is null";
+    const columns = includeInactive ? "*" : productListColumns;
+    return (await dbQuery<ProductRow>(`select ${columns} from public.products ${where} order by catalog_no asc`)).map(productFromRow);
   }
   if (!useSupabase()) {
     const products = (await readJson<Product[]>(productsFile)).map((product) => ({
@@ -291,10 +332,41 @@ export async function getProducts(options: { includeInactive?: boolean } = {}) {
     return includeInactive ? products : products.filter((product) => product.status === "published" && !product.deletedAt);
   }
   const rows = await supabaseRest<ProductRow[]>("products", {
-    query: "?select=*&order=catalog_no.asc"
+    query: `?select=*&order=catalog_no.asc${includeInactive ? "" : "&status=eq.published&deleted_at=is.null"}`
   });
   const products = rows.map(productFromRow);
   return includeInactive ? products : products.filter((product) => product.status === "published" && !product.deletedAt);
+}
+
+const getCachedPublishedProducts = unstable_cache(
+  () => loadProducts(false),
+  ["cms-published-products"],
+  { revalidate: CACHE_SECONDS, tags: [cacheTags.products] }
+);
+
+export async function getProducts(options: { includeInactive?: boolean } = {}) {
+  return options.includeInactive ? loadProducts(true) : getCachedPublishedProducts();
+}
+
+async function loadProductById(id: string) {
+  if (hasDatabaseUrl()) {
+    const rows = await dbQuery<ProductRow>(
+      "select * from public.products where id = $1 and status = 'published' and deleted_at is null limit 1",
+      [id]
+    );
+    return rows[0] ? productFromRow(rows[0]) : null;
+  }
+  return (await loadProducts(false)).find((product) => product.id === id) || null;
+}
+
+const getCachedProductById = unstable_cache(
+  (id: string) => loadProductById(id),
+  ["cms-published-product-by-id"],
+  { revalidate: CACHE_SECONDS, tags: [cacheTags.products] }
+);
+
+export async function getProductById(id: string) {
+  return getCachedProductById(id);
 }
 
 export class BilingualMigrationRequiredError extends Error {
@@ -388,18 +460,21 @@ export async function saveProducts(products: Product[]) {
         );
       }
     });
+    invalidateCmsCache("products");
     return;
   }
   if (!requireWritableSupabase()) {
     await writeJson(productsFile, products);
+    invalidateCmsCache("products");
     return;
   }
   if (products.length > 0) {
     await supabaseRest("products", { method: "POST", body: products.map(productToRow), prefer: "resolution=merge-duplicates,return=representation" });
   }
+  invalidateCmsCache("products");
 }
 
-export async function getSiteContent() {
+async function loadSiteContent() {
   if (hasDatabaseUrl()) {
     const rows = await dbQuery<SiteRow>('select * from public.site_content where id = $1 limit 1', ["main"]);
     if (rows[0]) {
@@ -413,6 +488,16 @@ export async function getSiteContent() {
     return siteFromRow(rows[0]);
   }
   return { ...siteDefaults, ...(await readJson<Partial<SiteContent>>(siteFile)) };
+}
+
+const getCachedSiteContent = unstable_cache(
+  loadSiteContent,
+  ["cms-site-content"],
+  { revalidate: CACHE_SECONDS, tags: [cacheTags.site] }
+);
+
+export async function getSiteContent() {
+  return getCachedSiteContent();
 }
 
 export async function saveSiteContent(site: SiteContent) {
@@ -467,10 +552,12 @@ export async function saveSiteContent(site: SiteContent) {
         JSON.stringify(normalizedSite.translations)
       ]
     );
+    invalidateCmsCache("site");
     return;
   }
   if (!requireWritableSupabase()) {
     await writeJson(siteFile, normalizedSite);
+    invalidateCmsCache("site");
     return;
   }
   await supabaseRest("site_content", {
@@ -478,6 +565,7 @@ export async function saveSiteContent(site: SiteContent) {
     body: [{ id: "main", ...normalizedSite }],
     prefer: "resolution=merge-duplicates,return=representation"
   });
+  invalidateCmsCache("site");
 }
 
 export async function getQuotes() {
@@ -522,18 +610,101 @@ export async function getNewsArticles() {
   return rows.map(newsFromRow);
 }
 
+async function loadPublishedArticleList(table: ArticleTable, file: string, limit?: number) {
+  if (hasDatabaseUrl()) {
+    const values = limit ? [limit] : [];
+    const limitClause = limit ? "limit $1" : "";
+    const rows = await dbQuery<NewsRow>(
+      `select ${articleListColumns} from public.${table} where published = true order by published_at desc ${limitClause}`,
+      values
+    );
+    return rows.map(newsFromRow);
+  }
+  if (!useSupabase()) {
+    const rows = (await readJson<NewsArticle[]>(file))
+      .filter((article) => article.published)
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    return (limit ? rows.slice(0, limit) : rows).map(compactArticle);
+  }
+  const queryLimit = limit ? `&limit=${limit}` : "";
+  const rows = await supabaseRest<NewsRow[]>(table, {
+    query: `?select=*&published=eq.true&order=published_at.desc${queryLimit}`
+  });
+  return rows.map(newsFromRow).map(compactArticle);
+}
+
+const getCachedPublishedNews = unstable_cache(
+  (limit?: number) => loadPublishedArticleList("news_articles", newsFile, limit),
+  ["cms-published-news-list"],
+  { revalidate: CACHE_SECONDS, tags: [cacheTags.news] }
+);
+
+const getCachedPublishedInfo = unstable_cache(
+  (limit?: number) => loadPublishedArticleList("info_articles", infoFile, limit),
+  ["cms-published-info-list"],
+  { revalidate: CACHE_SECONDS, tags: [cacheTags.info] }
+);
+
+export async function getPublishedNewsArticles(limit?: number) {
+  return getCachedPublishedNews(limit);
+}
+
+export async function getPublishedInfoArticles(limit?: number) {
+  return (await getCachedPublishedInfo(limit)) as InfoArticle[];
+}
+
+async function loadPublishedArticleBySlug(table: ArticleTable, file: string, slug: string) {
+  if (hasDatabaseUrl()) {
+    const rows = await dbQuery<NewsRow>(
+      `select * from public.${table} where slug = $1 and published = true limit 1`,
+      [slug]
+    );
+    return rows[0] ? newsFromRow(rows[0]) : null;
+  }
+  if (!useSupabase()) {
+    return (await readJson<NewsArticle[]>(file)).find((article) => article.slug === slug && article.published) || null;
+  }
+  const rows = await supabaseRest<NewsRow[]>(table, {
+    query: `?select=*&slug=eq.${encodeURIComponent(slug)}&published=eq.true&limit=1`
+  });
+  return rows[0] ? newsFromRow(rows[0]) : null;
+}
+
+const getCachedPublishedNewsBySlug = unstable_cache(
+  (slug: string) => loadPublishedArticleBySlug("news_articles", newsFile, slug),
+  ["cms-published-news-by-slug"],
+  { revalidate: CACHE_SECONDS, tags: [cacheTags.news] }
+);
+
+const getCachedPublishedInfoBySlug = unstable_cache(
+  (slug: string) => loadPublishedArticleBySlug("info_articles", infoFile, slug),
+  ["cms-published-info-by-slug"],
+  { revalidate: CACHE_SECONDS, tags: [cacheTags.info] }
+);
+
+export async function getPublishedNewsArticleBySlug(slug: string) {
+  return getCachedPublishedNewsBySlug(slug);
+}
+
+export async function getPublishedInfoArticleBySlug(slug: string) {
+  return (await getCachedPublishedInfoBySlug(slug)) as InfoArticle | null;
+}
+
 export async function saveNewsArticles(news: NewsArticle[]) {
   // Check before any writes so a missing migration cannot affect existing content.
   await ensureTranslationsColumn("news_articles");
   if (hasDatabaseUrl()) {
     await saveArticlesInDatabase("news_articles", news);
+    invalidateCmsCache("news");
     return;
   }
   if (!requireWritableSupabase()) {
     await writeJson(newsFile, news);
+    invalidateCmsCache("news");
     return;
   }
   await saveArticlesWithSupabase("news_articles", news);
+  invalidateCmsCache("news");
 }
 
 export async function getInfoArticles() {
@@ -550,13 +721,114 @@ export async function saveInfoArticles(info: InfoArticle[]) {
   await ensureTranslationsColumn("info_articles");
   if (hasDatabaseUrl()) {
     await saveArticlesInDatabase("info_articles", info);
+    invalidateCmsCache("info");
     return;
   }
   if (!requireWritableSupabase()) {
     await writeJson(infoFile, info);
+    invalidateCmsCache("info");
     return;
   }
   await saveArticlesWithSupabase("info_articles", info);
+  invalidateCmsCache("info");
+}
+
+export type PublicSearchData = {
+  products: Product[];
+  news: NewsArticle[];
+  info: InfoArticle[];
+};
+
+export async function searchPublicContent(query: string, limitPerGroup = 30): Promise<PublicSearchData> {
+  const keyword = query.trim();
+  if (!keyword) return { products: [], news: [], info: [] };
+
+  if (hasDatabaseUrl()) {
+    const pattern = `%${keyword}%`;
+    const [productRows, newsRows, infoRows] = await Promise.all([
+      dbQuery<ProductRow>(
+        `select ${productListColumns} from public.products
+         where status = 'published' and deleted_at is null
+           and concat_ws(' ', sku, catalog_no, cas, name_cn, name_en, synonyms, category, brand, formula, molecular_weight,
+             translations->'en'->>'nameEn', translations->'en'->>'synonyms', translations->'en'->>'category',
+             translations->'en'->>'brand', translations->'en'->>'molecularWeight') ilike $1
+         order by catalog_no asc limit $2`,
+        [pattern, limitPerGroup]
+      ),
+      dbQuery<NewsRow>(
+        `select ${articleListColumns} from public.news_articles
+         where published = true
+           and concat_ws(' ', title, category, summary, content, author, source,
+             translations->'en'->>'title', translations->'en'->>'category', translations->'en'->>'summary',
+             translations->'en'->>'content', translations->'en'->>'author', translations->'en'->>'source') ilike $1
+         order by published_at desc limit $2`,
+        [pattern, limitPerGroup]
+      ),
+      dbQuery<NewsRow>(
+        `select ${articleListColumns} from public.info_articles
+         where published = true
+           and concat_ws(' ', title, category, summary, content, author, source,
+             translations->'en'->>'title', translations->'en'->>'category', translations->'en'->>'summary',
+             translations->'en'->>'content', translations->'en'->>'author', translations->'en'->>'source') ilike $1
+         order by published_at desc limit $2`,
+        [pattern, limitPerGroup]
+      )
+    ]);
+    return {
+      products: productRows.map(productFromRow),
+      news: newsRows.map(newsFromRow),
+      info: infoRows.map(newsFromRow) as InfoArticle[]
+    };
+  }
+
+  const needle = keyword.toLowerCase();
+  const includesKeyword = (values: unknown[]) => values.join(" ").toLowerCase().includes(needle);
+  const [products, news, info] = await Promise.all([
+    getProducts(),
+    getPublishedNewsArticles(),
+    getPublishedInfoArticles()
+  ]);
+  return {
+    products: products.filter((product) => includesKeyword([product.sku, product.catalogNo, product.cas, product.nameCn, product.nameEn, product.synonyms, product.category, product.brand, product.formula, product.molecularWeight, product.tags])).slice(0, limitPerGroup),
+    news: news.filter((article) => includesKeyword([article.title, article.category, article.summary, article.author, article.source])).slice(0, limitPerGroup),
+    info: info.filter((article) => includesKeyword([article.title, article.category, article.summary, article.author, article.source])).slice(0, limitPerGroup)
+  };
+}
+
+export async function getAdminOverviewCounts() {
+  if (hasDatabaseUrl()) {
+    const rows = await dbQuery<{
+      products: string;
+      pending_quotes: string;
+      processed_quotes: string;
+      published_news: string;
+      published_info: string;
+    }>(
+      `select
+         (select count(*) from public.products where status = 'published' and deleted_at is null)::bigint as products,
+         (select count(*) from public.quotes where status <> '已处理')::bigint as pending_quotes,
+         (select count(*) from public.quotes where status = '已处理')::bigint as processed_quotes,
+         (select count(*) from public.news_articles where published = true)::bigint as published_news,
+         (select count(*) from public.info_articles where published = true)::bigint as published_info`
+    );
+    const row = rows[0];
+    return {
+      products: Number(row?.products || 0),
+      pendingQuotes: Number(row?.pending_quotes || 0),
+      processedQuotes: Number(row?.processed_quotes || 0),
+      publishedNews: Number(row?.published_news || 0),
+      publishedInfo: Number(row?.published_info || 0)
+    };
+  }
+
+  const [products, quotes, news, info] = await Promise.all([getProducts(), getQuotes(), getNewsArticles(), getInfoArticles()]);
+  return {
+    products: products.length,
+    pendingQuotes: quotes.filter((quote) => quote.status !== "已处理").length,
+    processedQuotes: quotes.filter((quote) => quote.status === "已处理").length,
+    publishedNews: news.filter((article) => article.published).length,
+    publishedInfo: info.filter((article) => article.published).length
+  };
 }
 
 export async function getCategories() {

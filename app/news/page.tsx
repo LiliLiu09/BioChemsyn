@@ -1,7 +1,7 @@
 import Link from "@/components/LocaleLink";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
-import { getNewsArticles, getSiteContent } from "@/lib/cms";
+import { getPublishedNewsArticles, getSiteContent } from "@/lib/cms";
 import { isArticleAvailable, localizeArticle, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
@@ -15,7 +15,7 @@ export async function generateMetadata() {
 }
 
 export default async function NewsPage() {
-  const [rawSite, news, locale] = await Promise.all([getSiteContent(), getNewsArticles(), getLocale()]);
+  const [rawSite, news, locale] = await Promise.all([getSiteContent(), getPublishedNewsArticles(), getLocale()]);
   const site = localizeSiteContent(rawSite, locale);
   const publishedNews = news
     .filter((article) => isArticleAvailable(article, locale))
