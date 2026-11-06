@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import type { Product } from "@/lib/types";
+import type { Product, ProductTranslation } from "@/lib/types";
 import { localizeProduct } from "@/lib/content-locale";
 import type { Locale } from "@/lib/i18n";
 import { FEATURED_PRODUCT_TAG } from "@/lib/product-tags";
+import { englishProductCategory } from "@/lib/product-category-translations";
 
 const defaultProductImage = "/product-default-kasons.png";
 
@@ -268,6 +269,18 @@ function draftHasProductData(draft: Partial<Product>) {
   );
 }
 
+const requiredEnglishProductFields = ["nameEn", "category"];
+
+function englishTranslationFor(product: Product): ProductTranslation {
+  const stored = product.translations?.en;
+  return {
+    ...stored,
+    nameEn: stored?.nameEn?.trim() || product.nameEn.trim(),
+    category: stored?.category?.trim() || englishProductCategory(product.category),
+    published: stored?.published === true
+  };
+}
+
 import { useAdminLanguage, contentErrorMessage } from "@/components/admin-language";
 import { useLanguage } from "@/components/LanguageProvider";
 import { ContentLanguageTabs, isEnglishReady, TranslationEditor, type ContentLanguage } from "@/components/TranslationEditor";
@@ -292,14 +305,14 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const active = products.find((product) => product.id === activeId);
-  const english = { nameEn: active?.nameEn || "", published: active?.translations?.en ? active.translations.en.published === true : isEnglishReady({ nameEn: active?.nameEn }, ["nameEn"]), ...active?.translations?.en };
-  const englishReady = isEnglishReady(english, ["nameEn"]);
+  const english = active ? englishTranslationFor(active) : { nameEn: "", category: "", published: false };
+  const englishReady = isEnglishReady(english, requiredEnglishProductFields);
   const updateEnglish = (key: string, value: string | string[] | boolean) => {
     if (!active) return;
     setProducts((current) => current.map((item) => {
       if (item.id !== active.id) return item;
-      const en = { nameEn: item.nameEn, published: false, ...item.translations?.en, [key]: value };
-      if (!isEnglishReady(en, ["nameEn"])) en.published = false;
+      const en = { ...englishTranslationFor(item), [key]: value };
+      if (!isEnglishReady(en, requiredEnglishProductFields)) en.published = false;
       return { ...item, translations: { ...item.translations, en } };
     }));
   };
@@ -500,6 +513,57 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     await saveProductsToServer(nextProducts, t("产品已发布"));
   };
 
+  const saveEnglishActive = async () => {
+    if (!active) return;
+    const en = englishTranslationFor(active);
+    const nextProducts = products.map((product) => product.id === active.id
+      ? { ...product, translations: { ...product.translations, en } }
+      : product);
+    setProducts(nextProducts);
+    await saveProductsToServer(nextProducts, translate("英文内容已保存", "English content saved"));
+  };
+
+  const publishEnglishActive = async () => {
+    if (!active) return;
+    if (active.status !== "published" || active.deletedAt) {
+      setMessage(translate("请先在中文内容中发布产品，再发布英文版本。", "Publish the product first, then publish its English version."));
+      return;
+    }
+    const en = { ...englishTranslationFor(active), published: true };
+    if (!isEnglishReady(en, requiredEnglishProductFields)) {
+      setMessage(translate("发布英文版本前，请填写英文名称和英文分类。", "Enter an English name and category before publishing the English version."));
+      return;
+    }
+    const nextProducts = products.map((product) => product.id === active.id
+      ? { ...product, translations: { ...product.translations, en } }
+      : product);
+    setProducts(nextProducts);
+    await saveProductsToServer(nextProducts, translate("英文版本已发布", "English version published"));
+  };
+
+  const publishSelectedEnglishProducts = async () => {
+    const selected = new Set(selectedIds);
+    const selectedProducts = products.filter((product) => selected.has(product.id) && !product.deletedAt);
+    if (selectedProducts.length === 0) {
+      setMessage(translate("请先选择要发布英文版本的产品。", "Select products to publish in English."));
+      return;
+    }
+    const invalidProduct = selectedProducts.find((product) => product.status !== "published" || !isEnglishReady(englishTranslationFor(product), requiredEnglishProductFields));
+    if (invalidProduct) {
+      setActiveId(invalidProduct.id);
+      setMode("detail");
+      setContentLanguage("en");
+      setMessage(translate("英文批量发布前，产品必须已发布，并填写英文名称和英文分类。", "Before bulk English publishing, each product must be published with an English name and category."));
+      return;
+    }
+    const nextProducts = products.map((product) => selected.has(product.id) && !product.deletedAt
+      ? { ...product, translations: { ...product.translations, en: { ...englishTranslationFor(product), published: true } } }
+      : product);
+    setProducts(nextProducts);
+    setSelectedIds([]);
+    await saveProductsToServer(nextProducts, translate(`已发布 ${selectedProducts.length} 个英文产品`, `${selectedProducts.length} English products published`));
+  };
+
   const publishSelectedProducts = async () => {
     const selected = new Set(selectedIds);
     const selectedProducts = products.filter((product) => selected.has(product.id) && !product.deletedAt);
@@ -625,8 +689,13 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
             ) : (
               <>
                 <button className="btn" type="button" onClick={removeProduct}>{t("删除")}</button>
-                <button className="btn" type="button" onClick={saveActiveAsDraft}>{t("保存至草稿")}</button>
-                <button className="btn primary" type="button" onClick={publishActive}>{t("发布产品")}</button>
+                {contentLanguage === "en" ? <>
+                  <button className="btn" type="button" onClick={saveEnglishActive}>{translate("保存英文内容", "Save English content")}</button>
+                  <button className="btn primary" type="button" onClick={publishEnglishActive}>{english.published ? translate("更新英文版本", "Update English version") : translate("发布英文版本", "Publish English version")}</button>
+                </> : <>
+                  <button className="btn" type="button" onClick={saveActiveAsDraft}>{t("保存至草稿")}</button>
+                  <button className="btn primary" type="button" onClick={publishActive}>{t("发布产品")}</button>
+                </>}
               </>
             )}
           </div>
@@ -636,7 +705,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         {contentLanguage === "en" ? <>
           <TranslationEditor values={english} fields={productTranslationFields} onChange={updateEnglish} uploadFolder="products" ready={englishReady} />
           <p className="result-count">{translate("英文版本仅在产品已发布且未删除时公开；货号、CAS、分子式、价格和库存与中文共用。", "The English version is public only when the product is published and not deleted. Catalog number, CAS, formula, price, and stock are shared.")}</p>
-          <button className="btn primary" type="button" onClick={() => saveProductsToServer()}>{translate("保存中英文内容", "Save Chinese and English content")}</button>
+          <button className="btn primary" type="button" onClick={saveEnglishActive}>{translate("保存英文内容", "Save English content")}</button>
         </> : <div className="admin-form-grid">
           <label className="admin-field full">
             <span>{t("产品分类")}</span>
@@ -772,6 +841,9 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
           <button className="btn primary" type="button" onClick={publishSelectedProducts} disabled={selectedIds.length === 0 || view === "deleted"}>
             {t("批量上架")}{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
           </button>
+          {locale === "en" && <button className="btn primary" type="button" onClick={publishSelectedEnglishProducts} disabled={selectedIds.length === 0 || view === "deleted"}>
+            {translate("批量发布英文版本", "Publish English versions")}{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
+          </button>}
           <button className="btn danger" type="button" onClick={removeSelectedProducts} disabled={selectedIds.length === 0}>
             {t("删除选中")}{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
           </button>

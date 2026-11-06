@@ -1217,7 +1217,9 @@ textarea:focus-visible {
 .article-page {
   display: grid;
   gap: 22px;
+  width: min(860px, 100%);
   max-width: 860px;
+  margin: 0 auto;
 }
 
 .article-page header {

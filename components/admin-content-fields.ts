@@ -12,7 +12,7 @@ export const articleTranslationFields: TranslationField[] = [
 
 export const productTranslationFields: TranslationField[] = [
   { key: "nameEn", zh: "英文名称", en: "English product name", required: true },
-  { key: "category", zh: "英文分类", en: "English category" },
+  { key: "category", zh: "英文分类", en: "English category", required: true },
   { key: "brand", zh: "英文品牌", en: "Brand" },
   { key: "synonyms", zh: "英文同义词", en: "Synonyms" },
   { key: "molecularWeight", zh: "分子量", en: "Molecular weight" },

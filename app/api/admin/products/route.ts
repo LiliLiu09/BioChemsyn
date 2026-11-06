@@ -6,6 +6,7 @@ import type { Product } from "@/lib/types";
 import { isEnglishContent } from "@/lib/content-locale";
 import { translate } from "@/lib/i18n";
 import { contentSaveError, requestLocale } from "../content-errors";
+import { englishProductCategory } from "@/lib/product-category-translations";
 
 function nextProductId(products: Array<Pick<Product, "id">>) {
   const maxId = products.reduce((max, product) => {
@@ -16,6 +17,7 @@ function nextProductId(products: Array<Pick<Product, "id">>) {
 }
 
 function normalizeProduct(product: Product, fallbackId: string): Product {
+  const english = product.translations?.en;
   return {
     ...product,
     id: product.id || fallbackId,
@@ -36,7 +38,15 @@ function normalizeProduct(product: Product, fallbackId: string): Product {
     scaleNote: product.scaleNote || "",
     stock: Number(product.stock || 0),
     price: Number(product.price || 0),
-    tags: Array.isArray(product.tags) ? product.tags : []
+    tags: Array.isArray(product.tags) ? product.tags : [],
+    translations: english ? {
+      ...product.translations,
+      en: {
+        ...english,
+        nameEn: english.nameEn?.trim() || product.nameEn.trim(),
+        category: english.category?.trim() || englishProductCategory(product.category)
+      }
+    } : product.translations
   };
 }
 
@@ -56,8 +66,11 @@ export async function PUT(request: Request) {
     return normalized;
   });
 
-  if (products.some((product) => product.translations?.en?.published === true && !isEnglishContent(product.translations.en.nameEn || product.nameEn))) {
-    return NextResponse.json({ code: "ENGLISH_TRANSLATION_INCOMPLETE", error: translate(requestLocale(request), "发布英文产品前，请填写正确的英文名称。", "Enter an English product name before publishing the English version.") }, { status: 400 });
+  if (products.some((product) => product.translations?.en?.published === true && (
+    !isEnglishContent(product.translations.en.nameEn || product.nameEn)
+    || !isEnglishContent(product.translations.en.category)
+  ))) {
+    return NextResponse.json({ code: "ENGLISH_TRANSLATION_INCOMPLETE", error: translate(requestLocale(request), "发布英文产品前，请填写正确的英文名称和英文分类。", "Enter an English product name and category before publishing the English version.") }, { status: 400 });
   }
   try { await saveProducts(products); } catch (error) { return contentSaveError(error, request); }
   revalidatePath("/", "layout");

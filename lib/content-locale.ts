@@ -1,6 +1,7 @@
 import type { Locale } from "@/lib/i18n";
 import type { InfoArticle, NewsArticle, Product, SiteContent } from "@/lib/types";
 import { publicProductTags } from "@/lib/product-tags";
+import { englishProductCategory } from "@/lib/product-category-translations";
 
 // Never substitute a guessed chemical name or silently show Chinese copy on an English page.
 const hanCharacters = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/;
@@ -66,7 +67,7 @@ export function localizeProduct(product: Product, locale: Locale, options?: { in
     nameCn: name,
     nameEn: name,
     synonyms: englishText(en?.synonyms, sharedText(product.synonyms)),
-    category: englishText(en?.category, sharedText(product.category, "Other products")),
+    category: englishText(en?.category, englishProductCategory(product.category) || "Other products"),
     brand: englishText(en?.brand, sharedText(product.brand)),
     molecularWeight: englishText(en?.molecularWeight, sharedText(product.molecularWeight, "Available on request")),
     purity: englishText(en?.purity, sharedText(product.purity, "Available on request")),
