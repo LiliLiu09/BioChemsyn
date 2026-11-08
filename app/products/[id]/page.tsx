@@ -4,10 +4,12 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { ProductDetailActions } from "@/components/ProductDetailActions";
 import { RichTextContent } from "@/components/RichTextContent";
-import { getProductById, getSiteContent } from "@/lib/cms";
+import { getProductById, getProducts, getSiteContent } from "@/lib/cms";
 import { isProductAvailable, localizeProduct, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
-import { translate } from "@/lib/i18n";
+import { localizePath, translate } from "@/lib/i18n";
+import { absoluteUrl, jsonLd, pageMetadata } from "@/lib/seo";
+import { categoryForProduct, priorityProducts } from "@/lib/catalog-seo";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -19,9 +21,21 @@ function lines(value: string) {
     .filter(Boolean);
 }
 
-export async function generateMetadata() {
-  const locale = await getLocale();
-  return { title: translate(locale, "产品详情", "Product details") };
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const [{ id }, locale] = await Promise.all([params, getLocale()]);
+  const raw = await getProductById(id);
+  if (!raw) notFound();
+  const available = isProductAvailable(raw, locale);
+  const product = localizeProduct(raw, locale);
+  const name = locale === "en" ? product.nameEn : product.nameCn || product.nameEn;
+  const identity = product.cas ? ` | CAS ${product.cas}` : ` | ${product.catalogNo || product.sku}`;
+  const description = locale === "en"
+    ? `${name}${product.cas ? ` (CAS ${product.cas})` : ""}. View chemical identity and research reagent specifications. Enquire about pack sizes and request a quotation from KASONS.`
+    : `${name}${product.cas ? `，CAS ${product.cas}` : ""}。查看产品规格、分子式及货号，联系凯森斯生物获取报价与批次资料。`;
+  return {
+    ...pageMetadata(`/products/${encodeURIComponent(id)}`, locale, `${name}${identity} | KASONS`, description, isProductAvailable(raw, "en")),
+    ...(!available ? { robots: { index: false, follow: true } } : {})
+  };
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -53,16 +67,38 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const basicInfo = product.details;
   const references = product.references;
   const certificate = product.certificate;
+  const category = categoryForProduct(rawProduct);
+  const priority = priorityProducts[id];
+  const related = locale === "en" && priority
+    ? (await getProducts()).filter((item) => item.id !== id && priorityProducts[item.id]?.category === priority.category && isProductAvailable(item, locale)).slice(0, 4).map((item) => localizeProduct(item, locale))
+    : [];
+  const description = locale === "en"
+    ? `${priority?.summary || `${product.nameEn} research reagent.`} Catalog number: ${product.catalogNo || product.sku}${product.cas ? `; CAS: ${product.cas}` : ""}.`
+    : `${product.nameCn || product.nameEn}，货号 ${product.catalogNo || product.sku}${product.cas ? `，CAS ${product.cas}` : ""}。`;
+  const schema = {
+    "@context": "https://schema.org", "@type": "Product",
+    name: product.nameCn || product.nameEn, description,
+    sku: product.catalogNo || product.sku,
+    url: absoluteUrl(localizePath(`/products/${encodeURIComponent(id)}`, locale)),
+    ...(product.image ? { image: [absoluteUrl(product.image)] } : {}),
+    ...(product.brand ? { brand: { "@type": "Brand", name: product.brand } } : {}),
+    additionalProperty: [
+      ...(product.cas ? [{ "@type": "PropertyValue", name: "CAS number", value: product.cas }] : []),
+      ...(product.formula && product.formula !== "Available on request" ? [{ "@type": "PropertyValue", name: "Molecular formula", value: product.formula }] : [])
+    ]
+  };
 
   return (
     <div className="shell">
       <Header site={site} />
       <main className="main">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(schema) }} />
         <div className="product-breadcrumb">
           <Link href="/">{t("首页", "Home")}</Link>
           <span>/</span>
           <Link href="/products">{t("产品中心", "Products")}</Link>
           <span>/</span>
+          {category && <><Link href={`/products/category/${category.slug}`}>{locale === "en" ? category.name : category.nameZh}</Link><span>/</span></>}
           <span>{product.nameCn || product.nameEn}</span>
         </div>
 
@@ -92,7 +128,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               </div>
               <div>
                 <dt>{t("产品分类", "Category")}</dt>
-                <dd>{product.category}</dd>
+                <dd>{category ? <Link href={`/products/category/${category.slug}`}>{product.category}</Link> : product.category}</dd>
               </div>
               <div>
                 <dt>{t("CAS 号", "CAS number")}</dt>
@@ -139,6 +175,18 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
         </section>
 
+        {locale === "en" && priority && (
+          <section className="seo-copy">
+            <h2>Product overview</h2>
+            <p>{priority.summary}</p>
+            <h2>Choosing the correct material</h2>
+            <p>{priority.selection}</p>
+            <h2>Request specifications and a quotation</h2>
+            <p>Quote catalog number <strong>{product.catalogNo || product.sku}</strong>{product.cas ? ` and CAS ${product.cas}` : ""}, the quantity required and your documentation needs. Confirm purity, pack size, lead time and any handling requirements with our sales team.</p>
+            <p><a href="mailto:inquiry@biochemsyn.com">inquiry@biochemsyn.com</a> · <Link href="/contact">Contact KASONS</Link></p>
+            {related.length > 0 && <><h2>Related research reagents</h2><ul>{related.map((item) => <li key={item.id}><Link href={`/products/${item.id}`}>{item.nameEn}</Link></li>)}</ul></>}
+          </section>
+        )}
         <section className="product-tabs">
           <input id="tab-basic" name="product-tabs" type="radio" defaultChecked />
           <input id="tab-references" name="product-tabs" type="radio" />

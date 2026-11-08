@@ -66,6 +66,8 @@ export function localizeProduct(product: Product, locale: Locale, options?: { in
     categoryKey: product.categoryKey || product.category || "未分类",
     nameCn: name,
     nameEn: name,
+    cas: englishText(product.cas),
+    formula: englishText(product.formula, "Available on request"),
     synonyms: englishText(en?.synonyms, sharedText(product.synonyms)),
     category: englishText(en?.category, englishProductCategory(product.category) || "Other products"),
     brand: englishText(en?.brand, sharedText(product.brand)),

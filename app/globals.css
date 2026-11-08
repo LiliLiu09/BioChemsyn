@@ -2880,3 +2880,22 @@ textarea.field {
     grid-template-columns: 1fr;
   }
 }
+.seo-category-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.seo-copy {
+  margin: 24px 0;
+  padding: clamp(20px, 3vw, 36px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+
+.seo-copy p { max-width: 90ch; line-height: 1.8; }
+.seo-copy h2 { margin-top: 24px; font-size: 1.25rem; }
+.seo-copy a { color: var(--brand-strong); text-decoration: underline; }

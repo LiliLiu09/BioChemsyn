@@ -7,6 +7,7 @@ import { GlobalSearchForm } from "@/components/GlobalSearchForm";
 import { isArticleAvailable, isProductAvailable, localizeArticle, localizeProduct, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
+import { categoryForProduct } from "@/lib/catalog-seo";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -59,7 +60,7 @@ export default async function HomePage() {
             <div className="home-category-list">
               <Link href="/products">{t("全部产品", "All products")}</Link>
               {allCategories.map(([key, label]) => (
-                <Link href={`/products?category=${encodeURIComponent(key)}`} key={key}>
+                <Link href={categoryForProduct({ category: key }) ? `/products/category/${categoryForProduct({ category: key })!.slug}` : `/products?category=${encodeURIComponent(key)}`} key={key}>
                   {label}
                 </Link>
               ))}
