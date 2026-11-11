@@ -1,5 +1,6 @@
 import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
+import { Fragment } from "react";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { ProductDetailActions } from "@/components/ProductDetailActions";
@@ -72,20 +73,22 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const related = locale === "en" && priority
     ? (await getProducts()).filter((item) => item.id !== id && priorityProducts[item.id]?.category === priority.category && isProductAvailable(item, locale)).slice(0, 4).map((item) => localizeProduct(item, locale))
     : [];
-  const description = locale === "en"
-    ? `${priority?.summary || `${product.nameEn} research reagent.`} Catalog number: ${product.catalogNo || product.sku}${product.cas ? `; CAS: ${product.cas}` : ""}.`
-    : `${product.nameCn || product.nameEn}，货号 ${product.catalogNo || product.sku}${product.cas ? `，CAS ${product.cas}` : ""}。`;
+  const productName = product.nameCn || product.nameEn || t("未命名产品", "Unnamed product");
+  const breadcrumbs = [
+    { name: t("首页", "Home"), path: "/" },
+    { name: t("产品中心", "Products"), path: "/products" },
+    ...(category ? [{ name: t(category.nameZh, category.name), path: `/products/category/${category.slug}` }] : []),
+    { name: productName, path: `/products/${encodeURIComponent(id)}` }
+  ];
   const schema = {
-    "@context": "https://schema.org", "@type": "Product",
-    name: product.nameCn || product.nameEn, description,
-    sku: product.catalogNo || product.sku,
-    url: absoluteUrl(localizePath(`/products/${encodeURIComponent(id)}`, locale)),
-    ...(product.image ? { image: [absoluteUrl(product.image)] } : {}),
-    ...(product.brand ? { brand: { "@type": "Brand", name: product.brand } } : {}),
-    additionalProperty: [
-      ...(product.cas ? [{ "@type": "PropertyValue", name: "CAS number", value: product.cas }] : []),
-      ...(product.formula && product.formula !== "Available on request" ? [{ "@type": "PropertyValue", name: "Molecular formula", value: product.formula }] : [])
-    ]
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: breadcrumbs.map(({ name, path }, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name,
+      item: absoluteUrl(localizePath(path, locale))
+    }))
   };
 
   return (
@@ -94,12 +97,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       <main className="main">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(schema) }} />
         <div className="product-breadcrumb">
-          <Link href="/">{t("首页", "Home")}</Link>
-          <span>/</span>
-          <Link href="/products">{t("产品中心", "Products")}</Link>
-          <span>/</span>
-          {category && <><Link href={`/products/category/${category.slug}`}>{locale === "en" ? category.name : category.nameZh}</Link><span>/</span></>}
-          <span>{product.nameCn || product.nameEn}</span>
+          {breadcrumbs.map(({ name, path }, index) => (
+            <Fragment key={path}>
+              {index > 0 && <span>/</span>}
+              {index === breadcrumbs.length - 1 ? <span>{name}</span> : <Link href={path}>{name}</Link>}
+            </Fragment>
+          ))}
         </div>
 
         <section className="product-detail-hero">
@@ -108,7 +111,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
 
           <div className="product-detail-summary">
-            <h1>{product.nameCn || product.nameEn || t("未命名产品", "Unnamed product")}</h1>
+            <h1>{productName}</h1>
             {locale === "zh" && product.nameCn && product.nameEn && <p className="product-subtitle">{product.nameEn}</p>}
 
             <dl className="product-field-list">

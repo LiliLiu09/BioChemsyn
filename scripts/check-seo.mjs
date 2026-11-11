@@ -50,13 +50,16 @@ for (let offset = 0; offset < ids.length; offset += 4) {
     metadata(html, path);
     assert.ok(html.includes(priorityProducts[id].summary), path);
     assert.ok(html.includes('mailto:inquiry@biochemsyn.com'));
-    const product = schemas(html).find((value) => value['@type'] === 'Product');
-    assert.ok(product?.sku && product?.name, `product identity: ${path}`);
-    assert.equal(product.offers, undefined, 'Do not invent public prices');
-    assert.equal(product.aggregateRating, undefined, 'Do not invent ratings');
+    const pageSchemas = schemas(html);
+    assert.ok(!pageSchemas.some((value) => value['@type'] === 'Product'), `quote-only product has no Product snippet: ${path}`);
+    const crumbs = pageSchemas.find((value) => value['@type'] === 'BreadcrumbList')?.itemListElement;
+    assert.deepEqual(crumbs?.map(({ item }) => item), [
+      `${origin}/en`, `${origin}/en/products`, `${origin}/en/products/category/${priorityProducts[id].category}`, `${origin}${path}`
+    ], `product breadcrumbs: ${path}`);
+    assert.ok(crumbs.every((crumb, index) => crumb['@type'] === 'ListItem' && crumb.position === index + 1 && crumb.name.trim()), `breadcrumb items: ${path}`);
     assert.ok(html.includes(`/en/products/category/${priorityProducts[id].category}`));
     assert.ok(sitemap.includes(`<loc>${origin}${path}</loc>`));
-    results.push({ path, name: product.name, sku: product.sku });
+    results.push({ path, name: crumbs.at(-1).name });
   }));
 }
 const home = await read('/en');
