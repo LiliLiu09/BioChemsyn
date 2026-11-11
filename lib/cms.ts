@@ -392,7 +392,7 @@ async function ensureTranslationsColumn(table: "products" | "site_content" | "ne
   }
 }
 
-export async function saveProducts(products: Product[]) {
+export async function saveProducts(products: Product[], options: { merge?: boolean } = {}) {
   await ensureTranslationsColumn("products");
   if (hasDatabaseUrl()) {
     const rows = products.map(productToRow);
@@ -464,7 +464,13 @@ export async function saveProducts(products: Product[]) {
     return;
   }
   if (!requireWritableSupabase()) {
-    await writeJson(productsFile, products);
+    if (options.merge) {
+      const existing = await readJson<Product[]>(productsFile);
+      const merged = new Map([...existing, ...products].map((product) => [product.id, product]));
+      await writeJson(productsFile, [...merged.values()]);
+    } else {
+      await writeJson(productsFile, products);
+    }
     invalidateCmsCache("products");
     return;
   }

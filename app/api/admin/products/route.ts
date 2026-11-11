@@ -58,7 +58,10 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   await requireAdmin();
-  const body = (await request.json()) as { products?: Product[] };
+  const body = (await request.json()) as { products?: Product[]; merge?: boolean };
+  if (body.merge === true && (!body.products?.length || body.products.some((product) => !product.id))) {
+    return NextResponse.json({ error: "A product ID is required for a partial update." }, { status: 400 });
+  }
   let nextIdNumber = Number(nextProductId(body.products || []).replace(/^p-/, ""));
   const products = (body.products || []).map((product) => {
     const normalized = normalizeProduct(product, `p-${nextIdNumber}`);
@@ -72,7 +75,7 @@ export async function PUT(request: Request) {
   ))) {
     return NextResponse.json({ code: "ENGLISH_TRANSLATION_INCOMPLETE", error: translate(requestLocale(request), "发布英文产品前，请填写正确的英文名称和英文分类。", "Enter an English product name and category before publishing the English version.") }, { status: 400 });
   }
-  try { await saveProducts(products); } catch (error) { return contentSaveError(error, request); }
+  try { await saveProducts(products, { merge: body.merge === true }); } catch (error) { return contentSaveError(error, request); }
   revalidatePath("/", "layout");
   return NextResponse.json({ ok: true, products });
 }

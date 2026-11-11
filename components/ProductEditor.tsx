@@ -482,12 +482,12 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     return Object.keys(nextErrors).length === 0;
   };
 
-  const saveProductsToServer = async (nextProducts = products, successMessage = t("已保存产品数据")) => {
+  const saveProductsToServer = async (nextProducts = products, successMessage = t("已保存产品数据"), merge = false) => {
     setMessage("");
     const response = await fetch("/api/admin/products", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ products: nextProducts })
+      body: JSON.stringify({ products: nextProducts, merge })
     });
     setMessage(response.ok ? successMessage : await contentErrorMessage(response, t("保存失败，请重新登录后台或检查 Supabase 配置")));
     return response.ok;
@@ -516,11 +516,10 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const saveEnglishActive = async () => {
     if (!active) return;
     const en = englishTranslationFor(active);
-    const nextProducts = products.map((product) => product.id === active.id
-      ? { ...product, translations: { ...product.translations, en } }
-      : product);
-    setProducts(nextProducts);
-    await saveProductsToServer(nextProducts, translate("英文内容已保存", "English content saved"));
+    const updated = { ...active, translations: { ...active.translations, en } };
+    if (await saveProductsToServer([updated], translate("英文内容已保存", "English content saved"), true)) {
+      setProducts((current) => current.map((product) => product.id === updated.id ? updated : product));
+    }
   };
 
   const publishEnglishActive = async () => {
@@ -534,11 +533,10 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       setMessage(translate("发布英文版本前，请填写英文名称和英文分类。", "Enter an English name and category before publishing the English version."));
       return;
     }
-    const nextProducts = products.map((product) => product.id === active.id
-      ? { ...product, translations: { ...product.translations, en } }
-      : product);
-    setProducts(nextProducts);
-    await saveProductsToServer(nextProducts, translate("英文版本已发布", "English version published"));
+    const updated = { ...active, translations: { ...active.translations, en } };
+    if (await saveProductsToServer([updated], translate("英文版本已发布", "English version published"), true)) {
+      setProducts((current) => current.map((product) => product.id === updated.id ? updated : product));
+    }
   };
 
   const publishSelectedEnglishProducts = async () => {
