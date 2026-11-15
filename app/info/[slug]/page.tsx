@@ -7,17 +7,21 @@ import { getPublishedInfoArticleBySlug, getSiteContent } from "@/lib/cms";
 import { isArticleAvailable, localizeArticle, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
+import { articleMetadata } from "@/lib/seo";
+import { cache } from "react";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function generateMetadata() {
-  const locale = await getLocale();
-  return { title: translate(locale, "资讯详情", "Resource article") };
+const getArticle = cache(getPublishedInfoArticleBySlug);
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const [{ slug }, locale] = await Promise.all([params, getLocale()]);
+  return articleMetadata(`/info/${encodeURIComponent(slug)}`, locale, await getArticle(slug));
 }
 
 export default async function InfoDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const [{ slug }, rawSite, rawArticle, locale] = await Promise.all([params, getSiteContent(), params.then(({ slug: articleSlug }) => getPublishedInfoArticleBySlug(articleSlug)), getLocale()]);
+  const [{ slug }, rawSite, rawArticle, locale] = await Promise.all([params, getSiteContent(), params.then(({ slug }) => getArticle(slug)), getLocale()]);
   const t = (zh: string, en: string) => translate(locale, zh, en);
   const site = localizeSiteContent(rawSite, locale);
   if (!rawArticle) {
@@ -32,7 +36,7 @@ export default async function InfoDetailPage({ params }: { params: Promise<{ slu
           <section className="content-page">
             <h1>{t("暂未提供翻译", "This resource is not available in English yet")}</h1>
             <p>{t("请查看中文版本或浏览其他资讯。", "You can switch to the Chinese version or browse other resources.")}</p>
-            <a className="btn" href={`/api/locale?language=zh&returnTo=${encodeURIComponent(`/info/${encodeURIComponent(slug)}`)}`}>{t("查看中文版本", "View Chinese version")}</a>
+            <a className="btn" href={`/info/${encodeURIComponent(slug)}`}>{t("查看中文版本", "View Chinese version")}</a>
             <Link className="btn primary" href="/info">{t("返回资讯信息", "Back to resources")}</Link>
           </section>
           <Footer site={site} />

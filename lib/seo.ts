@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { isArticleAvailable, localizeArticle } from "./content-locale";
 import { localizePath, type Locale } from "./i18n";
+import type { InfoArticle, NewsArticle } from "./types";
 
 export const siteOrigin = (process.env.NEXT_PUBLIC_SITE_URL || "https://biochemsyn.com").replace(/\/$/, "");
 export const absoluteUrl = (path: string) => new URL(path, siteOrigin).toString();
@@ -23,4 +25,13 @@ export function pageMetadata(path: string, locale: Locale, title: string, descri
 
 export function jsonLd(value: unknown) {
   return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
+export function articleMetadata(path: string, locale: Locale, article: InfoArticle | NewsArticle | null): Metadata {
+  if (!article || !isArticleAvailable(article, locale)) {
+    return { alternates: null, robots: { index: false, follow: true } };
+  }
+
+  const localized = localizeArticle(article, locale);
+  return pageMetadata(path, locale, localized.title, localized.summary, isArticleAvailable(article, "en"));
 }

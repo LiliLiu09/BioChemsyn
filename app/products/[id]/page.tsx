@@ -55,7 +55,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <section className="content-page">
             <h1>{t("产品内容暂未提供", "English product information is not available yet")}</h1>
             <p>{t("请联系销售团队获取产品信息。", "Please contact our sales team for details, or switch to the Chinese product page.")}</p>
-            <a className="btn" href={`/api/locale?language=zh&returnTo=${encodeURIComponent(`/products/${encodeURIComponent(id)}`)}`}>{t("查看中文版本", "View Chinese version")}</a>
+            <a className="btn" href={`/products/${encodeURIComponent(id)}`}>{t("查看中文版本", "View Chinese version")}</a>
             <Link className="btn primary" href="/contact">{t("联系我们", "Contact us")}</Link>
           </section>
           <Footer site={site} />
