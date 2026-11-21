@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { InfoArticle } from "@/lib/types";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { AdminArticleList } from "@/components/AdminArticleList";
 
 const emptyArticle: InfoArticle = {
   id: "",
@@ -164,20 +165,8 @@ export function InfoEditor({ initialInfo }: { initialInfo: InfoArticle[] }) {
 
   return (
     <div className="admin-products">
-      <div className="panel admin-list">
-        <div className="toolbar">
-          <h2>{t("资讯")}</h2>
-          <button className="btn primary" type="button" onClick={addArticle}>{t("新增")}</button>
-        </div>
-        {info.map((article) => (
-          <button className={`admin-list-item ${article.id === active.id ? "active" : ""}`} key={article.id} type="button" onClick={() => setActiveId(article.id)}>
-            <b>{locale === "en" ? article.translations?.en?.title || article.slug : article.title || t("未命名资讯")}</b>
-            <span>
-              {locale === "en" ? article.translations?.en?.category || t("资讯") : article.category} · {article.publishedAt} · {article.published ? t("已发布") : t("草稿")}
-            </span>
-          </button>
-        ))}
-      </div>
+      <AdminArticleList articles={info} activeId={active.id} heading={t("资讯")} untitledLabel={t("未命名资讯")}
+        onSelect={setActiveId} onAdd={addArticle} showCategory />
 
       <div className="panel admin-panel">
         <div className="toolbar">

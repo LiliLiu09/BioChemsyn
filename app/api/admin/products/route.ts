@@ -43,8 +43,8 @@ function normalizeProduct(product: Product, fallbackId: string): Product {
       ...product.translations,
       en: {
         ...english,
-        nameEn: english.nameEn?.trim() || product.nameEn.trim(),
-        category: english.category?.trim() || englishProductCategory(product.category)
+        nameEn: english.nameEn === undefined ? product.nameEn.trim() : english.nameEn.trim(),
+        category: english.category === undefined ? englishProductCategory(product.category) : english.category.trim()
       }
     } : product.translations
   };

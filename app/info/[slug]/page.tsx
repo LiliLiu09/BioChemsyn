@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { RichTextContent } from "@/components/RichTextContent";
-import { getPublishedInfoArticleBySlug, getSiteContent } from "@/lib/cms";
+import { getPublishedInfoArticleBySlug, getSiteContent, getProducts } from "@/lib/cms";
+import { mentionedProducts } from "@/lib/product-discovery";
+import { RelatedProductLinks } from "@/components/RelatedProductLinks";
 import { isArticleAvailable, localizeArticle, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
@@ -46,6 +48,7 @@ export default async function InfoDetailPage({ params }: { params: Promise<{ slu
   }
 
   const article = localizeArticle(rawArticle, locale);
+  const related = mentionedProducts(`${article.title} ${article.summary} ${article.content}`, await getProducts(), locale);
 
   return (
     <div className="shell">
@@ -68,6 +71,7 @@ export default async function InfoDetailPage({ params }: { params: Promise<{ slu
           {article.coverImage && <img className="article-cover" src={article.coverImage} alt={article.title} />}
           <p className="article-summary">{article.summary}</p>
           <RichTextContent content={article.content} locale={locale} imageAlt={t("资讯图片", "Resource image")} />
+          <RelatedProductLinks products={related} locale={locale} />
         </article>
         <Footer site={site} />
       </main>

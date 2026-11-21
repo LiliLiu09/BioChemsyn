@@ -288,6 +288,29 @@ Before committing, confirm that `.env.local`, secrets, temporary spreadsheets, e
 
 ## Troubleshooting
 
+### Search indexing and sitemap updates
+
+- Product, news and resource URLs use their own language-specific canonical URLs. Chinese and published English variants are linked with reciprocal `hreflang` annotations and a Chinese `x-default`.
+- `/sitemap.xml` includes only published products and articles, with English URLs included only when their English content is available. Its `lastmod` values come from stored content updates (or an article's original publication date when an update date is unavailable), never the time the sitemap is requested. Static pages without a reliable revision date omit `lastmod`.
+- Saving unchanged products or articles preserves their stored update dates. Article saves update individual records instead of recreating the whole table. The existing `updated_at` columns and triggers in `supabase/schema.sql` are used; no additional migration is required for this change.
+- Known old navigation aliases redirect to their replacement, preserving `/en` where appropriate. Unknown retired product/article IDs continue to return 404. Do not redirect every missing page to the homepage.
+- The old `/api/locale` endpoint remains a 301 redirect for previously discovered URLs. It is allowed in `robots.txt` so Google can follow that redirect. Current language links go straight to `/en/...` or the Chinese URL.
+- Footer category links use canonical category pages where available. Product pages link to published products in the same category. Articles show related product links only when a product name or CAS number is present in the article.
+- Run `npm run test:seo` for isolated indexing regressions and `npx tsc --noEmit --incremental false` for type checking. These checks do not build or start the website. After an authorized deployment, use `npm run seo:check -- https://biochemsyn.com` for HTTP checks and Search Console's live URL test for selected pages.
+- Search Console reports are delayed. Redirects, canonical alternatives and intentionally excluded inquiry-cart pages are not targets for 100% index coverage. Live-test a current URL and inspect its Google-selected canonical before deciding whether a historical warning still needs work.
+
+### Bilingual product editing
+
+Product details are edited on one page: Chinese content on the left and English content on the right (stacked on smaller screens). Catalog number, CAS, molecular formula, molecular weight, price, stock and the default image are shared fields at the top.
+
+**Save bilingual draft** saves both columns together and makes both language versions drafts. **Publish both languages** validates the catalog number, image, English name and English category, then saves and publishes both versions in one product update. Optional scientific fields may remain blank. Batch publishing follows the same validation and publishes both versions together. Existing untranslated records are not automatically published by deploying this interface.
+
+Run `npm run test:products` for isolated editor, API, draft and batch-publication regressions without starting the website.
+
+### Finding articles in Admin
+
+News and resource management share a searchable article list. Each entry shows its stored article ID before the title. Search covers IDs, slugs, Chinese and English titles, summaries, visible article body text, categories, authors and sources, including drafts. Multiple space-separated keywords must all match. Articles default to newest publication date first, with an oldest-first option. Sorting uses the article's `publishedAt` field, not its ID, import date or modification date; missing or invalid dates appear last. Search results retain the selected date order. Filtering and sorting change only the sidebar; saving still includes the complete article collection. Run `npm run test:articles` for search, sorting and save regressions without starting the website.
+
 ### Admin saves fail
 
 Check `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, required database migrations, and the Supabase project status.

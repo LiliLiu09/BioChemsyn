@@ -5,6 +5,7 @@ import { getLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 import { isProductAvailable, localizeProduct } from "@/lib/content-locale";
 import type { SiteContent } from "@/lib/types";
+import { categoryForProduct } from "@/lib/catalog-seo";
 
 export async function Footer({ site }: { site: SiteContent }) {
   const locale = await getLocale();
@@ -28,7 +29,10 @@ export async function Footer({ site }: { site: SiteContent }) {
       ["/contact", t("客户服务", "Customer service")], ["/contact", t("技术支持", "Technical support")], ["/info", t("采购说明", "Purchasing information")]
     ] },
     { title: t("产品", "Products"), links: [
-      ["/products", t("全部产品", "All products")], ...categories.map(([key, label]) => [`/products?category=${encodeURIComponent(key)}`, label])
+      ["/products", t("全部产品", "All products")], ...categories.map(([key, label]) => {
+        const category = categoryForProduct({ category: key });
+        return [category ? `/products/category/${category.slug}` : `/products?category=${encodeURIComponent(key)}`, label];
+      })
     ] },
     { title: t("新闻资讯", "News & resources"), links: [
       ["/news", t("新闻中心", "News")], ["/info", t("资讯信息", "Resources")]

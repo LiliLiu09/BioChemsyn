@@ -66,8 +66,10 @@ export function localizeProduct(product: Product, locale: Locale, options?: { in
     categoryKey: product.categoryKey || product.category || "未分类",
     nameCn: name,
     nameEn: name,
-    cas: englishText(product.cas),
-    formula: englishText(product.formula, "Available on request"),
+    // Chemical identifiers are shared data, not translation copy. Preserve them
+    // exactly in both languages; an absent value stays empty.
+    cas: product.cas || "",
+    formula: product.formula || "",
     synonyms: englishText(en?.synonyms, sharedText(product.synonyms)),
     category: englishText(en?.category, englishProductCategory(product.category) || "Other products"),
     brand: englishText(en?.brand, sharedText(product.brand)),

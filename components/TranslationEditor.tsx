@@ -25,13 +25,14 @@ export function ContentLanguageTabs({ value, onChange, ready }: { value: Content
   );
 }
 
-export function TranslationEditor({ values, fields, onChange, uploadFolder, ready, publishable = true }: {
+export function TranslationEditor({ values, fields, onChange, uploadFolder, ready, publishable = true, errors = {} }: {
   values: TranslationValues;
   fields: TranslationField[];
   onChange: (key: string, value: string | string[] | boolean) => void;
   uploadFolder: string;
   ready: boolean;
   publishable?: boolean;
+  errors?: Record<string, string | undefined>;
 }) {
   const { t } = useLanguage();
   return (
@@ -49,9 +50,10 @@ export function TranslationEditor({ values, fields, onChange, uploadFolder, read
             ) : (
               <label>
                 <span>{t(field.zh, field.en)}{field.required ? " *" : ""}</span>
-                {field.multiline ? <textarea className="field" value={value} onChange={(event) => onChange(field.key, event.target.value)} /> : <input className="field" value={value} onChange={(event) => onChange(field.key, field.key === "tags" ? event.target.value.split(/[,;，]/).map((tag) => tag.trim()) : event.target.value)} />}
+                {field.multiline ? <textarea className="field" value={value} aria-invalid={Boolean(errors[field.key])} onChange={(event) => onChange(field.key, event.target.value)} /> : <input className="field" value={value} aria-invalid={Boolean(errors[field.key])} onChange={(event) => onChange(field.key, field.key === "tags" ? event.target.value.split(/[,;，]/).map((tag) => tag.trim()) : event.target.value)} />}
               </label>
             )}
+            {errors[field.key] && <span className="field-error">{errors[field.key]}</span>}
           </div>
         );
       })}

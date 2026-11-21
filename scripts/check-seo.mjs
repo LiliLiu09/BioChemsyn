@@ -74,8 +74,17 @@ const legacy = await read(`/en/products?category=${encodeURIComponent('UDP-糖')
 assert.ok(legacy.html.includes(`rel="canonical" href="${origin}/en/products/category/udp-sugars"`));
 const missing = await read('/en/products/seo-nonexistent-product');
 assert.equal(missing.response.status, 404);
-const untranslatedPath = '/en/products/p-1786797241826';
-const untranslated = await read(untranslatedPath);
-assert.match(untranslated.html, /name="robots" content="noindex, follow"/);
-assert.ok(!sitemap.includes(`<loc>${origin}${untranslatedPath}</loc>`));
+// The published catalogue changes in Admin. A formerly untranslated ID must not
+// become a permanent assertion that blocks publishing its English translation.
+if (process.env.SEO_UNTRANSLATED_PRODUCT_ID) {
+  const untranslatedPath = `/en/products/${encodeURIComponent(process.env.SEO_UNTRANSLATED_PRODUCT_ID)}`;
+  const untranslated = await read(untranslatedPath);
+  assert.match(untranslated.html, /name="robots" content="noindex, follow"/);
+  assert.ok(!sitemap.includes(`<loc>${origin}${untranslatedPath}</loc>`));
+}
+assert.doesNotMatch(home.html, /href="[^\"]*\/api\/locale/);
+for (const match of sitemap.matchAll(/<lastmod>(.*?)<\/lastmod>/g)) {
+  const timestamp = Date.parse(match[1]);
+  assert.ok(Number.isFinite(timestamp) && timestamp <= Date.now(), 'lastmod must be a valid stored date, not a future date');
+}
 console.log(JSON.stringify({ passed: true, productPages: ids.length, categoryPages: coreCategories.length, sitemapUrls: (sitemap.match(/<loc>/g) || []).length, results }, null, 2));

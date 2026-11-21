@@ -2097,6 +2097,31 @@ textarea.field {
   align-self: start;
 }
 
+.admin-article-search {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.admin-article-search-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.admin-list-item .admin-article-id {
+  color: var(--brand-strong);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
 .admin-list-item {
   width: 100%;
   display: grid;
@@ -2129,6 +2154,57 @@ textarea.field {
 .product-detail-editor {
   display: grid;
   gap: 16px;
+}
+
+.product-editor-fields {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.product-shared-fields,
+.product-language-column {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.product-shared-fields h2,
+.product-language-column h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+
+.product-shared-fields .result-count { margin: 0 0 16px; }
+.product-shared-fields .admin-form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.product-shared-fields .admin-preview { max-width: 160px; max-height: 160px; object-fit: contain; }
+
+.bilingual-product-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.product-language-column .admin-form-grid { grid-template-columns: minmax(0, 1fr); }
+.product-language-column .result-count { min-height: 38px; margin: 0 0 16px; }
+.product-language-column textarea.field { min-height: 120px; resize: vertical; }
+.product-language-column textarea.field:first-of-type { white-space: pre-wrap; }
+.product-language-column .inline-controls { grid-template-columns: minmax(0, 1fr) auto; }
+
+@media (max-width: 1000px) {
+  .bilingual-product-columns { grid-template-columns: minmax(0, 1fr); }
+  .product-shared-fields .admin-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 600px) {
+  .product-shared-fields .admin-form-grid { grid-template-columns: minmax(0, 1fr); }
+  .product-shared-fields, .product-language-column { padding: 14px; }
 }
 
 .product-detail-editor .admin-field > span:first-child {
@@ -2885,6 +2961,12 @@ textarea.field {
   flex-wrap: wrap;
   gap: 12px;
   margin: 24px 0;
+}
+
+.promoted-product-links .btn {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .seo-copy {

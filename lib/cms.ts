@@ -4,6 +4,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { dbQuery, dbTransaction, hasDatabaseUrl } from "./db";
 import { getSupabaseConfig, supabaseRest } from "./supabase";
 import type { InfoArticle, NewsArticle, Product, QuoteRequest, SiteContent } from "./types";
+import { contentTimestamp, sameContent, stampContent } from "./content-updates";
 
 const dataDir = path.join(process.cwd(), "data");
 const productsFile = path.join(dataDir, "products.json");
@@ -13,6 +14,7 @@ const newsFile = path.join(dataDir, "news.json");
 const infoFile = path.join(dataDir, "info.json");
 
 type ProductRow = {
+  updated_at?: string | Date | null;
   id: string;
   status?: "draft" | "published";
   deleted_at?: string | Date | null;
@@ -45,7 +47,8 @@ type QuoteRow = Omit<QuoteRequest, "createdAt" | "salesNote"> & {
   created_at: string | Date;
   sales_note: string;
 };
-type NewsRow = Omit<NewsArticle, "publishedAt" | "coverImage"> & {
+type NewsRow = Omit<NewsArticle, "publishedAt" | "coverImage" | "updatedAt"> & {
+  updated_at?: string | Date | null;
   published_at: string | Date;
   cover_image: string;
 };
@@ -87,6 +90,7 @@ function requireWritableSupabase() {
 function productFromRow(row: ProductRow): Product {
   const deletedAt = row.deleted_at ? new Date(row.deleted_at).toISOString() : "";
   return {
+    updatedAt: contentTimestamp(row.updated_at),
     id: row.id,
     status: row.status === "draft" ? "draft" : "published",
     deletedAt,
@@ -170,6 +174,7 @@ function quoteToRow(quote: QuoteRequest): QuoteRow {
 function newsFromRow(row: NewsRow): NewsArticle {
   const publishedAt = row.published_at instanceof Date ? row.published_at.toISOString().slice(0, 10) : String(row.published_at).slice(0, 10);
   return {
+    updatedAt: contentTimestamp(row.updated_at),
     id: row.id,
     slug: row.slug,
     title: row.title,
@@ -247,7 +252,7 @@ const cacheTags = {
 } as const;
 
 const productListColumns = `
-  id, status, deleted_at, sku, catalog_no, cas, name_cn, name_en, synonyms,
+  id, updated_at, status, deleted_at, sku, catalog_no, cas, name_cn, name_en, synonyms,
   category, brand, formula, molecular_weight, purity, stock, package_size,
   price, lead_time, image, ''::text as details, ''::text as reference_text,
   ''::text as certificate, scale_note, tags,
@@ -255,7 +260,7 @@ const productListColumns = `
 `;
 
 const articleListColumns = `
-  id, slug, title, category, author, source, published_at, summary,
+  id, updated_at, slug, title, category, author, source, published_at, summary,
   ''::text as content, cover_image, views, published,
   jsonb_build_object(
     'en',
@@ -281,13 +286,21 @@ function invalidateCmsCache(tag: keyof typeof cacheTags) {
 async function saveArticlesInDatabase(table: ArticleTable, articles: NewsArticle[]) {
   const rows = articles.map(newsToRow);
   await dbTransaction(async (query) => {
-    await query(`delete from public.${table}`);
+    await query(`delete from public.${table} where not (id = any($1::text[]))`, [rows.map((row) => row.id)]);
     for (const row of rows) {
       await query(
-        `insert into public.${table} (
+        `insert into public.${table} as stored (
           id, slug, title, category, author, source, published_at, summary,
           content, cover_image, views, published, translations
-        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb)`,
+        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb)
+        on conflict (id) do update set
+          slug = excluded.slug, title = excluded.title, category = excluded.category,
+          author = excluded.author, source = excluded.source, published_at = excluded.published_at,
+          summary = excluded.summary, content = excluded.content, cover_image = excluded.cover_image,
+          views = excluded.views, published = excluded.published, translations = excluded.translations,
+          updated_at = now()
+        where (to_jsonb(stored) - 'created_at' - 'updated_at')
+          is distinct from (to_jsonb(excluded) - 'created_at' - 'updated_at')`,
         [
           row.id, row.slug, row.title, row.category, row.author, row.source,
           row.published_at, row.summary, row.content, row.cover_image,
@@ -300,13 +313,15 @@ async function saveArticlesInDatabase(table: ArticleTable, articles: NewsArticle
 
 async function saveArticlesWithSupabase(table: ArticleTable, articles: NewsArticle[]) {
   // Preserve existing rows if the bulk upsert fails. Delete only records absent from the saved list.
-  const previous = await supabaseRest<Array<{ id: string }>>(table, { query: "?select=id" });
+  const previous = await supabaseRest<NewsRow[]>(table, { query: "?select=*" });
   const keepIds = new Set(articles.map((article) => article.id));
-  if (articles.length > 0) {
+  const previousRows = new Map(previous.map((row) => [row.id, newsToRow(newsFromRow(row))]));
+  const changed = articles.map(newsToRow).filter((row) => !sameContent(row, previousRows.get(row.id)));
+  if (changed.length > 0) {
     await supabaseRest(table, {
       method: "POST",
       query: "?on_conflict=id",
-      body: articles.map(newsToRow),
+      body: changed,
       prefer: "resolution=merge-duplicates,return=representation"
     });
   }
@@ -340,7 +355,7 @@ async function loadProducts(includeInactive: boolean) {
 
 const getCachedPublishedProducts = unstable_cache(
   () => loadProducts(false),
-  ["cms-published-products"],
+  ["cms-published-products", "revision-dates-v1"],
   { revalidate: CACHE_SECONDS, tags: [cacheTags.products] }
 );
 
@@ -399,7 +414,7 @@ export async function saveProducts(products: Product[], options: { merge?: boole
     await dbTransaction(async (query) => {
       for (const row of rows) {
         await query(
-          `insert into public.products (
+          `insert into public.products as stored (
             id, status, deleted_at, sku, catalog_no, cas, name_cn, name_en, synonyms, category, brand, formula,
             molecular_weight, purity, stock, package_size, price, lead_time, image,
             details, reference_text, certificate, scale_note, tags, translations
@@ -429,7 +444,9 @@ export async function saveProducts(products: Product[], options: { merge?: boole
             scale_note = excluded.scale_note,
             tags = excluded.tags,
             translations = excluded.translations,
-            updated_at = now()`,
+            updated_at = now()
+          where (to_jsonb(stored) - 'created_at' - 'updated_at')
+            is distinct from (to_jsonb(excluded) - 'created_at' - 'updated_at')`,
           [
             row.id,
             row.status,
@@ -464,18 +481,22 @@ export async function saveProducts(products: Product[], options: { merge?: boole
     return;
   }
   if (!requireWritableSupabase()) {
+    const existing = await readJson<Product[]>(productsFile);
+    const stamped = stampContent(products, existing);
     if (options.merge) {
-      const existing = await readJson<Product[]>(productsFile);
-      const merged = new Map([...existing, ...products].map((product) => [product.id, product]));
+      const merged = new Map([...existing, ...stamped].map((product) => [product.id, product]));
       await writeJson(productsFile, [...merged.values()]);
     } else {
-      await writeJson(productsFile, products);
+      await writeJson(productsFile, stamped);
     }
     invalidateCmsCache("products");
     return;
   }
   if (products.length > 0) {
-    await supabaseRest("products", { method: "POST", body: products.map(productToRow), prefer: "resolution=merge-duplicates,return=representation" });
+    const existing = await loadProducts(true);
+    const previousRows = new Map(existing.map((product) => [product.id, productToRow(product)]));
+    const changed = products.map(productToRow).filter((row) => !sameContent(row, previousRows.get(row.id)));
+    if (changed.length) await supabaseRest("products", { method: "POST", body: changed, prefer: "resolution=merge-duplicates,return=representation" });
   }
   invalidateCmsCache("products");
 }
@@ -641,13 +662,13 @@ async function loadPublishedArticleList(table: ArticleTable, file: string, limit
 
 const getCachedPublishedNews = unstable_cache(
   (limit?: number) => loadPublishedArticleList("news_articles", newsFile, limit),
-  ["cms-published-news-list"],
+  ["cms-published-news-list", "revision-dates-v1"],
   { revalidate: CACHE_SECONDS, tags: [cacheTags.news] }
 );
 
 const getCachedPublishedInfo = unstable_cache(
   (limit?: number) => loadPublishedArticleList("info_articles", infoFile, limit),
-  ["cms-published-info-list"],
+  ["cms-published-info-list", "revision-dates-v1"],
   { revalidate: CACHE_SECONDS, tags: [cacheTags.info] }
 );
 
@@ -705,7 +726,7 @@ export async function saveNewsArticles(news: NewsArticle[]) {
     return;
   }
   if (!requireWritableSupabase()) {
-    await writeJson(newsFile, news);
+    await writeJson(newsFile, stampContent(news, await readJson<NewsArticle[]>(newsFile)));
     invalidateCmsCache("news");
     return;
   }
@@ -731,7 +752,7 @@ export async function saveInfoArticles(info: InfoArticle[]) {
     return;
   }
   if (!requireWritableSupabase()) {
-    await writeJson(infoFile, info);
+    await writeJson(infoFile, stampContent(info, await readJson<InfoArticle[]>(infoFile)));
     invalidateCmsCache("info");
     return;
   }

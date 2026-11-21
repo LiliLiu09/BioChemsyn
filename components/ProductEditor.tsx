@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import type { Product, ProductTranslation } from "@/lib/types";
+import type { Product } from "@/lib/types";
 import { localizeProduct } from "@/lib/content-locale";
 import type { Locale } from "@/lib/i18n";
 import { FEATURED_PRODUCT_TAG } from "@/lib/product-tags";
-import { englishProductCategory } from "@/lib/product-category-translations";
+import { bilingualProductErrors, englishTranslationFor, withBilingualPublication } from "@/lib/product-publication";
 
 const defaultProductImage = "/product-default-kasons.png";
 
@@ -271,24 +271,13 @@ function draftHasProductData(draft: Partial<Product>) {
 
 const requiredEnglishProductFields = ["nameEn", "category"];
 
-function englishTranslationFor(product: Product): ProductTranslation {
-  const stored = product.translations?.en;
-  return {
-    ...stored,
-    nameEn: stored?.nameEn?.trim() || product.nameEn.trim(),
-    category: stored?.category?.trim() || englishProductCategory(product.category),
-    published: stored?.published === true
-  };
-}
-
 import { useAdminLanguage, contentErrorMessage } from "@/components/admin-language";
 import { useLanguage } from "@/components/LanguageProvider";
-import { ContentLanguageTabs, isEnglishReady, TranslationEditor, type ContentLanguage } from "@/components/TranslationEditor";
+import { isEnglishReady, TranslationEditor } from "@/components/TranslationEditor";
 import { productTranslationFields } from "@/components/admin-content-fields";
 export function ProductEditor({ initialProducts }: { initialProducts: Product[] }) {
   const { locale, t } = useAdminLanguage();
   const { t: translate } = useLanguage();
-  const [contentLanguage, setContentLanguage] = useState<ContentLanguage>(locale);
   const [products, setProducts] = useState(initialProducts.map((product) => createProduct(product)));
   const [activeId, setActiveId] = useState("");
   const [mode, setMode] = useState<"grid" | "detail">("grid");
@@ -296,6 +285,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -313,8 +303,11 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       if (item.id !== active.id) return item;
       const en = { ...englishTranslationFor(item), [key]: value };
       if (!isEnglishReady(en, requiredEnglishProductFields)) en.published = false;
-      return { ...item, translations: { ...item.translations, en } };
+      return { ...item, ...(key === "nameEn" && typeof value === "string" ? { nameEn: value } : {}), translations: { ...item.translations, en } };
     }));
+    if (key === "nameEn" || key === "category") {
+      setErrors((current) => ({ ...current, [key === "nameEn" ? "englishName" : "englishCategory"]: "" }));
+    }
   };
   const categories = useMemo(() => Array.from(new Set(products.map((product) => product.category.trim()).filter(Boolean))).sort(), [products]);
   const visibleProducts = useMemo(() => {
@@ -383,6 +376,9 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
         if (key === "catalogNo" && typeof value === "string") {
           next.sku = value;
         }
+        if (key === "molecularWeight" && product.translations?.en) {
+          next.translations = { ...product.translations, en: { ...product.translations.en, molecularWeight: String(value) } };
+        }
         return next;
       })
     );
@@ -425,7 +421,7 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
     if (!category || !active) return;
     update("category", category);
     setNewCategory("");
-    setMessage(translate(`已将当前产品分类设为：${category}。点击保存至草稿或发布产品后生效。`, `Category set to ${category}. Save as a draft or publish to apply.`));
+    setMessage(translate(`已将当前产品分类设为：${category}。保存或发布中英文产品后生效。`, `Category set to ${category}. Save the bilingual draft or publish both languages to apply.`));
   };
 
   const addProduct = () => {
@@ -467,99 +463,66 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
 
   const restoreProduct = async () => {
     if (!active) return;
-    const nextProducts = products.map((product) => (product.id === active.id ? { ...product, deletedAt: "", status: "draft" as const } : product));
-    setProducts(nextProducts);
-    await saveProductsToServer(nextProducts, t("已恢复为草稿"));
+    const updated = withBilingualPublication(active, "draft");
+    if (await saveProductsToServer([updated], t("已恢复为草稿"), true)) {
+      setProducts((current) => current.map((product) => product.id === updated.id ? updated : product));
+    }
   };
 
   const validatePublish = (product: Product) => {
     const nextErrors: Record<string, string> = {};
     const label = product.catalogNo || product.sku || product.nameCn || product.nameEn || product.id;
-    if (!(product.catalogNo || product.sku).trim()) nextErrors.catalogNo = translate(`${label}：产品编号不能为空`, `${label}: Catalog number is required`);
-    if (!product.nameEn.trim() && !product.nameCn.trim()) nextErrors.nameEn = translate(`${label}：产品名称不能为空`, `${label}: Product name is required`);
-    if (!product.image.trim()) nextErrors.image = translate(`${label}：发布产品需要产品图片`, `${label}: A product image is required to publish`);
+    for (const key of bilingualProductErrors(product)) {
+      nextErrors[key] = {
+        catalogNo: translate(`${label}：产品编号不能为空`, `${label}: Catalog number is required`),
+        image: translate(`${label}：发布产品需要产品图片`, `${label}: A product image is required to publish`),
+        englishName: translate(`${label}：请填写英文名称`, `${label}: Enter an English product name`),
+        englishCategory: translate(`${label}：请填写英文分类`, `${label}: Enter an English category`)
+      }[key];
+    }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
   const saveProductsToServer = async (nextProducts = products, successMessage = t("已保存产品数据"), merge = false) => {
+    if (saving) return false;
     setMessage("");
-    const response = await fetch("/api/admin/products", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ products: nextProducts, merge })
-    });
-    setMessage(response.ok ? successMessage : await contentErrorMessage(response, t("保存失败，请重新登录后台或检查 Supabase 配置")));
-    return response.ok;
+    setSaving(true);
+    try {
+      const response = await fetch("/api/admin/products", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ products: nextProducts, merge })
+      });
+      setMessage(response.ok ? successMessage : await contentErrorMessage(response, t("保存失败，请重新登录后台或检查 Supabase 配置")));
+      return response.ok;
+    } catch {
+      setMessage(translate("保存失败，请检查网络后重试。", "Save failed. Check your connection and try again."));
+      return false;
+    } finally {
+      setSaving(false);
+    }
   };
 
   const saveActiveAsDraft = async () => {
     if (!active) return;
-    const nextProducts = products.map((product) => (product.id === active.id ? { ...product, status: "draft" as const, deletedAt: "" } : product));
-    setProducts(nextProducts);
-    await saveProductsToServer(nextProducts, t("已保存至草稿"));
+    const updated = withBilingualPublication(active, "draft");
+    if (await saveProductsToServer([updated], translate("中英文内容已保存至草稿", "Chinese and English content saved as a draft"), true)) {
+      setProducts((current) => current.map((product) => product.id === updated.id ? updated : product));
+      setErrors({});
+    }
   };
 
   const publishActive = async () => {
     if (!active) return;
-    const nextProduct = { ...active, status: "published" as const, deletedAt: "" };
-    if (!validatePublish(nextProduct)) {
-      setContentLanguage("zh");
+    if (!validatePublish(active)) {
       setMessage(t("请先修正表单错误"));
       return;
     }
-    const nextProducts = products.map((product) => (product.id === active.id ? nextProduct : product));
-    setProducts(nextProducts);
-    await saveProductsToServer(nextProducts, t("产品已发布"));
-  };
-
-  const saveEnglishActive = async () => {
-    if (!active) return;
-    const en = englishTranslationFor(active);
-    const updated = { ...active, translations: { ...active.translations, en } };
-    if (await saveProductsToServer([updated], translate("英文内容已保存", "English content saved"), true)) {
+    const updated = withBilingualPublication(active, "published");
+    if (await saveProductsToServer([updated], translate("中英文产品已一起发布", "Chinese and English product versions published together"), true)) {
       setProducts((current) => current.map((product) => product.id === updated.id ? updated : product));
     }
-  };
-
-  const publishEnglishActive = async () => {
-    if (!active) return;
-    if (active.status !== "published" || active.deletedAt) {
-      setMessage(translate("请先在中文内容中发布产品，再发布英文版本。", "Publish the product first, then publish its English version."));
-      return;
-    }
-    const en = { ...englishTranslationFor(active), published: true };
-    if (!isEnglishReady(en, requiredEnglishProductFields)) {
-      setMessage(translate("发布英文版本前，请填写英文名称和英文分类。", "Enter an English name and category before publishing the English version."));
-      return;
-    }
-    const updated = { ...active, translations: { ...active.translations, en } };
-    if (await saveProductsToServer([updated], translate("英文版本已发布", "English version published"), true)) {
-      setProducts((current) => current.map((product) => product.id === updated.id ? updated : product));
-    }
-  };
-
-  const publishSelectedEnglishProducts = async () => {
-    const selected = new Set(selectedIds);
-    const selectedProducts = products.filter((product) => selected.has(product.id) && !product.deletedAt);
-    if (selectedProducts.length === 0) {
-      setMessage(translate("请先选择要发布英文版本的产品。", "Select products to publish in English."));
-      return;
-    }
-    const invalidProduct = selectedProducts.find((product) => product.status !== "published" || !isEnglishReady(englishTranslationFor(product), requiredEnglishProductFields));
-    if (invalidProduct) {
-      setActiveId(invalidProduct.id);
-      setMode("detail");
-      setContentLanguage("en");
-      setMessage(translate("英文批量发布前，产品必须已发布，并填写英文名称和英文分类。", "Before bulk English publishing, each product must be published with an English name and category."));
-      return;
-    }
-    const nextProducts = products.map((product) => selected.has(product.id) && !product.deletedAt
-      ? { ...product, translations: { ...product.translations, en: { ...englishTranslationFor(product), published: true } } }
-      : product);
-    setProducts(nextProducts);
-    setSelectedIds([]);
-    await saveProductsToServer(nextProducts, translate(`已发布 ${selectedProducts.length} 个英文产品`, `${selectedProducts.length} English products published`));
   };
 
   const publishSelectedProducts = async () => {
@@ -570,23 +533,23 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
       return;
     }
 
-    const invalidProduct = selectedProducts.find((product) => !(product.catalogNo || product.sku).trim() || (!product.nameCn.trim() && !product.nameEn.trim()));
+    const candidates = selectedProducts.map((product) => ({ ...product, image: product.image.trim() || defaultProductImage }));
+    const invalidProduct = candidates.find((product) => bilingualProductErrors(product).length > 0);
     if (invalidProduct) {
       setActiveId(invalidProduct.id);
       setMode("detail");
-      setContentLanguage("zh");
       validatePublish(invalidProduct);
-      setMessage(t("批量上架前，请补充产品编号和产品名称。"));
+      setMessage(translate("批量发布前，请补齐产品编号、英文名称和英文分类。", "Complete catalog numbers, English names and English categories before publishing both versions."));
       return;
     }
 
-    const nextProducts = products.map((product) => selected.has(product.id) && !product.deletedAt
-      ? { ...product, image: product.image.trim() || defaultProductImage, status: "published" as const }
-      : product);
-    setProducts(nextProducts);
-    setSelectedIds([]);
-    setView("published");
-    await saveProductsToServer(nextProducts, translate(`已批量上架 ${selectedProducts.length} 个产品`, `${selectedProducts.length} products published`));
+    const published = candidates.map((product) => withBilingualPublication(product, "published"));
+    const replacements = new Map(published.map((product) => [product.id, product]));
+    if (await saveProductsToServer(published, translate(`已一起发布 ${published.length} 个产品的中英文版本`, `${published.length} products published in both languages`), true)) {
+      setProducts((current) => current.map((product) => replacements.get(product.id) || product));
+      setSelectedIds([]);
+      setView("published");
+    }
   };
 
   const uploadImage = async (file: File | undefined) => {
@@ -671,157 +634,126 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
   };
 
   if (mode === "detail" && active) {
+    const publishLabel = active.status === "published" && english.published
+      ? translate("更新中英文产品", "Update both languages")
+      : translate("发布中英文产品", "Publish both languages");
     return (
       <div className="panel admin-panel product-detail-editor">
         <div className="toolbar">
           <div>
             <h1>{t("产品详情")}</h1>
             <p className="admin-subtitle">
-              {active.catalogNo || active.sku || t("新产品")} · <span className={`status-pill ${active.deletedAt ? "deleted" : active.status}`}>{t(productValue(active, "status", locale))}</span>
+              {active.catalogNo || active.sku || t("新产品")} · <span className={"status-pill " + (active.deletedAt ? "deleted" : active.status)}>{t(productValue(active, "status", locale))}</span>
             </p>
           </div>
           <div className="admin-actions">
-            <button className="btn" type="button" onClick={() => setMode("grid")}>{t("返回产品列表")}</button>
+            <button className="btn" type="button" disabled={saving} onClick={() => setMode("grid")}>{t("返回产品列表")}</button>
             {active.deletedAt ? (
-              <button className="btn" type="button" onClick={restoreProduct}>{t("恢复为草稿")}</button>
-            ) : (
-              <>
-                <button className="btn" type="button" onClick={removeProduct}>{t("删除")}</button>
-                {contentLanguage === "en" ? <>
-                  <button className="btn" type="button" onClick={saveEnglishActive}>{translate("保存英文内容", "Save English content")}</button>
-                  <button className="btn primary" type="button" onClick={publishEnglishActive}>{english.published ? translate("更新英文版本", "Update English version") : translate("发布英文版本", "Publish English version")}</button>
-                </> : <>
-                  <button className="btn" type="button" onClick={saveActiveAsDraft}>{t("保存至草稿")}</button>
-                  <button className="btn primary" type="button" onClick={publishActive}>{t("发布产品")}</button>
-                </>}
-              </>
-            )}
+              <button className="btn" type="button" disabled={saving} onClick={restoreProduct}>{t("恢复为草稿")}</button>
+            ) : <>
+              <button className="btn" type="button" disabled={saving} onClick={removeProduct}>{t("删除")}</button>
+              <button className="btn" type="button" disabled={saving || uploading} onClick={saveActiveAsDraft}>{translate("保存中英文草稿", "Save bilingual draft")}</button>
+              <button className="btn primary" type="button" disabled={saving || uploading} onClick={publishActive}>{saving ? translate("保存中...", "Saving...") : publishLabel}</button>
+            </>}
           </div>
         </div>
 
-        <ContentLanguageTabs value={contentLanguage} onChange={setContentLanguage} ready={englishReady} />
-        {contentLanguage === "en" ? <>
-          <TranslationEditor values={english} fields={productTranslationFields} onChange={updateEnglish} uploadFolder="products" ready={englishReady} />
-          <p className="result-count">{translate("英文版本仅在产品已发布且未删除时公开；货号、CAS、分子式、价格和库存与中文共用。", "The English version is public only when the product is published and not deleted. Catalog number, CAS, formula, price, and stock are shared.")}</p>
-          <button className="btn primary" type="button" onClick={saveEnglishActive}>{translate("保存英文内容", "Save English content")}</button>
-        </> : <div className="admin-form-grid">
-          <label className="admin-field full">
-            <span>{t("产品分类")}</span>
-            <input className="field" list="product-categories" value={active.category} onChange={(event) => update("category", event.target.value)} placeholder={t("选择或输入产品分类")} />
-            <datalist id="product-categories">
-              {categories.map((category) => (
-                <option key={category} value={category} />
-              ))}
-            </datalist>
-            <div className="inline-controls">
-              <input className="field" value={newCategory} onChange={(event) => setNewCategory(event.target.value)} placeholder={t("新增类别名称")} />
-              <button className="btn" type="button" onClick={addCategory}>{t("添加并应用")}</button>
-            </div>
-          </label>
-
-          <label className="admin-field full">
-            <span>{t("产品图片")}</span>
-            <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder={t("上传后自动生成图片地址")} />
-            <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
-            {errors.image && <span className="field-error">{errors.image}</span>}
-            {uploading && <span className="result-count">{t("图片上传中...")}</span>}
-            {active.image && <img className="admin-preview" src={active.image} alt={t("产品图片预览")} />}
-          </label>
-
-          <label className="admin-field">
-            <span>{t("中文名")}</span>
-            <input className="field" value={active.nameCn} onChange={(event) => update("nameCn", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>{t("英文名 *")}</span>
-            <input className="field" value={active.nameEn} onChange={(event) => update("nameEn", event.target.value)} />
-            {errors.nameEn && <span className="field-error">{errors.nameEn}</span>}
-          </label>
-          <label className="admin-field">
-            <span>{t("产品编号 *")}</span>
-            <input className="field" value={active.catalogNo || active.sku} onChange={(event) => update("catalogNo", event.target.value)} />
-            {errors.catalogNo && <span className="field-error">{errors.catalogNo}</span>}
-          </label>
-          <label className="admin-field">
-            <span>{t("记录 ID")}</span>
-            <input className="field" value={active.id} readOnly />
-          </label>
-          <label className="admin-field">
-            <span>{t("品牌")}</span>
-            <input className="field" value={active.brand} onChange={(event) => update("brand", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>{t("CAS 号")}</span>
-            <input className="field" value={active.cas} onChange={(event) => update("cas", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>{t("分子式")}</span>
-            <input className="field" value={active.formula} onChange={(event) => update("formula", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>{t("分子量")}</span>
-            <input className="field" value={active.molecularWeight} onChange={(event) => update("molecularWeight", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>{t("纯度")}</span>
-            <input className="field" value={active.purity} onChange={(event) => update("purity", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>{t("包装")}</span>
-            <input className="field" value={active.packageSize} onChange={(event) => update("packageSize", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>{t("货期")}</span>
-            <input className="field" value={active.leadTime} onChange={(event) => update("leadTime", event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>{t("价格")}</span>
-            <input className="field" type="number" min={0} value={active.price} onChange={(event) => update("price", Number(event.target.value))} />
-          </label>
-          <label className="admin-field">
-            <span>{t("库存")}</span>
-            <input className="field" type="number" min={0} value={active.stock} onChange={(event) => update("stock", Number(event.target.value))} />
-          </label>
-          <label className="admin-field full">
-            <span>{t("同义词")}</span>
-            <input className="field" value={active.synonyms} onChange={(event) => update("synonyms", event.target.value)} />
-          </label>
-          <label className="admin-field full">
-            <span>{t("标签")}</span>
-            <input className="field" value={active.tags.join("，")} onChange={(event) => update("tags", event.target.value.split(/[;，,]/).map((tag) => tag.trim()).filter(Boolean))} placeholder={t("多个标签用逗号分隔")} />
-          </label>
-          <label className="admin-field full checkbox-field">
-            <input
-              type="checkbox"
-              checked={active.tags.includes(FEATURED_PRODUCT_TAG)}
-              onChange={(event) => update(
-                "tags",
-                event.target.checked
+        <fieldset className="product-editor-fields" disabled={saving} inert={saving}>
+          <section className="product-shared-fields" aria-labelledby="product-shared-heading">
+            <h2 id="product-shared-heading">{translate("共享产品信息", "Shared product information")}</h2>
+            <p className="result-count">{translate("产品编号、CAS、分子式、分子量、价格、库存和默认图片供中英文页面共用。", "Catalog number, CAS, formula, molecular weight, price, stock and the default image are shared by both languages.")}</p>
+            <div className="admin-form-grid">
+              <label className="admin-field">
+                <span>{t("产品编号 *")}</span>
+                <input className="field" value={active.catalogNo || active.sku} onChange={(event) => update("catalogNo", event.target.value)} />
+                {errors.catalogNo && <span className="field-error">{errors.catalogNo}</span>}
+              </label>
+              <label className="admin-field">
+                <span>{t("记录 ID")}</span>
+                <input className="field" value={active.id} readOnly />
+              </label>
+              {([
+                ["cas", translate("CAS 号", "CAS number")],
+                ["formula", translate("分子式", "Molecular formula")],
+                ["molecularWeight", translate("分子量", "Molecular weight")]
+              ] as const).map(([key, label]) => <label className="admin-field" key={key}>
+                <span>{label}</span>
+                <input className="field" value={active[key]} onChange={(event) => update(key, event.target.value)} />
+              </label>)}
+              {([["price", t("价格")], ["stock", t("库存")]] as const).map(([key, label]) => <label className="admin-field" key={key}>
+                <span>{label}</span>
+                <input className="field" type="number" min={0} value={active[key]} onChange={(event) => update(key, Number(event.target.value))} />
+              </label>)}
+              <label className="admin-field full">
+                <span>{t("产品图片")}</span>
+                <input className="field" value={active.image} onChange={(event) => update("image", event.target.value)} placeholder={t("上传后自动生成图片地址")} />
+                <input className="field" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadImage(event.target.files?.[0])} />
+                {errors.image && <span className="field-error">{errors.image}</span>}
+                {uploading && <span className="result-count">{t("图片上传中...")}</span>}
+                {active.image && <img className="admin-preview" src={active.image} alt={t("产品图片预览")} />}
+              </label>
+              <label className="admin-field full checkbox-field">
+                <input type="checkbox" checked={active.tags.includes(FEATURED_PRODUCT_TAG)} onChange={(event) => update("tags", event.target.checked
                   ? Array.from(new Set([...active.tags, FEATURED_PRODUCT_TAG]))
-                  : active.tags.filter((tag) => tag !== FEATURED_PRODUCT_TAG)
-              )}
-            />
-            <span>{t("明星产品（仅后台可见）")}</span>
-          </label>
-          <label className="admin-field full">
-            <span>{t("基本信息")}</span>
-            <textarea className="field" value={active.details} onChange={(event) => update("details", event.target.value)} />
-          </label>
-          <label className="admin-field full">
-            <span>{t("参考文献")}</span>
-            <textarea className="field" value={active.references} onChange={(event) => update("references", event.target.value)} />
-          </label>
-          <label className="admin-field full">
-            <span>{t("质检证书")}</span>
-            <textarea className="field" value={active.certificate} onChange={(event) => update("certificate", event.target.value)} />
-          </label>
-          <label className="admin-field full">
-            <span>{t("规模说明")}</span>
-            <textarea className="field" value={active.scaleNote} onChange={(event) => update("scaleNote", event.target.value)} />
-          </label>
-        </div>
-        }
-        {message && <div className="notice">{message}</div>}
+                  : active.tags.filter((tag) => tag !== FEATURED_PRODUCT_TAG))} />
+                <span>{t("明星产品（仅后台可见）")}</span>
+              </label>
+            </div>
+          </section>
+
+          <div className="bilingual-product-columns">
+            <section className="product-language-column" aria-labelledby="product-chinese-heading" lang="zh-CN">
+              <h2 id="product-chinese-heading">中文内容</h2>
+              <div className="admin-form-grid">
+                <label className="admin-field">
+                  <span>{translate("中文名称", "Chinese name")}</span>
+                  <input className="field" value={active.nameCn} onChange={(event) => update("nameCn", event.target.value)} />
+                </label>
+                <label className="admin-field">
+                  <span>{t("产品分类")}</span>
+                  <input className="field" list="product-categories" value={active.category} onChange={(event) => update("category", event.target.value)} placeholder={t("选择或输入产品分类")} />
+                  <datalist id="product-categories">{categories.map((category) => <option key={category} value={category} />)}</datalist>
+                  <div className="inline-controls">
+                    <input className="field" value={newCategory} onChange={(event) => setNewCategory(event.target.value)} placeholder={t("新增类别名称")} />
+                    <button className="btn" type="button" onClick={addCategory}>{t("添加并应用")}</button>
+                  </div>
+                </label>
+                {([
+                  ["brand", t("品牌")], ["synonyms", t("同义词")], ["purity", t("纯度")],
+                  ["packageSize", t("包装")], ["leadTime", t("货期")]
+                ] as const).map(([key, label]) => <label className="admin-field" key={key}>
+                  <span>{label}</span>
+                  <input className="field" value={active[key]} onChange={(event) => update(key, event.target.value)} />
+                </label>)}
+                <label className="admin-field">
+                  <span>{t("标签")}</span>
+                  <input className="field" value={active.tags.join("，")} onChange={(event) => update("tags", event.target.value.split(/[;，,]/).map((tag) => tag.trim()).filter(Boolean))} placeholder={t("多个标签用逗号分隔")} />
+                </label>
+                {([
+                  ["details", t("基本信息")], ["references", t("参考文献")],
+                  ["certificate", t("质检证书")], ["scaleNote", t("规模说明")]
+                ] as const).map(([key, label]) => <label className="admin-field full" key={key}>
+                  <span>{label}</span>
+                  <textarea className="field" value={active[key]} onChange={(event) => update(key, event.target.value)} />
+                </label>)}
+              </div>
+            </section>
+            <section className="product-language-column" aria-labelledby="product-english-heading" lang="en">
+              <h2 id="product-english-heading">English content</h2>
+              <p className="result-count">{englishReady
+                ? translate("英文必填信息已填写。发布时将与中文一起生效。", "Required English fields are complete. Both languages will be published together.")
+                : translate("请填写英文名称和英文分类后一起发布；其余内容可先保存为草稿。", "Complete the English name and category to publish both languages, or save a draft.")}</p>
+              <TranslationEditor values={english} fields={productTranslationFields.filter((field) => field.key !== "molecularWeight")}
+                onChange={updateEnglish} uploadFolder="products" ready={englishReady} publishable={false}
+                errors={{ nameEn: errors.englishName, category: errors.englishCategory }} />
+            </section>
+          </div>
+        </fieldset>
+        {!active.deletedAt && <div className="admin-actions">
+          <button className="btn" type="button" disabled={saving || uploading} onClick={saveActiveAsDraft}>{translate("保存中英文草稿", "Save bilingual draft")}</button>
+          <button className="btn primary" type="button" disabled={saving || uploading} onClick={publishActive}>{saving ? translate("保存中...", "Saving...") : publishLabel}</button>
+        </div>}
+        {message && <div className="notice" role="status">{message}</div>}
       </div>
     );
   }
@@ -834,18 +766,15 @@ export function ProductEditor({ initialProducts }: { initialProducts: Product[] 
           <p className="admin-subtitle">{t("以表格方式查看全部产品，点击详情进入单个产品表单。")}</p>
         </div>
         <div className="admin-actions">
-          <button className="btn primary" type="button" onClick={addProduct}>{t("添加产品")}</button>
-          <button className="btn" type="button" onClick={() => csvInputRef.current?.click()}>{t("批量上传")}</button>
-          <button className="btn primary" type="button" onClick={publishSelectedProducts} disabled={selectedIds.length === 0 || view === "deleted"}>
-            {t("批量上架")}{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
+          <button className="btn primary" type="button" disabled={saving} onClick={addProduct}>{t("添加产品")}</button>
+          <button className="btn" type="button" disabled={saving} onClick={() => csvInputRef.current?.click()}>{t("批量上传")}</button>
+          <button className="btn primary" type="button" onClick={publishSelectedProducts} disabled={saving || selectedIds.length === 0 || view === "deleted"}>
+            {translate("批量发布中英文", "Publish both languages")}{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
           </button>
-          {locale === "en" && <button className="btn primary" type="button" onClick={publishSelectedEnglishProducts} disabled={selectedIds.length === 0 || view === "deleted"}>
-            {translate("批量发布英文版本", "Publish English versions")}{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
-          </button>}
-          <button className="btn danger" type="button" onClick={removeSelectedProducts} disabled={selectedIds.length === 0}>
+          <button className="btn danger" type="button" onClick={removeSelectedProducts} disabled={saving || selectedIds.length === 0}>
             {t("删除选中")}{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
           </button>
-          <button className="btn" type="button" onClick={() => saveProductsToServer()}>{t("保存全部")}</button>
+          <button className="btn" type="button" disabled={saving} onClick={() => saveProductsToServer()}>{t("保存全部")}</button>
           <input ref={csvInputRef} className="sr-only" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" onChange={(event) => importSpreadsheet(event.target.files?.[0])} />
         </div>
       </div>

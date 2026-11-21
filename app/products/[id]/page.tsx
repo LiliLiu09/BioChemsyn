@@ -11,6 +11,9 @@ import { getLocale } from "@/lib/locale-server";
 import { localizePath, translate } from "@/lib/i18n";
 import { absoluteUrl, jsonLd, pageMetadata } from "@/lib/seo";
 import { categoryForProduct, priorityProducts } from "@/lib/catalog-seo";
+import { promotedProducts } from "@/lib/promoted-products";
+import { productSearchDescription, relatedProducts } from "@/lib/product-discovery";
+import { RelatedProductLinks } from "@/components/RelatedProductLinks";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -30,11 +33,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const product = localizeProduct(raw, locale);
   const name = locale === "en" ? product.nameEn : product.nameCn || product.nameEn;
   const identity = product.cas ? ` | CAS ${product.cas}` : ` | ${product.catalogNo || product.sku}`;
-  const description = locale === "en"
-    ? `${name}${product.cas ? ` (CAS ${product.cas})` : ""}. View chemical identity and research reagent specifications. Enquire about pack sizes and request a quotation from KASONS.`
-    : `${name}${product.cas ? `，CAS ${product.cas}` : ""}。查看产品规格、分子式及货号，联系凯森斯生物获取报价与批次资料。`;
+  const promotion = promotedProducts.find((item) => item.cas === product.cas?.trim());
+  const searchName = promotion?.[locale] || name;
+  const description = productSearchDescription(product, locale, searchName);
   return {
-    ...pageMetadata(`/products/${encodeURIComponent(id)}`, locale, `${name}${identity} | KASONS`, description, isProductAvailable(raw, "en")),
+    ...pageMetadata(`/products/${encodeURIComponent(id)}`, locale, `${searchName}${identity} | KASONS`, description, isProductAvailable(raw, "en")),
     ...(!available ? { robots: { index: false, follow: true } } : {})
   };
 }
@@ -70,9 +73,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const certificate = product.certificate;
   const category = categoryForProduct(rawProduct);
   const priority = priorityProducts[id];
-  const related = locale === "en" && priority
-    ? (await getProducts()).filter((item) => item.id !== id && priorityProducts[item.id]?.category === priority.category && isProductAvailable(item, locale)).slice(0, 4).map((item) => localizeProduct(item, locale))
-    : [];
+  const related = relatedProducts(rawProduct, await getProducts(), locale);
   const productName = product.nameCn || product.nameEn || t("未命名产品", "Unnamed product");
   const breadcrumbs = [
     { name: t("首页", "Home"), path: "/" },
@@ -187,7 +188,6 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             <h2>Request specifications and a quotation</h2>
             <p>Quote catalog number <strong>{product.catalogNo || product.sku}</strong>{product.cas ? ` and CAS ${product.cas}` : ""}, the quantity required and your documentation needs. Confirm purity, pack size, lead time and any handling requirements with our sales team.</p>
             <p><a href="mailto:inquiry@biochemsyn.com">inquiry@biochemsyn.com</a> · <Link href="/contact">Contact KASONS</Link></p>
-            {related.length > 0 && <><h2>Related research reagents</h2><ul>{related.map((item) => <li key={item.id}><Link href={`/products/${item.id}`}>{item.nameEn}</Link></li>)}</ul></>}
           </section>
         )}
         <section className="product-tabs">
@@ -217,6 +217,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
           </div>
         </section>
+        <RelatedProductLinks products={related} locale={locale} />
         <Footer site={site} />
       </main>
     </div>

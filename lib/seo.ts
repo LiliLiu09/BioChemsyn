@@ -3,7 +3,18 @@ import { isArticleAvailable, localizeArticle } from "./content-locale";
 import { localizePath, type Locale } from "./i18n";
 import type { InfoArticle, NewsArticle } from "./types";
 
-export const siteOrigin = (process.env.NEXT_PUBLIC_SITE_URL || "https://biochemsyn.com").replace(/\/$/, "");
+export function canonicalOrigin(value?: string): string {
+  try {
+    const url = new URL(value?.trim() || "https://biochemsyn.com");
+    if (!/^https?:$/.test(url.protocol)) return "https://biochemsyn.com";
+    if (["biochemsyn.com", "www.biochemsyn.com"].includes(url.hostname)) return "https://biochemsyn.com";
+    return url.origin;
+  } catch {
+    return "https://biochemsyn.com";
+  }
+}
+
+export const siteOrigin = canonicalOrigin(process.env.NEXT_PUBLIC_SITE_URL);
 export const absoluteUrl = (path: string) => new URL(path, siteOrigin).toString();
 
 export function pageMetadata(path: string, locale: Locale, title: string, description: string, englishAvailable = true): Metadata {

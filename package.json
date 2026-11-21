@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "seo:check": "node --experimental-strip-types scripts/check-seo.mjs",
+    "test:seo": "node --test scripts/test-seo-indexing.mjs",
+    "test:products": "node --test scripts/test-product-publication.mjs",
+    "test:articles": "node --test scripts/test-admin-article-search.mjs",
     "db:apply-schema": "node scripts/apply-supabase-schema.mjs",
     "db:migrate-json": "node scripts/migrate-json-to-supabase.mjs"
   },

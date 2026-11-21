@@ -2,6 +2,7 @@ import Link from "@/components/LocaleLink";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { ProductBrowser } from "@/components/ProductBrowser";
+import { PromotedProductLinks } from "@/components/PromotedProductLinks";
 import { getProducts, getPublishedNewsArticles, getSiteContent } from "@/lib/cms";
 import { GlobalSearchForm } from "@/components/GlobalSearchForm";
 import { isArticleAvailable, isProductAvailable, localizeArticle, localizeProduct, localizeSiteContent } from "@/lib/content-locale";
@@ -77,6 +78,7 @@ export default async function HomePage() {
 
                 <GlobalSearchForm />
               </section>
+              <PromotedProductLinks products={products} locale={locale} />
               <ProductBrowser compact products={products} />
 
               {latestNews.length > 0 && (

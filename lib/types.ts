@@ -1,4 +1,5 @@
 export type Product = {
+  updatedAt?: string;
   categoryKey?: string;
   contentLocale?: "zh" | "en";
   id: string;
@@ -63,6 +64,7 @@ export type QuoteRequest = {
 };
 
 export type NewsArticle = {
+  updatedAt?: string;
   categoryKey?: string;
   contentLocale?: "zh" | "en";
   id: string;
@@ -81,6 +83,7 @@ export type NewsArticle = {
 };
 
 export type InfoArticle = {
+  updatedAt?: string;
   categoryKey?: string;
   contentLocale?: "zh" | "en";
   id: string;

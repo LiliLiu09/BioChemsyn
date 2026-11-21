@@ -1,6 +1,7 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { ProductBrowser } from "@/components/ProductBrowser";
+import { PromotedProductLinks } from "@/components/PromotedProductLinks";
 import { getProducts, getSiteContent } from "@/lib/cms";
 import { isProductAvailable, localizeProduct, localizeSiteContent } from "@/lib/content-locale";
 import { getLocale } from "@/lib/locale-server";
@@ -35,6 +36,7 @@ export default async function ProductsPage() {
       <main className="main">
         <h1>{translate(locale, "科研试剂与糖化学产品", "Glycochemistry & Research Reagents")}</h1>
         <CoreCategoryLinks locale={locale} />
+        <PromotedProductLinks products={products} locale={locale} />
         <ProductBrowser products={products} />
         <Footer site={site} />
       </main>
